@@ -5,56 +5,89 @@
  *      Author: phamnamhien
  */
 
-
-#include "Lpuart_Uart_Ip.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+/*==================================================================================================
+*                                        INCLUDE FILES
+* 1) system and project includes
+* 2) needed interfaces from external units
+* 3) internal and external interfaces from this unit
+==================================================================================================*/
 #include "Clock_Ip.h"
+#include "Lpuart_Uart_Ip.h"
 #include "IntCtrl_Ip.h"
 #include "Siul2_Port_Ip.h"
 #include "string.h"
 
+#include "systick.h"
 #include "log_debug.h"
 
+/*==================================================================================================
+*                          LOCAL TYPEDEFS (STRUCTURES, UNIONS, ENUMS)
+==================================================================================================*/
+#define clockConfig &Clock_Ip_aClockConfig[0]
+/*==================================================================================================
+*                                       LOCAL MACROS
+==================================================================================================*/
+
+/*==================================================================================================
+*                                      LOCAL CONSTANTS
+==================================================================================================*/
 static const char* TAG = "MAIN";
+/*==================================================================================================
+*                                      LOCAL VARIABLES
+==================================================================================================*/
+/*==================================================================================================
+*                                      GLOBAL CONSTANTS
+==================================================================================================*/
+/*==================================================================================================
+*                                      GLOBAL VARIABLES
+==================================================================================================*/
+extern uint32_t SystemCoreClock;
+
+/*==================================================================================================
+*                                   LOCAL FUNCTION PROTOTYPES
+==================================================================================================*/
+/*==================================================================================================
+*                                       LOCAL FUNCTIONS
+==================================================================================================*/
 
 
+/*==================================================================================================
+*                                       GLOBAL FUNCTIONS
+==================================================================================================*/
 int main(void)
 {
-    /* Init clock */
-    Clock_Ip_Init(&Clock_Ip_aClockConfig[0]);
-
-#if defined (FEATURE_CLOCK_IP_HAS_SPLL_CLK)
-    while (CLOCK_IP_PLL_LOCKED != Clock_Ip_GetPllStatus())
-    {
-        /* Wait PLL locked */
-    }
-    Clock_Ip_DistributePll();
-#endif
-
-    /* Init pins */
+    /* Initialize Clock */
+    Clock_Ip_Init(clockConfig);
+    /* Initialize SysTick */
+    SysTick_Init();
+    /* Initialize Pin */
     Siul2_Port_Ip_Init(NUM_OF_CONFIGURED_PINS_PortContainer_0_BOARD_InitPeripherals,
                        g_pin_mux_InitConfigArr_PortContainer_0_BOARD_InitPeripherals);
 
-    /* Init IRQ */
+    /* set ISR */
     IntCtrl_Ip_Init(&IntCtrlConfig_0);
 
-    /* Init LPUART4 for Debug*/
-    Lpuart_Uart_Ip_Init(LOG_UART_CHANNEL, &Lpuart_Uart_Ip_xHwConfigPB_0);
-
-    /* Init log */
     log_init();
     log_set_level(LOG_LEVEL_DEBUG);
 
-
-
+    LOG_I(TAG, "Start");
+    uint32 nextTime = 1000;
     while(1) {
-        LOG_I(TAG, "System started");
-        LOG_D(TAG, "Clock: %d Hz", 80000000);
-        LOG_W(TAG, "Warning message");
-        LOG_E(TAG, "Error message");
-        for(uint32_t i = 0; i < 10000000; i++) {
+        uint32 tick = SysTick_GetTick();
 
+        if(tick >= nextTime) {
+            LOG_I(TAG, "Tick = %lu", tick);
+            nextTime += 1000;  // Tăng 1s cho lần tiếp theo
         }
     }
-
-    return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
+/** @} */
+

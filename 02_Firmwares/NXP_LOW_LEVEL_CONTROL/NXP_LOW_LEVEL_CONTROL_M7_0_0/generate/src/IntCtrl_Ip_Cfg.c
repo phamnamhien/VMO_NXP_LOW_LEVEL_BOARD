@@ -78,10 +78,11 @@ static const IntCtrl_Ip_IrqConfigType aIrqConfiguration1[] = {
     {LPUART7_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_7_IRQHandler},
     {LPUART8_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_8_IRQHandler},
     {LPUART9_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_9_IRQHandler},
+    {PIT0_IRQn, (boolean)TRUE, 0U, &PIT_0_ISR},
 };
 /* Configuration structure for interrupt controller #1*/
 const IntCtrl_Ip_CtrlConfigType IntCtrlConfig_0 = {
-    10U,
+    11U,
     aIrqConfiguration1
 };
 #define PLATFORM_STOP_SEC_CONFIG_DATA_UNSPECIFIED
