@@ -1,57 +1,60 @@
-/*==================================================================================================
-* Project : RTD AUTOSAR 4.7
-* Platform : CORTEXM
-* Peripheral : S32K3XX
-* Dependencies : none
-*
-* Autosar Version : 4.7.0
-* Autosar Revision : ASR_REL_4_7_REV_0000
-* Autosar Conf.Variant :
-* SW Version : 6.0.0
-* Build Version : S32K3_RTD_6_0_0_D2506_ASR_REL_4_7_REV_0000_20250610
-*
-* Copyright 2020 - 2025 NXP
-*
-* NXP Confidential and Proprietary. This software is owned or controlled by NXP and may only be 
-*   used strictly in accordance with the applicable license terms.  By expressly 
-*   accepting such terms or by downloading, installing, activating and/or otherwise 
-*   using the software, you are agreeing that you have read, and that you agree to 
-*   comply with and are bound by, such license terms.  If you do not agree to be 
-*   bound by the applicable license terms, then you may not retain, install,
-*   activate or otherwise use the software.
-==================================================================================================*/
+/*
+ * main.c
+ *
+ *  Created on: Jan 6, 2026
+ *      Author: phamnamhien
+ */
 
-/**
-*   @file main.c
-*
-*   @addtogroup main_module main module documentation
-*   @{
-*/
 
-/* Including necessary configuration files. */
-#include "Mcal.h"
+#include "Lpuart_Uart_Ip.h"
+#include "Clock_Ip.h"
+#include "IntCtrl_Ip.h"
+#include "Siul2_Port_Ip.h"
+#include "string.h"
 
-volatile int exit_code = 0;
-/* User includes */
+#include "log_debug.h"
 
-/*!
-  \brief The main function for the project.
-  \details The startup initialization sequence is the following:
- * - startup asm routine
- * - main()
-*/
+static const char* TAG = "MAIN";
+
+
 int main(void)
 {
-    /* Write your code here */
+    /* Init clock */
+    Clock_Ip_Init(&Clock_Ip_aClockConfig[0]);
 
-    for(;;)
+#if defined (FEATURE_CLOCK_IP_HAS_SPLL_CLK)
+    while (CLOCK_IP_PLL_LOCKED != Clock_Ip_GetPllStatus())
     {
-        if(exit_code != 0)
-        {
-            break;
+        /* Wait PLL locked */
+    }
+    Clock_Ip_DistributePll();
+#endif
+
+    /* Init pins */
+    Siul2_Port_Ip_Init(NUM_OF_CONFIGURED_PINS_PortContainer_0_BOARD_InitPeripherals,
+                       g_pin_mux_InitConfigArr_PortContainer_0_BOARD_InitPeripherals);
+
+    /* Init IRQ */
+    IntCtrl_Ip_Init(&IntCtrlConfig_0);
+
+    /* Init LPUART4 for Debug*/
+    Lpuart_Uart_Ip_Init(LOG_UART_CHANNEL, &Lpuart_Uart_Ip_xHwConfigPB_0);
+
+    /* Init log */
+    log_init();
+    log_set_level(LOG_LEVEL_DEBUG);
+
+
+
+    while(1) {
+        LOG_I(TAG, "System started");
+        LOG_D(TAG, "Clock: %d Hz", 80000000);
+        LOG_W(TAG, "Warning message");
+        LOG_E(TAG, "Error message");
+        for(uint32_t i = 0; i < 10000000; i++) {
+
         }
     }
-    return exit_code;
-}
 
-/** @} */
+    return 0;
+}

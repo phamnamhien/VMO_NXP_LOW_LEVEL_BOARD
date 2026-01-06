@@ -20,13 +20,19 @@
 *   bound by the applicable license terms, then you may not retain, install,
 *   activate or otherwise use the software.
 ==================================================================================================*/
-
 /**
-*   @file    Igf_Port_Ip_Cfg.c
+*   @file OsIf_Software_Semaphore.h
+*   @version 6.0.0
 *
-*   @addtogroup Port_CFG
+*   @brief   BaseNXP - Driver header file.
+*   @details Specific driver header file.
+*
+*   @addtogroup osif_drv
 *   @{
 */
+
+#ifndef OSIF_SOFTWARE_SEMAPHORE_H
+#define OSIF_SOFTWARE_SEMAPHORE_H
 
 #ifdef __cplusplus
 extern "C"{
@@ -38,87 +44,103 @@ extern "C"{
 * 2) needed interfaces from external units
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
-#include "Igf_Port_Ip.h"
+#include "StandardTypes.h"
+#include "OsIf_Cfg.h"
 
 /*==================================================================================================
 *                                 SOURCE FILE VERSION INFORMATION
 ==================================================================================================*/
-#define IGF_PORT_IP_VENDOR_ID_CFG_C                       43
-#define IGF_PORT_IP_AR_RELEASE_MAJOR_VERSION_CFG_C        4
-#define IGF_PORT_IP_AR_RELEASE_MINOR_VERSION_CFG_C        7
-#define IGF_PORT_IP_AR_RELEASE_REVISION_VERSION_CFG_C     0
-#define IGF_PORT_IP_SW_MAJOR_VERSION_CFG_C                6
-#define IGF_PORT_IP_SW_MINOR_VERSION_CFG_C                0
-#define IGF_PORT_IP_SW_PATCH_VERSION_CFG_C                0
+#define OSIF_SOFTWARE_SEMAPHORE_VENDOR_ID_H                    43
+#define OSIF_SOFTWARE_SEMAPHORE_AR_RELEASE_MAJOR_VERSION_H     4
+#define OSIF_SOFTWARE_SEMAPHORE_AR_RELEASE_MINOR_VERSION_H     7
+#define OSIF_SOFTWARE_SEMAPHORE_AR_RELEASE_REVISION_VERSION_H  0
+#define OSIF_SOFTWARE_SEMAPHORE_SW_MAJOR_VERSION_H             6
+#define OSIF_SOFTWARE_SEMAPHORE_SW_MINOR_VERSION_H             0
+#define OSIF_SOFTWARE_SEMAPHORE_SW_PATCH_VERSION_H             0
 
 /*==================================================================================================
 *                                       FILE VERSION CHECKS
 ==================================================================================================*/
-/* Check if the files Igf_Port_Ip_Cfg.c and Igf_Port_Ip.h are of the same version */
-#if (IGF_PORT_IP_VENDOR_ID_CFG_C != IGF_PORT_IP_VENDOR_ID_H)
-    #error "Igf_Port_Ip_Cfg.c and Igf_Port_Ip.h have different vendor ids"
+/* Checks against StandardTypes.h */
+#ifndef DISABLE_MCAL_INTERMODULE_ASR_CHECK
+    #if ((OSIF_SOFTWARE_SEMAPHORE_AR_RELEASE_MAJOR_VERSION_H != STD_AR_RELEASE_MAJOR_VERSION) || \
+         (OSIF_SOFTWARE_SEMAPHORE_AR_RELEASE_MINOR_VERSION_H != STD_AR_RELEASE_MINOR_VERSION))
+        #error "AutoSar Version Numbers of OsIf_Software_Semaphore.h and StandardTypes.h are different"
+    #endif
 #endif
-/* Check if Igf_Port_Ip_Cfg.c and Igf_Port_Ip.h are of the same Autosar version */
-#if ((IGF_PORT_IP_AR_RELEASE_MAJOR_VERSION_CFG_C    != IGF_PORT_IP_AR_RELEASE_MAJOR_VERSION_H) || \
-     (IGF_PORT_IP_AR_RELEASE_MINOR_VERSION_CFG_C    != IGF_PORT_IP_AR_RELEASE_MINOR_VERSION_H) || \
-     (IGF_PORT_IP_AR_RELEASE_REVISION_VERSION_CFG_C != IGF_PORT_IP_AR_RELEASE_REVISION_VERSION_CFG_H) \
-    )
-    #error "AutoSar Version Numbers of Igf_Port_Ip_Cfg.c and Igf_Port_Ip.h are different"
-#endif
-/* Check if Igf_Port_Ip_Cfg.c and Igf_Port_Ip.h are of the same Software version */
-#if ((IGF_PORT_IP_SW_MAJOR_VERSION_CFG_C != IGF_PORT_IP_SW_MAJOR_VERSION_H) || \
-     (IGF_PORT_IP_SW_MINOR_VERSION_CFG_C != IGF_PORT_IP_SW_MINOR_VERSION_H) || \
-     (IGF_PORT_IP_SW_PATCH_VERSION_CFG_C != IGF_PORT_IP_SW_PATCH_VERSION_H)    \
-    )
-    #error "Software Version Numbers of Igf_Port_Ip_Cfg.c and Igf_Port_Ip.h are different"
+
+/* Checks against OsIf_Cfg.h */
+#ifndef DISABLE_MCAL_INTERMODULE_ASR_CHECK
+    #if ((OSIF_SOFTWARE_SEMAPHORE_AR_RELEASE_MAJOR_VERSION_H != OSIF_CFG_AR_RELEASE_MAJOR_VERSION) || \
+         (OSIF_SOFTWARE_SEMAPHORE_AR_RELEASE_MINOR_VERSION_H != OSIF_CFG_AR_RELEASE_MINOR_VERSION))
+        #error "AutoSar Version Numbers of OsIf_Software_Semaphore.h and OsIf_Cfg.h are different"
+    #endif
 #endif
 
 /*==================================================================================================
-*                           LOCAL TYPEDEFS (STRUCTURES, UNIONS, ENUMS)
+*                                            CONSTANTS
 ==================================================================================================*/
 
 /*==================================================================================================
-*                                          LOCAL MACROS
+*                                       DEFINES AND MACROS
+==================================================================================================*/
+#ifdef OSIF_SOFTWARE_SEMAPHORE_ENABLE
+#if (OSIF_SOFTWARE_SEMAPHORE_ENABLE == STD_ON)
+
+#define OSIF_SOFTWARE_SEMAPHORE_UNLOCKED_VALUE  0U
+
+/*==================================================================================================
+*                                              ENUMS
 ==================================================================================================*/
 
 /*==================================================================================================
-*                                         LOCAL CONSTANTS
+*                                  STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/
 
 /*==================================================================================================
-*                                         LOCAL VARIABLES
+*                                  GLOBAL VARIABLE DECLARATIONS
 ==================================================================================================*/
 
 /*==================================================================================================
-*                                        GLOBAL CONSTANTS
+*                                       FUNCTION PROTOTYPES
 ==================================================================================================*/
+#define BASENXP_START_SEC_CODE
+#include "BaseNXP_MemMap.h"
 
-/*==================================================================================================
-*                                        GLOBAL VARIABLES
-==================================================================================================*/
+/*!
+ * @brief Lock software semaphore
+ *
+ * This function locks software semaphore
+ *
+ * @param[in] Semaphore the pointer to software semaphore
+ * @param[in] Lockval the lock value
+ */
+boolean OsIf_Software_Semaphore_Lock(const uint32 *Semaphore,
+                                     uint32 Lockval
+                                    );
 
-/*==================================================================================================
-*                                        GLOBAL CONSTANTS
-==================================================================================================*/
+/*!
+ * @brief Unlock software semaphore
+ *
+ * This function unlocks software semaphore
+ *
+ * @param[in] Semaphore the pointer to software semaphore
+ * @param[in] Lockval the lock value
+ */
+boolean OsIf_Software_Semaphore_Unlock(const uint32 *Semaphore,
+                                       uint32 Lockval
+                                      );
 
-/*==================================================================================================
-*                                        GLOBAL VARIABLES
-==================================================================================================*/
+#define BASENXP_STOP_SEC_CODE
+#include "BaseNXP_MemMap.h"
 
-/*==================================================================================================
-*                                    LOCAL FUNCTION PROTOTYPES
-==================================================================================================*/
-
-/*==================================================================================================
-*                                         LOCAL FUNCTIONS
-==================================================================================================*/
-
-/*==================================================================================================
-*                                        GLOBAL FUNCTIONS
-==================================================================================================*/
+#endif /* #if (OSIF_SOFTWARE_SEMAPHORE_ENABLE == STD_ON) */
+#endif /* #ifdef OSIF_SOFTWARE_SEMAPHORE_ENABLE */
 
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* OSIF_SOFTWARE_SEMAPHORE_H */
 
 /** @} */

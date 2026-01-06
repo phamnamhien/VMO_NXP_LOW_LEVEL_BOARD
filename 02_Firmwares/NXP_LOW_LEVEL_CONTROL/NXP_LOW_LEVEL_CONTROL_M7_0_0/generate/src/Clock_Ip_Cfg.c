@@ -244,34 +244,6 @@ static const Clock_Ip_PllConfigType Clock_Ip_PllConfigurations_0[CLOCK_IP_CONFIG
 
     #if CLOCK_IP_CONFIGURED_PLLS_0_NO > 0U
     {
-        PLL_CLK,                /* name */
-        1U,                     /* enable */
-        FXOSC_CLK,                     /* inputReference */
-        0U,                     /* Bypass */
-        2U,                      /* predivider */
-        0U,                      /* multiplier */
-        0U,                      /* postdivider */
-        0U,                     /* numeratorFracLoopDiv */
-        120U,                   /* mulFactorDiv */
-        1U,                     /* ModulationBypass */
-        1U,                     /* Modulation type: Spread spectrum modulation bypassed */ 
-        0U,                     /* modulationPeriod */
-        0U,                     /* incrementStep */
-        0U,                     /* sigmaDelta */
-        0U,                     /* ditherControl */
-        0U,                     /* ditherControlValue */
-        0U,                     /* Monitor type */
-        {
-            0U,
-            0U,
-            0U,
-        },
-        0U,                     /* SoftwareDisable */
-    },
-    #endif
-
-    #if CLOCK_IP_CONFIGURED_PLLS_0_NO > 1U
-    {
         PLLAUX_CLK,                /* name */
         1U,                     /* enable */
         FXOSC_CLK,                     /* inputReference */
@@ -305,7 +277,7 @@ static const Clock_Ip_SelectorConfigType Clock_Ip_SelectorConfigurations_0[CLOCK
     #if CLOCK_IP_CONFIGURED_SELECTORS_0_NO > 0U
     {
         SCS_CLK,                    /* Clock name associated to selector */
-        PLL_PHI0_CLK,                    /* Name of the selected input source */
+        FIRC_CLK,                    /* Name of the selected input source */
     },
     #endif
 
@@ -434,7 +406,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
 
     #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 0U
     {
-        PLL_POSTDIV_CLK,                    /* name */
+        PLLAUX_POSTDIV_CLK,                    /* name */
         2U,                              /* value */
         {
             0U,
@@ -445,29 +417,18 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
 
     #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 1U
     {
-        PLLAUX_POSTDIV_CLK,                    /* name */
-        2U,                              /* value */
+        PLLAUX_PHI0_CLK,                    /* name */
+        6U,                              /* value */
         {
             0U,
         }
     },
     #endif
-
 
     #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 2U
     {
-        PLL_PHI0_CLK,                    /* name */
-        3U,                              /* value */
-        {
-            0U,
-        }
-    },
-    #endif
-
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 3U
-    {
-        PLL_PHI1_CLK,                    /* name */
-        3U,                              /* value */
+        PLLAUX_PHI1_CLK,                    /* name */
+        4U,                              /* value */
         {
             0U,
         }
@@ -475,26 +436,6 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     #endif
 
     #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 4U
-    {
-        PLLAUX_PHI0_CLK,                    /* name */
-        3U,                              /* value */
-        {
-            0U,
-        }
-    },
-    #endif
-
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 5U
-    {
-        PLLAUX_PHI1_CLK,                    /* name */
-        2U,                              /* value */
-        {
-            0U,
-        }
-    },
-    #endif
-
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 7U
     {
         CORE_CLK,                    /* name */
         1U,                              /* value */
@@ -504,7 +445,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 8U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 5U
     {
         AIPS_PLAT_CLK,                    /* name */
         2U,                              /* value */
@@ -514,7 +455,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 9U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 6U
     {
         AIPS_SLOW_CLK,                    /* name */
         4U,                              /* value */
@@ -524,7 +465,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 10U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 7U
     {
         HSE_CLK,                    /* name */
         2U,                              /* value */
@@ -534,7 +475,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 11U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 8U
     {
         DCM_CLK,                    /* name */
         4U,                              /* value */
@@ -544,7 +485,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 12U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 9U
     {
         LBIST_CLK,                    /* name */
         4U,                              /* value */
@@ -554,7 +495,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 13U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 10U
     {
         QSPI_MEM_CLK,                    /* name */
         1U,                              /* value */
@@ -564,7 +505,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 14U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 11U
     {
         CM7_CORE_CLK,                    /* name */
         1U,                              /* value */
@@ -574,7 +515,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 15U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 12U
     {
         CLKOUT_RUN_CLK,                    /* name */
         2U,                              /* value */
@@ -584,7 +525,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 16U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 13U
     {
         CLKOUT_STANDBY_CLK,                    /* name */
         2U,                              /* value */
@@ -594,7 +535,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 17U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 14U
     {
         GMAC0_RX_CLK,                    /* name */
         1U,                              /* value */
@@ -604,7 +545,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 18U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 15U
     {
         GMAC_TS_CLK,                    /* name */
         1U,                              /* value */
@@ -614,7 +555,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 19U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 16U
     {
         GMAC0_TX_CLK,                    /* name */
         1U,                              /* value */
@@ -624,7 +565,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 20U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 17U
     {
         FLEXCANA_CLK,                    /* name */
         2U,                              /* value */
@@ -634,7 +575,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 21U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 18U
     {
         FLEXCANB_CLK,                    /* name */
         2U,                              /* value */
@@ -644,7 +585,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 22U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 19U
     {
         QSPI_SFCK_CLK,                    /* name */
         1U,                              /* value */
@@ -654,7 +595,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 23U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 20U
     {
         STMA_CLK,                    /* name */
         1U,                              /* value */
@@ -664,7 +605,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 24U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 21U
     {
         STMB_CLK,                    /* name */
         1U,                              /* value */
@@ -674,7 +615,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 25U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 22U
     {
         TRACE_CLK,                    /* name */
         1U,                              /* value */
@@ -684,7 +625,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 26U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 23U
     {
         STMC_CLK,                    /* name */
         1U,                              /* value */
@@ -694,7 +635,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 27U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 24U
     {
         GMAC1_RX_CLK,                    /* name */
         1U,                              /* value */
@@ -704,7 +645,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 28U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 25U
     {
         GMAC1_TX_CLK,                    /* name */
         1U,                              /* value */
@@ -714,7 +655,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 29U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 26U
     {
         STMD_CLK,                    /* name */
         2U,                              /* value */
@@ -724,7 +665,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     },
     #endif
 
-    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 30U
+    #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 27U
     {
         AES_CLK,                    /* name */
         1U,                              /* value */
@@ -1748,7 +1689,7 @@ static const Clock_Ip_CmuConfigType Clock_Ip_CmuConfigurations_0[CLOCK_IP_CONFIG
         ),
         CLOCK_IP_MAXIMUM_5_PERCENTAGE_DEVIATION,            /* Monitor maximum allowed frequency variation. */
         CLOCK_IP_LOW_LATENCY_1US,            /* Latency of clock monitor reaction. */
-        160000000U,
+        48000000U,
         {
                 0U,          /* Start index in register values array */
                 0U,          /* End index in register values array */
@@ -1767,7 +1708,7 @@ static const Clock_Ip_CmuConfigType Clock_Ip_CmuConfigurations_0[CLOCK_IP_CONFIG
         ),
         CLOCK_IP_MAXIMUM_5_PERCENTAGE_DEVIATION,            /* Monitor maximum allowed frequency variation. */
         CLOCK_IP_LOW_LATENCY_1US,            /* Latency of clock monitor reaction. */
-        80000000U,
+        24000000U,
         {
                 0U,          /* Start index in register values array */
                 0U,          /* End index in register values array */
@@ -1786,7 +1727,7 @@ static const Clock_Ip_CmuConfigType Clock_Ip_CmuConfigurations_0[CLOCK_IP_CONFIG
         ),
         CLOCK_IP_MAXIMUM_5_PERCENTAGE_DEVIATION,            /* Monitor maximum allowed frequency variation. */
         CLOCK_IP_LOW_LATENCY_1US,            /* Latency of clock monitor reaction. */
-        160000000U,
+        48000000U,
         {
                 0U,          /* Start index in register values array */
                 0U,          /* End index in register values array */
@@ -1817,19 +1758,19 @@ static const Clock_Ip_ConfiguredFrequencyType Clock_Ip_ConfiguredFrequencyConfig
     #if CLOCK_IP_CONFIGURED_FREQUENCIES_COUNT > 3U
     {
         CORE_CLK,
-        160000000U,
+        48000000U,
     },
     #endif
     #if CLOCK_IP_CONFIGURED_FREQUENCIES_COUNT > 4U
     {
         AIPS_PLAT_CLK,
-        80000000U,
+        24000000U,
     },
     #endif
     #if CLOCK_IP_CONFIGURED_FREQUENCIES_COUNT > 5U
     {
         AIPS_SLOW_CLK,
-        40000000U,
+        12000000U,
     },
     #endif
 };
@@ -1849,9 +1790,9 @@ const Clock_Ip_ClockConfigType Clock_Ip_aClockConfig[1U] = {
 
         3U,                       /* ircoscsCount */
         2U,                       /* xoscsCount */
-        2U,                       /* pllsCount */
+        1U,                       /* pllsCount */
         18U,                       /* selectorsCount */
-        31U,                       /* dividersCount */
+        28U,                       /* dividersCount */
         1U,                       /* dividerTriggersCount */
         0U,                       /* fracDivsCount */
         4U,                       /* extClksCount */
