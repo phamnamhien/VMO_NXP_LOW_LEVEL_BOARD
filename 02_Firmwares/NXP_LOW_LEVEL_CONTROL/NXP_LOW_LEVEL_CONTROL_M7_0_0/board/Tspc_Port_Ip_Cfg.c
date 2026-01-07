@@ -171,8 +171,6 @@ PortContainer_0_BOARD_InitPeripherals:
   - {pin_num: R5, peripheral: GMAC1, signal: 'gmac1_mii_rmii_rgmii_rxd, 1', pin_signal: PTD12, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: P5, peripheral: LPI2C0, signal: lpi2c0_sda, pin_signal: PTD13, direction: INPUT/OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: M4, peripheral: LPI2C0, signal: lpi2c0_scl, pin_signal: PTD14, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: P2, peripheral: GMAC0, signal: gmac0_mii_rmii_rgmii_mdio, pin_signal: PTD16, direction: INPUT/OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: N3, peripheral: GMAC0, signal: gmac0_mii_rmii_rgmii_mdc, pin_signal: PTD17, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: E17, peripheral: SIUL2, signal: 'gpio, 119', pin_signal: PTD23, direction: INPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: D16, peripheral: SIUL2, signal: 'gpio, 120', pin_signal: PTD24, direction: INPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: C16, peripheral: SIUL2, signal: 'gpio, 121', pin_signal: PTD25, direction: INPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
@@ -196,6 +194,8 @@ PortContainer_0_BOARD_InitPeripherals:
   - {pin_num: P13, peripheral: SIUL2, signal: 'gpio, 187', pin_signal: PTF27, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: L10, peripheral: LPSPI0, signal: lpspi0_pcs0, pin_signal: PTF28, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: K4, peripheral: LPSPI3, signal: lpspi3_pcs1, pin_signal: PTF29, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
+  - {pin_num: N3, peripheral: GMAC0, signal: gmac0_mii_rmii_rgmii_mdc, pin_signal: PTD17, pullSelect: pullUp, pullEnable: disabled}
+  - {pin_num: P2, peripheral: GMAC0, signal: gmac0_mii_rmii_rgmii_mdio, pin_signal: PTD16, direction: INPUT/OUTPUT, pullSelect: pullUp, pullEnable: enabled}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */

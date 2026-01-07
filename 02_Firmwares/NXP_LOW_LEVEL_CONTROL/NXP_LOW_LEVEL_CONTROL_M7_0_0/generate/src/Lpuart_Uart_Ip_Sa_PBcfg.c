@@ -142,11 +142,11 @@ extern "C"{
 const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_0 =
 {
     /* Actual baudrate */
-    115384U,
+    115440U,
     /* Baudrate mantissa*/
-    8U,
+    33U,
     /* Baudrate Divisor*/
-    26U,
+    21U,
     /* Parity type */
     LPUART_UART_IP_PARITY_DISABLED,
     /* Number of stop bits, 1 stop bit (default) or 2 stop bits */
@@ -173,11 +173,11 @@ const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_0 =
 const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_1 =
 {
     /* Actual baudrate */
-    115384U,
+    115440U,
     /* Baudrate mantissa*/
-    8U,
+    33U,
     /* Baudrate Divisor*/
-    26U,
+    21U,
     /* Parity type */
     LPUART_UART_IP_PARITY_DISABLED,
     /* Number of stop bits, 1 stop bit (default) or 2 stop bits */
@@ -204,11 +204,11 @@ const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_1 =
 const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_2 =
 {
     /* Actual baudrate */
-    115384U,
+    115440U,
     /* Baudrate mantissa*/
-    8U,
+    33U,
     /* Baudrate Divisor*/
-    26U,
+    21U,
     /* Parity type */
     LPUART_UART_IP_PARITY_DISABLED,
     /* Number of stop bits, 1 stop bit (default) or 2 stop bits */
@@ -235,11 +235,11 @@ const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_2 =
 const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_3 =
 {
     /* Actual baudrate */
-    115384U,
+    115440U,
     /* Baudrate mantissa*/
-    8U,
+    33U,
     /* Baudrate Divisor*/
-    26U,
+    21U,
     /* Parity type */
     LPUART_UART_IP_PARITY_DISABLED,
     /* Number of stop bits, 1 stop bit (default) or 2 stop bits */
@@ -266,11 +266,11 @@ const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_3 =
 const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_4 =
 {
     /* Actual baudrate */
-    115384U,
+    115440U,
     /* Baudrate mantissa*/
-    8U,
+    33U,
     /* Baudrate Divisor*/
-    26U,
+    21U,
     /* Parity type */
     LPUART_UART_IP_PARITY_DISABLED,
     /* Number of stop bits, 1 stop bit (default) or 2 stop bits */
@@ -297,11 +297,11 @@ const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_4 =
 const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_5 =
 {
     /* Actual baudrate */
-    115384U,
+    115440U,
     /* Baudrate mantissa*/
-    8U,
+    33U,
     /* Baudrate Divisor*/
-    26U,
+    21U,
     /* Parity type */
     LPUART_UART_IP_PARITY_DISABLED,
     /* Number of stop bits, 1 stop bit (default) or 2 stop bits */
@@ -328,11 +328,11 @@ const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_5 =
 const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_6 =
 {
     /* Actual baudrate */
-    115384U,
+    115440U,
     /* Baudrate mantissa*/
-    8U,
+    33U,
     /* Baudrate Divisor*/
-    26U,
+    21U,
     /* Parity type */
     LPUART_UART_IP_PARITY_DISABLED,
     /* Number of stop bits, 1 stop bit (default) or 2 stop bits */
@@ -359,11 +359,11 @@ const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_6 =
 const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_7 =
 {
     /* Actual baudrate */
-    115384U,
+    115440U,
     /* Baudrate mantissa*/
-    8U,
+    33U,
     /* Baudrate Divisor*/
-    26U,
+    21U,
     /* Parity type */
     LPUART_UART_IP_PARITY_DISABLED,
     /* Number of stop bits, 1 stop bit (default) or 2 stop bits */
@@ -390,11 +390,11 @@ const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_7 =
 const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_8 =
 {
     /* Actual baudrate */
-    115384U,
+    115440U,
     /* Baudrate mantissa*/
-    8U,
+    33U,
     /* Baudrate Divisor*/
-    26U,
+    21U,
     /* Parity type */
     LPUART_UART_IP_PARITY_DISABLED,
     /* Number of stop bits, 1 stop bit (default) or 2 stop bits */
@@ -421,11 +421,11 @@ const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_8 =
 const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_9 =
 {
     /* Actual baudrate */
-    115384U,
+    115440U,
     /* Baudrate mantissa*/
-    8U,
+    33U,
     /* Baudrate Divisor*/
-    26U,
+    21U,
     /* Parity type */
     LPUART_UART_IP_PARITY_DISABLED,
     /* Number of stop bits, 1 stop bit (default) or 2 stop bits */

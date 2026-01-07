@@ -4,7 +4,7 @@
 
 volatile uint32 g_sysTick = 0;
 
-void SysTick_Handler(void) {
+void SysTick_Custom_Handler(void) {
     g_sysTick++;
 }
 

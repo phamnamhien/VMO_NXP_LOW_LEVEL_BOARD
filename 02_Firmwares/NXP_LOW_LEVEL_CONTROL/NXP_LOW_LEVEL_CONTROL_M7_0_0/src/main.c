@@ -18,6 +18,7 @@ extern "C" {
 #include "Lpuart_Uart_Ip.h"
 #include "IntCtrl_Ip.h"
 #include "Siul2_Port_Ip.h"
+#include "Siul2_Dio_Ip.h"
 #include "string.h"
 
 #include "systick.h"
@@ -74,14 +75,8 @@ int main(void)
     log_set_level(LOG_LEVEL_DEBUG);
 
     LOG_I(TAG, "Start");
-    uint32 nextTime = 1000;
     while(1) {
-        uint32 tick = SysTick_GetTick();
-
-        if(tick >= nextTime) {
-            LOG_I(TAG, "Tick = %lu", tick);
-            nextTime += 1000;  // Tăng 1s cho lần tiếp theo
-        }
+    	SysTick_DelayMs(100);
     }
 }
 

@@ -79,7 +79,7 @@ extern "C"{
  *================================================================================================*/
 #define GPT_START_SEC_CODE
 #include "Gpt_MemMap.h"
-extern void SysTick_Handler(uint8 channel); 
+extern void SysTick_Custom_Handler(uint8 channel); 
 #define GPT_STOP_SEC_CODE
 #include "Gpt_MemMap.h"
 
@@ -111,7 +111,7 @@ const Pit_Ip_ChannelConfigType PIT_0_ChannelConfig_PB[1U] =
         /** @brief PIT Enable Interrupt */
         (boolean)(TRUE),
         /** @brief PIT callback name */
-        &SysTick_Handler,
+        &SysTick_Custom_Handler,
         /** @brief PIT callbackparam */
         (uint8)0U,
         /** @brief PIT channel mode */
