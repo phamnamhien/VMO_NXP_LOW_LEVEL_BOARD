@@ -11,11 +11,11 @@
 /**
  * @brief RX interrupt callback
  */
-void Eth_RxIrqCallback(uint8 instance, uint8 channel);
+void Eth_43_GMAC_RxIrqCallback(uint8 instance, uint8 channel);
 
 /**
  * @brief TX interrupt callback
  */
-void Eth_TxIrqCallback(uint8 instance, uint8 channel);
+void Eth_43_GMAC_TxIrqCallback(uint8 instance, uint8 channel);
 
 #endif /* ETH_CALLBACKS_H */

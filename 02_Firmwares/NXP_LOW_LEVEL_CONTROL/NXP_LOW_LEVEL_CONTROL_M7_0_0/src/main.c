@@ -23,6 +23,8 @@ extern "C" {
 
 #include "systick.h"
 #include "log_debug.h"
+#include "test_lan9646.h"
+
 
 /*==================================================================================================
 *                          LOCAL TYPEDEFS (STRUCTURES, UNIONS, ENUMS)
@@ -58,25 +60,44 @@ extern uint32_t SystemCoreClock;
 /*==================================================================================================
 *                                       GLOBAL FUNCTIONS
 ==================================================================================================*/
+//int main(void)
+//{
+//    /* Initialize Clock */
+//    Clock_Ip_Init(clockConfig);
+//    /* Initialize SysTick */
+//    SysTick_Init();
+//    /* Initialize Pin */
+//    Siul2_Port_Ip_Init(NUM_OF_CONFIGURED_PINS_PortContainer_0_BOARD_InitPeripherals,
+//                       g_pin_mux_InitConfigArr_PortContainer_0_BOARD_InitPeripherals);
+//
+//    /* set ISR */
+//    IntCtrl_Ip_Init(&IntCtrlConfig_0);
+//
+//    log_init();
+//    log_set_level(LOG_LEVEL_DEBUG);
+//
+//    LOG_I(TAG, "Start");
+//    while(1) {
+//    	LOG_I(TAG, "Hi");
+//    	SysTick_DelayMs(100);
+//    }
+//}
 int main(void)
 {
-    /* Initialize Clock */
-    Clock_Ip_Init(clockConfig);
-    /* Initialize SysTick */
+	Clock_Ip_Init(clockConfig);
     SysTick_Init();
-    /* Initialize Pin */
     Siul2_Port_Ip_Init(NUM_OF_CONFIGURED_PINS_PortContainer_0_BOARD_InitPeripherals,
-                       g_pin_mux_InitConfigArr_PortContainer_0_BOARD_InitPeripherals);
-
-    /* set ISR */
+                           g_pin_mux_InitConfigArr_PortContainer_0_BOARD_InitPeripherals);
     IntCtrl_Ip_Init(&IntCtrlConfig_0);
 
     log_init();
-    log_set_level(LOG_LEVEL_DEBUG);
 
-    LOG_I(TAG, "Start");
+    LOG_I(TAG, "System Start");
+
+    Test_LAN9646_Init();
+
     while(1) {
-    	SysTick_DelayMs(100);
+        Test_LAN9646_PeriodicRead();
     }
 }
 

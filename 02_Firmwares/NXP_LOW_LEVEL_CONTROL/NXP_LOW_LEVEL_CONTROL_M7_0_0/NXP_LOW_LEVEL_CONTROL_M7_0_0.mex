@@ -1225,6 +1225,16 @@
                   <data type="Version">1.0.0</data>
                </feature>
             </dependency>
+            <dependency resourceType="SWComponent" resourceId="platform.middleware.tcpip" description="tcpip is not found in the toolchain/IDE project. The project will not compile!" problem_level="2" source="Peripherals">
+               <feature name="enabled" evaluation="equal">
+                  <data type="Boolean">true</data>
+               </feature>
+            </dependency>
+            <dependency resourceType="SWComponent" resourceId="platform.middleware.tcpip" description="An unsupported version of the tcpip in the toolchain/IDE project. Required: ${required_value}, actual: ${actual_value}. The project might not compile correctly." problem_level="1" source="Peripherals">
+               <feature name="version" evaluation="equivalent">
+                  <data type="Version">1.0.0</data>
+               </feature>
+            </dependency>
             <dependency resourceType="SWComponent" resourceId="platform.driver.gmac" description="Gmac is not found in the toolchain/IDE project. The project will not compile!" problem_level="2" source="Peripherals">
                <feature name="enabled" evaluation="equal">
                   <data type="Boolean">true</data>
@@ -1271,13 +1281,18 @@
             <file path="generate/include/Siul2_Dio_Ip_Cfg.h" update_enabled="true"/>
             <file path="generate/include/Siul2_Port_Ip_Defines.h" update_enabled="true"/>
             <file path="generate/include/Soc_Ips.h" update_enabled="true"/>
+            <file path="generate/include/lwipcfg.h" update_enabled="true"/>
+            <file path="generate/include/lwipopts.h" update_enabled="true"/>
+            <file path="generate/include/lwippools.h" update_enabled="true"/>
             <file path="generate/include/modules.h" update_enabled="true"/>
+            <file path="generate/include/netifcfg.h" update_enabled="true"/>
             <file path="generate/src/Gmac_Ip_Cfg.c" update_enabled="true"/>
             <file path="generate/src/Gmac_Ip_Sa_PBcfg.c" update_enabled="true"/>
             <file path="generate/src/IntCtrl_Ip_Cfg.c" update_enabled="true"/>
             <file path="generate/src/Lpuart_Uart_Ip_Sa_PBcfg.c" update_enabled="true"/>
             <file path="generate/src/OsIf_Cfg.c" update_enabled="true"/>
             <file path="generate/src/Pit_Ip_SA_PBcfg.c" update_enabled="true"/>
+            <file path="generate/src/netifcfg.c" update_enabled="true"/>
          </generated_project_files>
          <peripherals_profile>
             <processor_version>0.0.0</processor_version>
@@ -3295,19 +3310,21 @@
                         </struct>
                      </config_set>
                   </instance>
-                  <instance name="tcpip_stack_1" uuid="5590f0e3-13b1-4316-b70c-b8ed41a33ad5" type="tcpip" type_id="tcpip" mode="general" enabled="false" comment="" custom_name_enabled="false" editing_lock="false">
-                     <config_set name="tcpip_cfg" quick_selection="default_tcpip">
+                  <instance name="tcpip_stack_1" uuid="5590f0e3-13b1-4316-b70c-b8ed41a33ad5" type="tcpip" type_id="tcpip" mode="general" enabled="true" comment="" custom_name_enabled="false" editing_lock="false">
+                     <config_set name="tcpip_cfg">
                         <struct name="generic_tab">
                            <setting name="externalBuff" value="false"/>
-                           <setting name="osOption" value="false"/>
+                           <setting name="osOption" value="true"/>
+                           <setting name="osType" value="FreeRtosType"/>
+                           <setting name="freertos" value="freertos"/>
                            <setting name="lowlevelIface" value="GMAC_RTD"/>
                            <setting name="lowlevelConfig" value="Gmac"/>
                            <setting name="boolEnableHostname" value="true"/>
                            <struct name="thread_t">
                               <setting name="tcpip_thread_name" value="tcpip_thread"/>
-                              <setting name="tcpip_thread_stacksize" value="0"/>
-                              <setting name="tcpip_thread_prio" value="1"/>
-                              <setting name="default_thread_stacksize" value="0"/>
+                              <setting name="tcpip_thread_stacksize" value="2048"/>
+                              <setting name="tcpip_thread_prio" value="2"/>
+                              <setting name="default_thread_stacksize" value="1024"/>
                               <setting name="default_thread_prio" value="1"/>
                            </struct>
                         </struct>
@@ -3317,9 +3334,9 @@
                               <setting name="hostname" value="tcpipBoard0"/>
                               <setting name="boolDhcp" value="false"/>
                               <setting name="boolAutoip" value="false"/>
-                              <setting name="ipv4Address" value="192.168.0.200"/>
+                              <setting name="ipv4Address" value="192.168.1.200"/>
                               <setting name="ipv4Subnet" value="255.255.255.0"/>
-                              <setting name="ipv4Gateway" value="192.168.0.1"/>
+                              <setting name="ipv4Gateway" value="192.168.1.1"/>
                               <setting name="boolIpv6" value="true"/>
                            </struct>
                         </array>
@@ -3374,12 +3391,27 @@
                               <setting name="boolSntp" value="false"/>
                               <setting name="boolNetio" value="false"/>
                            </struct>
+                           <struct name="netconn">
+                              <struct name="netconnSettings">
+                                 <setting name="netconn_semPerThread" value="1"/>
+                              </struct>
+                              <setting name="boolHttpdNetconn" value="false"/>
+                              <setting name="boolTcpechoNetconn" value="false"/>
+                              <setting name="boolUdpechoNetconn" value="false"/>
+                              <setting name="boolDns" value="false"/>
+                              <setting name="boolShell" value="false"/>
+                           </struct>
+                           <struct name="socket">
+                              <setting name="boolChargenSocket" value="false"/>
+                              <setting name="boolSocketExamples" value="false"/>
+                              <setting name="boolRtp" value="false"/>
+                           </struct>
                         </struct>
                         <struct name="memory_tab">
                            <setting name="memUsePools" value="false"/>
                            <setting name="mempUseCustomPools" value="false"/>
                            <setting name="memAlign" value="4"/>
-                           <setting name="memHeapSize" value="20480"/>
+                           <setting name="memHeapSize" value="32768"/>
                            <setting name="noPacketBuf" value="8"/>
                            <setting name="noRawPcb" value="4"/>
                            <setting name="noUdpPcb" value="8"/>
@@ -3414,7 +3446,7 @@
                            </struct>
                         </struct>
                         <struct name="debug_tab">
-                           <setting name="enableDebug" value="false"/>
+                           <setting name="enableDebug" value="true"/>
                            <struct name="messageTypeDebug">
                               <setting name="debugTrace" value="false"/>
                               <setting name="debugState" value="false"/>
@@ -3423,16 +3455,16 @@
                            </struct>
                            <setting name="minDebugLevel" value="LWIP_DBG_LEVEL_ALL"/>
                            <struct name="protocolDebug">
-                              <setting name="etharpDebug" value="false"/>
-                              <setting name="netifDebug" value="false"/>
+                              <setting name="etharpDebug" value="true"/>
+                              <setting name="netifDebug" value="true"/>
                               <setting name="pbufDebug" value="false"/>
                               <setting name="apiLibDebug" value="false"/>
                               <setting name="apiMsgDebug" value="false"/>
                               <setting name="socketsDebug" value="false"/>
-                              <setting name="icmpDebug" value="false"/>
+                              <setting name="icmpDebug" value="true"/>
                               <setting name="igmpDebug" value="false"/>
                               <setting name="inetDebug" value="false"/>
-                              <setting name="ipDebug" value="false"/>
+                              <setting name="ipDebug" value="true"/>
                               <setting name="ipReassDebug" value="false"/>
                               <setting name="rawDebug" value="false"/>
                               <setting name="memDebug" value="false"/>
