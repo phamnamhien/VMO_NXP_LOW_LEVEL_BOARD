@@ -3523,12 +3523,12 @@
                                  <setting name="EthCtrlEnableRxInterrupt" value="true"/>
                                  <setting name="EthCtrlEnableTxInterrupt" value="true"/>
                                  <setting name="EthCtrlIdx" value="0"/>
-                                 <setting name="EthCtrlMacLayerType" value="ETH_MAC_LAYER_TYPE_XGMII"/>
+                                 <setting name="EthCtrlMacLayerType" value="ETH_MAC_LAYER_TYPE_XMII"/>
                                  <array name="EthCtrlMacLayerSubType">
                                     <setting name="0" value="REDUCED"/>
                                  </array>
                                  <array name="EthCtrlMacLayerSpeed">
-                                    <setting name="0" value="ETH_MAC_LAYER_SPEED_1G"/>
+                                    <setting name="0" value="ETH_MAC_LAYER_SPEED_100M"/>
                                  </array>
                                  <array name="EthCtrlPhyAddress">
                                     <setting name="0" value="00:11:22:33:44:55"/>
@@ -3569,7 +3569,7 @@
                                        <setting name="MAC_CONFIG_SPLIT_MODE_TYPE" value="L3_L4_SPLIT"/>
                                        <setting name="MAC_CONFIG_SPLIT_OFFSET" value="2"/>
                                     </struct>
-                                    <struct name="EthCtrlConfigPacketFilter" quick_selection="Default">
+                                    <struct name="EthCtrlConfigPacketFilter">
                                        <setting name="Name" value="EthCtrlConfigPacketFilter"/>
                                        <setting name="PKT_FILTER_RECV_ALL" value="false"/>
                                        <setting name="PKT_FILTER_LAYER3_LAYER4" value="false"/>
@@ -3583,7 +3583,7 @@
                                        <setting name="PKT_FILTER_DST_ADDR_INV_FILTER_EN" value="false"/>
                                        <setting name="PKT_FILTER_HASH_MULTICAST" value="false"/>
                                        <setting name="PKT_FILTER_HASH_UNICAST" value="false"/>
-                                       <setting name="PKT_FILTER_PROMISCUOUS_MODE" value="false"/>
+                                       <setting name="PKT_FILTER_PROMISCUOUS_MODE" value="true"/>
                                     </struct>
                                     <struct name="EthCtrlConfigDMAPriority" quick_selection="Default">
                                        <setting name="Name" value="EthCtrlConfigDMAPriority"/>
@@ -3614,7 +3614,7 @@
                                           <setting name="EthCtrlConfigEgressFifoBufTotal" value="8"/>
                                           <setting name="EthCtrlConfigEgressFifoIdx" value="0"/>
                                           <setting name="EthCtrlConfigMTLEgressQueueSizeInBytes" value="2048"/>
-                                          <setting name="EthCtrlConfigEgressFifoCallback" value="Eth_TxIrqCallback"/>
+                                          <setting name="EthCtrlConfigEgressFifoCallback" value="Eth_43_GMAC_TxIrqCallback"/>
                                           <setting name="EthCtrlConfigEgressTransmitChannelWeight" value="1"/>
                                           <array name="EthCtrlConfigEgressFifoPriorityAssignment"/>
                                        </struct>
@@ -3652,7 +3652,7 @@
                                           <setting name="EthCtrlConfigIngressFifoBufTotal" value="16"/>
                                           <setting name="EthCtrlConfigIngressFifoIdx" value="0"/>
                                           <setting name="EthCtrlConfigMTLIngressQueueSizeInBytes" value="2048"/>
-                                          <setting name="EthCtrlConfigIngressFifoCallback" value="Eth_RxIrqCallback"/>
+                                          <setting name="EthCtrlConfigIngressFifoCallback" value="Eth_43_GMAC_RxIrqCallback"/>
                                           <setting name="EthCtrlRxHeaderSplitFifoSupport" value="false"/>
                                           <setting name="EthCtrlRxHeaderSplitOffset" value="14"/>
                                           <array name="EthCtrlConfigIngressFifoPriorityAssignment">

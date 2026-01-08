@@ -11,7 +11,7 @@
  * @param instance GMAC instance (0 for GMAC0)
  * @param channel DMA channel
  */
-void Eth_RxIrqCallback(uint8 instance, uint8 channel)
+void Eth_43_GMAC_RxIrqCallback(uint8 instance, uint8 channel)
 {
     (void)instance;
     (void)channel;
@@ -27,7 +27,7 @@ void Eth_RxIrqCallback(uint8 instance, uint8 channel)
  * @param instance GMAC instance (0 for GMAC0)
  * @param channel DMA channel
  */
-void Eth_TxIrqCallback(uint8 instance, uint8 channel)
+void Eth_43_GMAC_TxIrqCallback(uint8 instance, uint8 channel)
 {
     (void)instance;
     (void)channel;

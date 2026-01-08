@@ -114,8 +114,8 @@ extern "C"{
 #include "Eth_MemMap.h"
 
 /*! @brief Channel callbacks external declarations */
-extern void Eth_RxIrqCallback(const uint8 CtrlIdx, const uint8 DMAChannel);
-extern void Eth_TxIrqCallback(const uint8 CtrlIdx, const uint8 DMAChannel);
+extern void Eth_43_GMAC_RxIrqCallback(const uint8 CtrlIdx, const uint8 DMAChannel);
+extern void Eth_43_GMAC_TxIrqCallback(const uint8 CtrlIdx, const uint8 DMAChannel);
 
 #define ETH_STOP_SEC_CODE
 #include "Eth_MemMap.h"
@@ -168,7 +168,7 @@ static const Gmac_Ip_RxRingConfigType GMAC_0_aRxRingConfigPB[1U] =
     /* The configuration structure for Rx Ring 0 */
     {
         /*.ringDesc = */GMAC_0_RxRing_0_DescBuffer,
-        /*.callback = */&Eth_RxIrqCallback,
+        /*.callback = */&Eth_43_GMAC_RxIrqCallback,
         /*.buffer = */GMAC_0_RxRing_0_DataBuffer,
         /*.interrupts = */(uint32)GMAC_CH_INTERRUPT_RI,
         /*.bufferLen = */1536U,
@@ -190,7 +190,7 @@ static const Gmac_Ip_TxRingConfigType GMAC_0_aTxRingConfigPB[1U] =
         /*.hiCredit = */0U,
         /*.loCredit = */0,
         /*.ringDesc = */GMAC_0_TxRing_0_DescBuffer,
-        /*.callback = */&Eth_TxIrqCallback,
+        /*.callback = */&Eth_43_GMAC_TxIrqCallback,
         /*.buffer = */GMAC_0_TxRing_0_DataBuffer,
         /*.interrupts = */(uint32)GMAC_CH_INTERRUPT_TI,
         /*.bufferLen = */1536U,
@@ -221,16 +221,16 @@ static const Gmac_Ip_ConfigType GMAC_0_InitConfigPB =
 #endif
     /*.interrupts = */0U,
     /*.callback = */NULL_PTR,
-    /*.miiMode = */GMAC_RGMII_MODE,
+    /*.miiMode = */GMAC_RMII_MODE,
     /*.txSchedAlgo = */GMAC_SCHED_ALGO_SP,
-    /*.speed = */GMAC_SPEED_1G,
+    /*.speed = */GMAC_SPEED_100M,
     /*.duplex = */GMAC_FULL_DUPLEX,
     /*.macConfig = */0U | (uint32)GMAC_MAC_CONFIG_CRC_STRIPPING | (uint32)GMAC_MAC_CONFIG_AUTO_PAD | ((uint32)0U << GMAC_MAC_CONFIGURATION_IPG_SHIFT) | ((uint32)GMAC_MAC_CONFIG_CHECKSUM_OFFLOAD),
     /*.extendedMacConfig = */ (uint32)0U,
 #if (STD_ON == GMAC_IP_RX_HEADER_SPLIT)
     /*.extendedMacConfig1 = */ (uint32)0U,
 #endif
-    /*.macPktFilterConfig = */0U,
+    /*.macPktFilterConfig = */0U | (uint32)GMAC_PKT_FILTER_PROMISCUOUS_MODE,
     /*.enableCtrl = */(boolean)TRUE
 #ifdef GMAC_IP_DMA_PRIORITY_CONFIGURATION_ENABLE
     #if (GMAC_IP_DMA_PRIORITY_CONFIGURATION_ENABLE == STD_ON)
