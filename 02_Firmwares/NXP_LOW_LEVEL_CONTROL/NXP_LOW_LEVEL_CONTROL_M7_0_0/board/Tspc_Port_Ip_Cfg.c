@@ -194,8 +194,8 @@ PortContainer_0_BOARD_InitPeripherals:
   - {pin_num: P13, peripheral: SIUL2, signal: 'gpio, 187', pin_signal: PTF27, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: L10, peripheral: LPSPI0, signal: lpspi0_pcs0, pin_signal: PTF28, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: K4, peripheral: LPSPI3, signal: lpspi3_pcs1, pin_signal: PTF29, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: N3, peripheral: GMAC0, signal: gmac0_mii_rmii_rgmii_mdc, pin_signal: PTD17, pullSelect: pullUp, pullEnable: disabled}
-  - {pin_num: P2, peripheral: GMAC0, signal: gmac0_mii_rmii_rgmii_mdio, pin_signal: PTD16, direction: INPUT/OUTPUT, pullSelect: pullUp, pullEnable: enabled}
+  - {pin_num: P2, peripheral: SIUL2, signal: 'gpio, 112', pin_signal: PTD16, direction: INPUT/OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
+  - {pin_num: N3, peripheral: SIUL2, signal: 'gpio, 113', pin_signal: PTD17, direction: INPUT/OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */

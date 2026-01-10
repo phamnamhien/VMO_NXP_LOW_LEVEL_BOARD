@@ -221,7 +221,7 @@ static const Gmac_Ip_ConfigType GMAC_0_InitConfigPB =
 #endif
     /*.interrupts = */0U,
     /*.callback = */NULL_PTR,
-    /*.miiMode = */GMAC_RMII_MODE,
+    /*.miiMode = */GMAC_RGMII_MODE,
     /*.txSchedAlgo = */GMAC_SCHED_ALGO_SP,
     /*.speed = */GMAC_SPEED_100M,
     /*.duplex = */GMAC_FULL_DUPLEX,

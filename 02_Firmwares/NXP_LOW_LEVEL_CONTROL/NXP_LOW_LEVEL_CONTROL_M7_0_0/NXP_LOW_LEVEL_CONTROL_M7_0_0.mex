@@ -722,17 +722,20 @@
                         <pin_feature name="InitValue" value="state_1"/>
                      </pin_features>
                   </pin>
-                  <pin peripheral="GMAC0" signal="gmac0_mii_rmii_rgmii_mdc" pin_num="N3" pin_signal="PTD17">
-                     <pin_features>
-                        <pin_feature name="pullSelect" value="pullUp"/>
-                        <pin_feature name="pullEnable" value="disabled"/>
-                     </pin_features>
-                  </pin>
-                  <pin peripheral="GMAC0" signal="gmac0_mii_rmii_rgmii_mdio" pin_num="P2" pin_signal="PTD16">
+                  <pin peripheral="SIUL2" signal="gpio, 112" pin_num="P2" pin_signal="PTD16">
                      <pin_features>
                         <pin_feature name="direction" value="INPUT/OUTPUT"/>
                         <pin_feature name="pullSelect" value="pullUp"/>
                         <pin_feature name="pullEnable" value="enabled"/>
+                        <pin_feature name="InitValue" value="state_1"/>
+                     </pin_features>
+                  </pin>
+                  <pin peripheral="SIUL2" signal="gpio, 113" pin_num="N3" pin_signal="PTD17">
+                     <pin_features>
+                        <pin_feature name="direction" value="INPUT/OUTPUT"/>
+                        <pin_feature name="pullSelect" value="pullUp"/>
+                        <pin_feature name="pullEnable" value="enabled"/>
+                        <pin_feature name="InitValue" value="state_1"/>
                      </pin_features>
                   </pin>
                </pins>
@@ -2763,7 +2766,7 @@
                                     </struct>
                                     <struct name="89">
                                        <setting name="Name" value="PortPin_89"/>
-                                       <setting name="PortPinPue" value="false"/>
+                                       <setting name="PortPinPue" value="true"/>
                                        <setting name="PortPinPus" value="true"/>
                                        <setting name="PortPinSafeMode" value="false"/>
                                        <setting name="PortPinDse" value="false"/>
@@ -3523,7 +3526,7 @@
                                  <setting name="EthCtrlEnableRxInterrupt" value="true"/>
                                  <setting name="EthCtrlEnableTxInterrupt" value="true"/>
                                  <setting name="EthCtrlIdx" value="0"/>
-                                 <setting name="EthCtrlMacLayerType" value="ETH_MAC_LAYER_TYPE_XMII"/>
+                                 <setting name="EthCtrlMacLayerType" value="ETH_MAC_LAYER_TYPE_XGMII"/>
                                  <array name="EthCtrlMacLayerSubType">
                                     <setting name="0" value="REDUCED"/>
                                  </array>
