@@ -3,34 +3,6 @@
  * \brief           LAN9646 Ethernet Switch Driver Implementation
  */
 
-/*
- * Copyright (c) 2026 Pham Nam Hien
- *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modify, merge,
- * publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
- * AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
- *
- * This file is part of LAN9646 library.
- *
- * Author:          Pham Nam Hien
- * Version:         v1.0.0
- */
 #include "lan9646.h"
 #include <string.h>
 
@@ -44,9 +16,6 @@ static lan9646r_t prv_miim_write_reg(lan9646_t* handle, uint16_t reg_addr, const
 
 /**
  * \brief           Initialize LAN9646 device
- * \param[in]       handle: Pointer to device handle
- * \param[in]       cfg: Pointer to configuration structure
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 lan9646r_t
 lan9646_init(lan9646_t* handle, const lan9646_cfg_t* cfg) {
@@ -56,10 +25,8 @@ lan9646_init(lan9646_t* handle, const lan9646_cfg_t* cfg) {
         return lan9646INVPARAM;
     }
 
-    /* Copy configuration */
     memcpy(&handle->cfg, cfg, sizeof(lan9646_cfg_t));
 
-    /* Initialize selected interface */
     switch (cfg->if_type) {
         case LAN9646_IF_SPI:
             if (cfg->ops.spi.init_fn == NULL) {
@@ -94,8 +61,6 @@ lan9646_init(lan9646_t* handle, const lan9646_cfg_t* cfg) {
 
 /**
  * \brief           De-initialize LAN9646 device
- * \param[in]       handle: Pointer to device handle
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 lan9646r_t
 lan9646_deinit(lan9646_t* handle) {
@@ -109,11 +74,6 @@ lan9646_deinit(lan9646_t* handle) {
 
 /**
  * \brief           SPI read register implementation
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address (16-bit)
- * \param[out]      data: Buffer to store read data
- * \param[in]       len: Number of bytes to read
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 static lan9646r_t
 prv_spi_read_reg(lan9646_t* handle, uint16_t reg_addr, uint8_t* data, uint16_t len) {
@@ -123,31 +83,24 @@ prv_spi_read_reg(lan9646_t* handle, uint16_t reg_addr, uint8_t* data, uint16_t l
 
     spi = &handle->cfg.ops.spi;
 
-    /* Check required callbacks */
     if (spi->cs_low_fn == NULL || spi->cs_high_fn == NULL || spi->transfer_fn == NULL) {
         return lan9646INVPARAM;
     }
 
-    /* Prepare command: CMD(1) + ADDR_H(1) + ADDR_L(1) + DUMMY(1) */
     cmd_buf[0] = LAN9646_SPI_CMD_READ;
     cmd_buf[1] = (uint8_t)(reg_addr >> 8);
     cmd_buf[2] = (uint8_t)(reg_addr & 0xFF);
-    cmd_buf[3] = 0x00; /* Turnaround/dummy byte */
+    cmd_buf[3] = 0x00;
 
-    /* Assert CS */
     spi->cs_low_fn();
 
-    /* Send command and address */
     res = spi->transfer_fn(cmd_buf, NULL, 4);
     if (res != lan9646OK) {
         spi->cs_high_fn();
         return res;
     }
 
-    /* Read data */
     res = spi->transfer_fn(NULL, data, len);
-
-    /* De-assert CS */
     spi->cs_high_fn();
 
     return res;
@@ -155,11 +108,6 @@ prv_spi_read_reg(lan9646_t* handle, uint16_t reg_addr, uint8_t* data, uint16_t l
 
 /**
  * \brief           SPI write register implementation
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address (16-bit)
- * \param[in]       data: Data to write
- * \param[in]       len: Number of bytes to write
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 static lan9646r_t
 prv_spi_write_reg(lan9646_t* handle, uint16_t reg_addr, const uint8_t* data, uint16_t len) {
@@ -169,30 +117,23 @@ prv_spi_write_reg(lan9646_t* handle, uint16_t reg_addr, const uint8_t* data, uin
 
     spi = &handle->cfg.ops.spi;
 
-    /* Check required callbacks */
     if (spi->cs_low_fn == NULL || spi->cs_high_fn == NULL || spi->write_fn == NULL) {
         return lan9646INVPARAM;
     }
 
-    /* Prepare command: CMD(1) + ADDR_H(1) + ADDR_L(1) */
     cmd_buf[0] = LAN9646_SPI_CMD_WRITE;
     cmd_buf[1] = (uint8_t)(reg_addr >> 8);
     cmd_buf[2] = (uint8_t)(reg_addr & 0xFF);
 
-    /* Assert CS */
     spi->cs_low_fn();
 
-    /* Send command and address */
     res = spi->write_fn(cmd_buf, 3);
     if (res != lan9646OK) {
         spi->cs_high_fn();
         return res;
     }
 
-    /* Write data */
     res = spi->write_fn(data, len);
-
-    /* De-assert CS */
     spi->cs_high_fn();
 
     return res;
@@ -200,11 +141,6 @@ prv_spi_write_reg(lan9646_t* handle, uint16_t reg_addr, const uint8_t* data, uin
 
 /**
  * \brief           I2C read register implementation
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address (16-bit)
- * \param[out]      data: Buffer to store read data
- * \param[in]       len: Number of bytes to read
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 static lan9646r_t
 prv_i2c_read_reg(lan9646_t* handle, uint16_t reg_addr, uint8_t* data, uint16_t len) {
@@ -214,11 +150,9 @@ prv_i2c_read_reg(lan9646_t* handle, uint16_t reg_addr, uint8_t* data, uint16_t l
 
     i2c = &handle->cfg.ops.i2c;
 
-    /* Use memory read if available */
     if (i2c->mem_read_fn != NULL) {
         return i2c->mem_read_fn(handle->cfg.i2c_addr, reg_addr, data, len);
     } else if (i2c->write_fn != NULL && i2c->read_fn != NULL) {
-        /* Manual memory read: write address then read data */
         addr_buf[0] = (uint8_t)(reg_addr >> 8);
         addr_buf[1] = (uint8_t)(reg_addr & 0xFF);
 
@@ -235,33 +169,15 @@ prv_i2c_read_reg(lan9646_t* handle, uint16_t reg_addr, uint8_t* data, uint16_t l
 
 /**
  * \brief           I2C write register implementation
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address (16-bit)
- * \param[in]       data: Data to write
- * \param[in]       len: Number of bytes to write
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 static lan9646r_t
 prv_i2c_write_reg(lan9646_t* handle, uint16_t reg_addr, const uint8_t* data, uint16_t len) {
     lan9646_i2c_t* i2c;
-    uint8_t tx_buf[258]; /* 2 bytes addr + max 256 bytes data */
 
     i2c = &handle->cfg.ops.i2c;
 
-    /* Use memory write if available */
     if (i2c->mem_write_fn != NULL) {
         return i2c->mem_write_fn(handle->cfg.i2c_addr, reg_addr, data, len);
-    } else if (i2c->write_fn != NULL) {
-        /* Manual memory write: address + data in single transaction */
-        if (len > 256) {
-            return lan9646INVPARAM;
-        }
-
-        tx_buf[0] = (uint8_t)(reg_addr >> 8);
-        tx_buf[1] = (uint8_t)(reg_addr & 0xFF);
-        memcpy(&tx_buf[2], data, len);
-
-        return i2c->write_fn(handle->cfg.i2c_addr, tx_buf, len + 2);
     }
 
     return lan9646INVPARAM;
@@ -269,18 +185,16 @@ prv_i2c_write_reg(lan9646_t* handle, uint16_t reg_addr, const uint8_t* data, uin
 
 /**
  * \brief           MIIM read register implementation
- * \note            MIIM only supports 16-bit PHY register access
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address (5-bit for MIIM)
- * \param[out]      data: Buffer to store read data (must be 2 bytes)
- * \param[in]       len: Number of bytes to read (must be 2)
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 static lan9646r_t
 prv_miim_read_reg(lan9646_t* handle, uint16_t reg_addr, uint8_t* data, uint16_t len) {
     lan9646_miim_t* miim;
     lan9646r_t res;
-    uint16_t value;
+    uint16_t val;
+
+    if (len != 2) {
+        return lan9646INVPARAM;
+    }
 
     miim = &handle->cfg.ops.miim;
 
@@ -288,16 +202,10 @@ prv_miim_read_reg(lan9646_t* handle, uint16_t reg_addr, uint8_t* data, uint16_t 
         return lan9646INVPARAM;
     }
 
-    /* MIIM only supports 16-bit access */
-    if (len != 2) {
-        return lan9646INVPARAM;
-    }
-
-    res = miim->read_fn(handle->cfg.phy_addr, (uint8_t)reg_addr, &value);
-
+    res = miim->read_fn(handle->cfg.phy_addr, (uint8_t)(reg_addr & 0x1F), &val);
     if (res == lan9646OK) {
-        data[0] = (uint8_t)(value >> 8);
-        data[1] = (uint8_t)(value & 0xFF);
+        data[0] = (uint8_t)(val >> 8);
+        data[1] = (uint8_t)(val & 0xFF);
     }
 
     return res;
@@ -305,17 +213,15 @@ prv_miim_read_reg(lan9646_t* handle, uint16_t reg_addr, uint8_t* data, uint16_t 
 
 /**
  * \brief           MIIM write register implementation
- * \note            MIIM only supports 16-bit PHY register access
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address (5-bit for MIIM)
- * \param[in]       data: Data to write (must be 2 bytes)
- * \param[in]       len: Number of bytes to write (must be 2)
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 static lan9646r_t
 prv_miim_write_reg(lan9646_t* handle, uint16_t reg_addr, const uint8_t* data, uint16_t len) {
     lan9646_miim_t* miim;
-    uint16_t value;
+    uint16_t val;
+
+    if (len != 2) {
+        return lan9646INVPARAM;
+    }
 
     miim = &handle->cfg.ops.miim;
 
@@ -323,22 +229,12 @@ prv_miim_write_reg(lan9646_t* handle, uint16_t reg_addr, const uint8_t* data, ui
         return lan9646INVPARAM;
     }
 
-    /* MIIM only supports 16-bit access */
-    if (len != 2) {
-        return lan9646INVPARAM;
-    }
-
-    value = ((uint16_t)data[0] << 8) | data[1];
-
-    return miim->write_fn(handle->cfg.phy_addr, (uint8_t)reg_addr, value);
+    val = ((uint16_t)data[0] << 8) | data[1];
+    return miim->write_fn(handle->cfg.phy_addr, (uint8_t)(reg_addr & 0x1F), val);
 }
 
 /**
  * \brief           Read 8-bit register
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address
- * \param[out]      data: Pointer to store read value
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 lan9646r_t
 lan9646_read_reg8(lan9646_t* handle, uint16_t reg_addr, uint8_t* data) {
@@ -349,17 +245,13 @@ lan9646_read_reg8(lan9646_t* handle, uint16_t reg_addr, uint8_t* data) {
     switch (handle->cfg.if_type) {
         case LAN9646_IF_SPI: return prv_spi_read_reg(handle, reg_addr, data, 1);
         case LAN9646_IF_I2C: return prv_i2c_read_reg(handle, reg_addr, data, 1);
-        case LAN9646_IF_MIIM: return lan9646INVPARAM; /* MIIM does not support 8-bit */
+        case LAN9646_IF_MIIM: return lan9646INVPARAM;
         default: return lan9646ERR;
     }
 }
 
 /**
  * \brief           Write 8-bit register
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address
- * \param[in]       data: Value to write
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 lan9646r_t
 lan9646_write_reg8(lan9646_t* handle, uint16_t reg_addr, uint8_t data) {
@@ -370,17 +262,13 @@ lan9646_write_reg8(lan9646_t* handle, uint16_t reg_addr, uint8_t data) {
     switch (handle->cfg.if_type) {
         case LAN9646_IF_SPI: return prv_spi_write_reg(handle, reg_addr, &data, 1);
         case LAN9646_IF_I2C: return prv_i2c_write_reg(handle, reg_addr, &data, 1);
-        case LAN9646_IF_MIIM: return lan9646INVPARAM; /* MIIM does not support 8-bit */
+        case LAN9646_IF_MIIM: return lan9646INVPARAM;
         default: return lan9646ERR;
     }
 }
 
 /**
  * \brief           Read 16-bit register
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address
- * \param[out]      data: Pointer to store read value
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 lan9646r_t
 lan9646_read_reg16(lan9646_t* handle, uint16_t reg_addr, uint16_t* data) {
@@ -407,10 +295,6 @@ lan9646_read_reg16(lan9646_t* handle, uint16_t reg_addr, uint16_t* data) {
 
 /**
  * \brief           Write 16-bit register
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address
- * \param[in]       data: Value to write
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 lan9646r_t
 lan9646_write_reg16(lan9646_t* handle, uint16_t reg_addr, uint16_t data) {
@@ -433,10 +317,6 @@ lan9646_write_reg16(lan9646_t* handle, uint16_t reg_addr, uint16_t data) {
 
 /**
  * \brief           Read 32-bit register
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address
- * \param[out]      data: Pointer to store read value
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 lan9646r_t
 lan9646_read_reg32(lan9646_t* handle, uint16_t reg_addr, uint32_t* data) {
@@ -450,12 +330,13 @@ lan9646_read_reg32(lan9646_t* handle, uint16_t reg_addr, uint32_t* data) {
     switch (handle->cfg.if_type) {
         case LAN9646_IF_SPI: res = prv_spi_read_reg(handle, reg_addr, buf, 4); break;
         case LAN9646_IF_I2C: res = prv_i2c_read_reg(handle, reg_addr, buf, 4); break;
-        case LAN9646_IF_MIIM: return lan9646INVPARAM; /* MIIM does not support 32-bit */
+        case LAN9646_IF_MIIM: return lan9646INVPARAM;
         default: return lan9646ERR;
     }
 
     if (res == lan9646OK) {
-        *data = ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) | ((uint32_t)buf[2] << 8) | buf[3];
+        *data = ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) |
+                ((uint32_t)buf[2] << 8) | buf[3];
     }
 
     return res;
@@ -463,10 +344,6 @@ lan9646_read_reg32(lan9646_t* handle, uint16_t reg_addr, uint32_t* data) {
 
 /**
  * \brief           Write 32-bit register
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address
- * \param[in]       data: Value to write
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 lan9646r_t
 lan9646_write_reg32(lan9646_t* handle, uint16_t reg_addr, uint32_t data) {
@@ -484,19 +361,13 @@ lan9646_write_reg32(lan9646_t* handle, uint16_t reg_addr, uint32_t data) {
     switch (handle->cfg.if_type) {
         case LAN9646_IF_SPI: return prv_spi_write_reg(handle, reg_addr, buf, 4);
         case LAN9646_IF_I2C: return prv_i2c_write_reg(handle, reg_addr, buf, 4);
-        case LAN9646_IF_MIIM: return lan9646INVPARAM; /* MIIM does not support 32-bit */
+        case LAN9646_IF_MIIM: return lan9646INVPARAM;
         default: return lan9646ERR;
     }
 }
 
 /**
- * \brief           Read multiple consecutive registers (burst read)
- * \note            Not supported for MIIM interface
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Starting register address
- * \param[out]      data: Buffer to store read data
- * \param[in]       len: Number of bytes to read
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
+ * \brief           Burst read
  */
 lan9646r_t
 lan9646_read_burst(lan9646_t* handle, uint16_t reg_addr, uint8_t* data, uint16_t len) {
@@ -507,19 +378,13 @@ lan9646_read_burst(lan9646_t* handle, uint16_t reg_addr, uint8_t* data, uint16_t
     switch (handle->cfg.if_type) {
         case LAN9646_IF_SPI: return prv_spi_read_reg(handle, reg_addr, data, len);
         case LAN9646_IF_I2C: return prv_i2c_read_reg(handle, reg_addr, data, len);
-        case LAN9646_IF_MIIM: return lan9646INVPARAM; /* MIIM does not support burst */
+        case LAN9646_IF_MIIM: return lan9646INVPARAM;
         default: return lan9646ERR;
     }
 }
 
 /**
- * \brief           Write multiple consecutive registers (burst write)
- * \note            Not supported for MIIM interface
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Starting register address
- * \param[in]       data: Data to write
- * \param[in]       len: Number of bytes to write
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
+ * \brief           Burst write
  */
 lan9646r_t
 lan9646_write_burst(lan9646_t* handle, uint16_t reg_addr, const uint8_t* data, uint16_t len) {
@@ -530,18 +395,13 @@ lan9646_write_burst(lan9646_t* handle, uint16_t reg_addr, const uint8_t* data, u
     switch (handle->cfg.if_type) {
         case LAN9646_IF_SPI: return prv_spi_write_reg(handle, reg_addr, data, len);
         case LAN9646_IF_I2C: return prv_i2c_write_reg(handle, reg_addr, data, len);
-        case LAN9646_IF_MIIM: return lan9646INVPARAM; /* MIIM does not support burst */
+        case LAN9646_IF_MIIM: return lan9646INVPARAM;
         default: return lan9646ERR;
     }
 }
 
 /**
  * \brief           Modify 8-bit register (read-modify-write)
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address
- * \param[in]       mask: Bit mask for bits to modify
- * \param[in]       value: New value for masked bits
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 lan9646r_t
 lan9646_modify_reg8(lan9646_t* handle, uint16_t reg_addr, uint8_t mask, uint8_t value) {
@@ -552,27 +412,19 @@ lan9646_modify_reg8(lan9646_t* handle, uint16_t reg_addr, uint8_t mask, uint8_t 
         return lan9646INVPARAM;
     }
 
-    /* Read current value */
     res = lan9646_read_reg8(handle, reg_addr, &reg_val);
     if (res != lan9646OK) {
         return res;
     }
 
-    /* Modify bits */
     reg_val &= ~mask;
     reg_val |= (value & mask);
 
-    /* Write back */
     return lan9646_write_reg8(handle, reg_addr, reg_val);
 }
 
 /**
  * \brief           Modify 16-bit register (read-modify-write)
- * \param[in]       handle: Pointer to device handle
- * \param[in]       reg_addr: Register address
- * \param[in]       mask: Bit mask for bits to modify
- * \param[in]       value: New value for masked bits
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
  */
 lan9646r_t
 lan9646_modify_reg16(lan9646_t* handle, uint16_t reg_addr, uint16_t mask, uint16_t value) {
@@ -583,39 +435,59 @@ lan9646_modify_reg16(lan9646_t* handle, uint16_t reg_addr, uint16_t mask, uint16
         return lan9646INVPARAM;
     }
 
-    /* Read current value */
     res = lan9646_read_reg16(handle, reg_addr, &reg_val);
     if (res != lan9646OK) {
         return res;
     }
 
-    /* Modify bits */
     reg_val &= ~mask;
     reg_val |= (value & mask);
 
-    /* Write back */
     return lan9646_write_reg16(handle, reg_addr, reg_val);
 }
 
 /**
- * \brief           Get chip ID
+ * \brief           Get chip ID and revision
  * \param[in]       handle: Pointer to device handle
- * \param[out]      chip_id: Pointer to store chip ID value
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
+ * \param[out]      chip_id: Pointer to store chip ID (0x9477)
+ * \param[out]      revision: Pointer to store revision (can be NULL)
+ * \return          \ref lan9646OK on success
  */
 lan9646r_t
-lan9646_get_chip_id(lan9646_t* handle, uint16_t* chip_id) {
+lan9646_get_chip_id(lan9646_t* handle, uint16_t* chip_id, uint8_t* revision) {
+    uint8_t id1, id2, id3;
+    lan9646r_t res;
+
     if (handle == NULL || chip_id == NULL || !handle->is_init) {
         return lan9646INVPARAM;
     }
 
-    return lan9646_read_reg16(handle, LAN9646_REG_CHIP_ID, chip_id);
+    /* Read Chip ID MSB from 0x0001 */
+    res = lan9646_read_reg8(handle, LAN9646_REG_CHIP_ID1, &id1);
+    if (res != lan9646OK) return res;
+
+    /* Read Chip ID LSB from 0x0002 */
+    res = lan9646_read_reg8(handle, LAN9646_REG_CHIP_ID2, &id2);
+    if (res != lan9646OK) return res;
+
+    /* Full 16-bit chip ID = MSB:LSB = 0x9477 */
+    *chip_id = ((uint16_t)id1 << 8) | id2;
+
+    /* Read revision if requested */
+    if (revision != NULL) {
+        res = lan9646_read_reg8(handle, LAN9646_REG_CHIP_ID3, &id3);
+        if (res == lan9646OK) {
+            *revision = (id3 >> 4) & 0x0F;
+        }
+    }
+
+    return lan9646OK;
 }
 
 /**
  * \brief           Perform software reset
  * \param[in]       handle: Pointer to device handle
- * \return          \ref lan9646OK on success, member of \ref lan9646r_t otherwise
+ * \return          \ref lan9646OK on success
  */
 lan9646r_t
 lan9646_soft_reset(lan9646_t* handle) {
@@ -623,8 +495,8 @@ lan9646_soft_reset(lan9646_t* handle) {
         return lan9646INVPARAM;
     }
 
-    /* Set soft reset bit in global control register */
-    return lan9646_modify_reg8(handle, LAN9646_REG_GLOBAL_CTRL, 0x01, 0x01);
+    /* Set soft reset bit (bit 0) in register 0x0003 */
+    return lan9646_modify_reg8(handle, LAN9646_REG_GLOBAL_CTRL,
+                               LAN9646_GLOBAL_SW_RESET, LAN9646_GLOBAL_SW_RESET);
 }
-
 

@@ -114,8 +114,6 @@ extern "C"{
 #include "Eth_MemMap.h"
 
 /*! @brief Channel callbacks external declarations */
-extern void Eth_43_GMAC_RxIrqCallback(const uint8 CtrlIdx, const uint8 DMAChannel);
-extern void Eth_43_GMAC_TxIrqCallback(const uint8 CtrlIdx, const uint8 DMAChannel);
 
 #define ETH_STOP_SEC_CODE
 #include "Eth_MemMap.h"
@@ -160,7 +158,7 @@ static Gmac_Ip_TxGateControl GMAC_0_aGateControlListPB[1U]  =
 
 
 /*! @brief The MAC address(es) of the configured controller(s) */
-static const uint8 GMAC_0_au8MacAddrPB[GMAC_MAC_ADDR_LENGTH] = { 0x00U, 0x11U, 0x22U, 0x33U, 0x44U, 0x55U };
+static const uint8 GMAC_0_au8MacAddrPB[GMAC_MAC_ADDR_LENGTH] = { 0xAAU, 0x12U, 0x22U, 0x33U, 0x44U, 0x55U };
 
 /*! @brief Reception ring configuration structures */
 static const Gmac_Ip_RxRingConfigType GMAC_0_aRxRingConfigPB[1U] =
@@ -168,13 +166,13 @@ static const Gmac_Ip_RxRingConfigType GMAC_0_aRxRingConfigPB[1U] =
     /* The configuration structure for Rx Ring 0 */
     {
         /*.ringDesc = */GMAC_0_RxRing_0_DescBuffer,
-        /*.callback = */&Eth_43_GMAC_RxIrqCallback,
+        /*.callback = */NULL_PTR,
         /*.buffer = */GMAC_0_RxRing_0_DataBuffer,
-        /*.interrupts = */(uint32)GMAC_CH_INTERRUPT_RI,
+        /*.interrupts = */(uint32)0U,
         /*.bufferLen = */1536U,
-        /*.ringSize = */16U,
+        /*.ringSize = */8U,
         /*.MTLQueueSize = */2048U,
-        /*.priorityMask = */(uint8)GMAC_VLAN_PRIORITY_0,
+        /*.priorityMask = */0U,
 		/*.dmaBurstLength = */64U
     }
 };
@@ -190,11 +188,11 @@ static const Gmac_Ip_TxRingConfigType GMAC_0_aTxRingConfigPB[1U] =
         /*.hiCredit = */0U,
         /*.loCredit = */0,
         /*.ringDesc = */GMAC_0_TxRing_0_DescBuffer,
-        /*.callback = */&Eth_43_GMAC_TxIrqCallback,
+        /*.callback = */NULL_PTR,
         /*.buffer = */GMAC_0_TxRing_0_DataBuffer,
-        /*.interrupts = */(uint32)GMAC_CH_INTERRUPT_TI,
+        /*.interrupts = */(uint32)0U,
         /*.bufferLen = */1536U,
-        /*.ringSize = */8U,
+        /*.ringSize = */4U,
         /*.MTLQueueSize = */2048U,
         /*.priorityMask = */0U,
         /*.dmaBurstLength = */64U,
@@ -223,14 +221,14 @@ static const Gmac_Ip_ConfigType GMAC_0_InitConfigPB =
     /*.callback = */NULL_PTR,
     /*.miiMode = */GMAC_RGMII_MODE,
     /*.txSchedAlgo = */GMAC_SCHED_ALGO_SP,
-    /*.speed = */GMAC_SPEED_100M,
+    /*.speed = */GMAC_SPEED_1G,
     /*.duplex = */GMAC_FULL_DUPLEX,
-    /*.macConfig = */0U | (uint32)GMAC_MAC_CONFIG_CRC_STRIPPING | (uint32)GMAC_MAC_CONFIG_AUTO_PAD | ((uint32)0U << GMAC_MAC_CONFIGURATION_IPG_SHIFT) | ((uint32)GMAC_MAC_CONFIG_CHECKSUM_OFFLOAD),
+    /*.macConfig = */0U | ((uint32)0U << GMAC_MAC_CONFIGURATION_IPG_SHIFT),
     /*.extendedMacConfig = */ (uint32)0U,
 #if (STD_ON == GMAC_IP_RX_HEADER_SPLIT)
     /*.extendedMacConfig1 = */ (uint32)0U,
 #endif
-    /*.macPktFilterConfig = */0U | (uint32)GMAC_PKT_FILTER_PROMISCUOUS_MODE,
+    /*.macPktFilterConfig = */0U,
     /*.enableCtrl = */(boolean)TRUE
 #ifdef GMAC_IP_DMA_PRIORITY_CONFIGURATION_ENABLE
     #if (GMAC_IP_DMA_PRIORITY_CONFIGURATION_ENABLE == STD_ON)

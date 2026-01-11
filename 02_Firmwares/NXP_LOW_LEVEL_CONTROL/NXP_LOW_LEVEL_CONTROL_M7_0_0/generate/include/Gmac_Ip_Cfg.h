@@ -96,7 +96,7 @@ extern "C"{
 #define GMAC_CONFIG_EXT \
     GMAC_CONFIG_SA_PB 
 
-#define GMAC_IP_DEV_ERROR_DETECT            (STD_ON)
+#define GMAC_IP_DEV_ERROR_DETECT            (STD_OFF)
 
 #define GMAC_TIMEOUT_TYPE                (OSIF_COUNTER_DUMMY)
 
