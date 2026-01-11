@@ -487,7 +487,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 5U
     {
         PLLAUX_PHI1_CLK,                    /* name */
-        4U,                              /* value */
+        2U,                              /* value */
         {
             0U,
         }
@@ -527,7 +527,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 10U
     {
         HSE_CLK,                    /* name */
-        2U,                              /* value */
+        1U,                              /* value */
         {
             0U,
         }
@@ -607,7 +607,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 18U
     {
         GMAC_TS_CLK,                    /* name */
-        1U,                              /* value */
+        2U,                              /* value */
         {
             0U,
         }
@@ -617,7 +617,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 19U
     {
         GMAC0_TX_CLK,                    /* name */
-        1U,                              /* value */
+        2U,                              /* value */
         {
             0U,
         }

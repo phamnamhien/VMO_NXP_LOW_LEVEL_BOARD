@@ -9,11 +9,12 @@
 #include "string.h"
 
 static log_level_t current_level = LOG_LEVEL_INFO;
-static uint32 log_counter = 0;
-
+static uint8_t is_initialized = 0;
 void log_init(void) {
-    Lpuart_Uart_Ip_Init(LOG_UART_CHANNEL, &Lpuart_Uart_Ip_xHwConfigPB_0);
-    log_counter = 0;
+	if(!is_initialized) {
+	    Lpuart_Uart_Ip_Init(LOG_UART_CHANNEL, &Lpuart_Uart_Ip_xHwConfigPB_0);
+	    is_initialized = 1;
+	}
 }
 
 void log_set_level(log_level_t level) {
@@ -60,6 +61,4 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
             status = Lpuart_Uart_Ip_GetTransmitStatus(LOG_UART_CHANNEL, &remainingBytes);
         } while (status == LPUART_UART_IP_STATUS_BUSY && timeout-- > 0);
     }
-
-    log_counter++;
 }

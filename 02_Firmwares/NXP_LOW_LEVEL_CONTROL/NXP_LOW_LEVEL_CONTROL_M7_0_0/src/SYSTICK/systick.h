@@ -12,7 +12,7 @@
 /* PIT Channel used - 0 */
 #define CH_0 0U
 /* PIT time-out period - equivalent to 1ms */
-#define PIT_PERIOD 	12000UL
+#define PIT_PERIOD 	40000UL
 
 
 

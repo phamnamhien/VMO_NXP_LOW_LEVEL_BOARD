@@ -114,10 +114,10 @@ extern const Siul2_Port_Ip_PinSettingsConfig g_pin_mux_InitConfigArr_PortContain
 #define ETH_RST_PORT            PTB_L_HALF
 #define ETH_INT_PIN             4u
 #define ETH_INT_PORT            PTB_L_HALF
-#define ETH_MDC_PIN             1u
-#define ETH_MDC_PORT            PTD_H_HALF
 #define ETH_MDIO_PIN            0u
 #define ETH_MDIO_PORT           PTD_H_HALF
+#define ETH_MDC_PIN             1u
+#define ETH_MDC_PORT            PTD_H_HALF
 
 /*==================================================================================================
                                            ENUMS
