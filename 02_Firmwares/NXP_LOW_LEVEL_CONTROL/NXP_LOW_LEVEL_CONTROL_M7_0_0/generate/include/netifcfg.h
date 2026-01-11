@@ -57,6 +57,7 @@ typedef struct {
     char name[2];                           /* Interface name */
 } netif_custom_t;
 
+#define NETIF_GMAC  STD_ON
 /* Number of Ethernet Interfaces for the stack */
 #define NETIF_NUMBER       1
 

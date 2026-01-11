@@ -88,7 +88,7 @@ outputs:
 - {id: FLEXIO0_CLK.outFreq, value: 160 MHz}
 - {id: FXOSCOUT.outFreq, value: 16 MHz}
 - {id: GMAC0_MII_RGMII_RX.outFreq, value: 125 MHz}
-- {id: GMAC0_RX_CLK.outFreq, value: 48 MHz}
+- {id: GMAC0_RX_CLK.outFreq, value: 48 MHz, locked: true, accuracy: '0.001'}
 - {id: GMAC0_TX_CLK.outFreq, value: 125 MHz}
 - {id: GMAC1_RX_CLK.outFreq, value: 48 MHz}
 - {id: GMAC1_TX_CLK.outFreq, value: 48 MHz}
@@ -171,6 +171,10 @@ outputs:
 - {id: TSENSE0_CLK.outFreq, value: 40 MHz}
 - {id: WKPU0_CLK.outFreq, value: 40 MHz}
 settings:
+- {id: ClockDisableFlashWaitStatesConfig, value: Enabled}
+- {id: ClockDisableRamWaitStatesConfig, value: Enabled}
+- {id: ClockGetFrequencyAPI, value: Enabled}
+- {id: ClockLoopTimeout, value: '500000'}
 - {id: CORE_MFD.scale, value: '120', locked: true}
 - {id: CORE_PLLODIV_0_DE, value: Enabled}
 - {id: CORE_PLLODIV_1_DE, value: Enabled}

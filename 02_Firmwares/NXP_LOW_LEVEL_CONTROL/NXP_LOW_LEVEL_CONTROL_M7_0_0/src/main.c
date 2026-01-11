@@ -1,20 +1,22 @@
 /**
  * \file            main.c
- * \brief           LAN9646 GMAC Diagnostics & Port Monitor
- * \note            Uses lan9646 low-level + lan9646_switch high-level API
+ * \brief           LAN9646 + Eth_43_GMAC Debug
  */
 
 #include "Mcal.h"
-#include "Clock_Ip.h"
-#include "Siul2_Port_Ip.h"
-#include "Siul2_Dio_Ip.h"
-#include "IntCtrl_Ip.h"
+#include "Mcu.h"
+#include "Port.h"
+#include "OsIf.h"
+#include "Platform.h"
+#include "Eth_43_GMAC.h"
+#include "EthIf.h"
 
 #include "lan9646.h"
 #include "lan9646_switch.h"
 #include "s32k3xx_soft_i2c.h"
-#include "systick.h"
 #include "log_debug.h"
+
+#include <string.h>
 
 #define TAG "MAIN"
 
@@ -28,12 +30,25 @@
 #define LAN9646_SDA_PIN         ETH_MDIO_PIN
 #define LAN9646_I2C_SPEED       5U
 
+#define ETH_CTRL_IDX            0U
+
 /*===========================================================================*/
 /*                           PRIVATE VARIABLES                                */
 /*===========================================================================*/
 
 static lan9646_t g_lan9646;
 static softi2c_t g_i2c;
+
+/*===========================================================================*/
+/*                          DELAY FUNCTION                                    */
+/*===========================================================================*/
+
+static void delay_ms(uint32_t ms) {
+    uint32_t start = OsIf_GetMilliseconds();
+    while ((OsIf_GetMilliseconds() - start) < ms) {
+        /* Wait */
+    }
+}
 
 /*===========================================================================*/
 /*                          I2C CALLBACKS                                     */
@@ -71,155 +86,154 @@ static lan9646r_t i2c_mem_read_cb(uint8_t dev_addr, uint16_t mem_addr,
 }
 
 /*===========================================================================*/
-/*                          PORT 6 CONFIG (RGMII)                             */
+/*                          SWITCH DEBUG                                      */
 /*===========================================================================*/
 
-static void print_port6_config(void) {
-    uint8_t ctrl0, ctrl1;
+static void debug_switch_config(void) {
+    uint8_t val8;
+    uint32_t val32;
 
-    /* Read XMII Control registers */
-    if (lan9646_read_reg8(&g_lan9646, LAN9646_REG_PORT_XMII_CTRL0(6), &ctrl0) != lan9646OK ||
-        lan9646_read_reg8(&g_lan9646, LAN9646_REG_PORT_XMII_CTRL1(6), &ctrl1) != lan9646OK) {
-        LOG_E(TAG, "Failed to read Port 6 config!");
-        return;
+    LOG_I(TAG, "");
+    LOG_I(TAG, "========== Switch Global Config ==========");
+
+    /* Switch Operation (0x0300) */
+    if (lan9646_read_reg8(&g_lan9646, 0x0300, &val8) == lan9646OK) {
+        LOG_I(TAG, "SW_OPERATION (0x0300) = 0x%02X", val8);
+        LOG_I(TAG, "  [0] Start Switch: %s", (val8 & 0x01) ? "YES" : "NO");
     }
 
-    /* Decode interface type */
-    const char* if_str;
-    bool is_1g = (ctrl1 & LAN9646_XMII_SPEED_1000) == 0;  /* 0 = 1000Mbps */
-    if (is_1g) {
-        if_str = "RGMII";
-    } else {
-        if_str = (ctrl1 & LAN9646_XMII_MII_RMII_MODE) ? "RMII" : "MII";
-    }
+    /* Check Port VLAN Membership and MSTP State */
+    const uint8_t ports[] = {1, 2, 6};
+    for (int i = 0; i < 3; i++) {
+        uint16_t base = (uint16_t)ports[i] << 12;
 
-    /* Decode speed */
-    const char* spd_str;
-    if (is_1g) {
-        spd_str = "1000 Mbps";
-    } else {
-        spd_str = (ctrl0 & LAN9646_XMII_SPEED_100) ? "100 Mbps" : "10 Mbps";
-    }
-
-    LOG_I(TAG, "");
-    LOG_I(TAG, "========== GMAC0 (Port 6) Configuration ==========");
-    LOG_I(TAG, "Interface:   %s", if_str);
-    LOG_I(TAG, "Speed:       %s", spd_str);
-    LOG_I(TAG, "Duplex:      %s", (ctrl0 & LAN9646_XMII_DUPLEX) ? "Full" : "Half");
-
-    LOG_I(TAG, "");
-    LOG_I(TAG, "--- RGMII Delay (Critical for S32K388 GMAC) ---");
-    LOG_I(TAG, "TX Egress Delay:   %s", (ctrl1 & LAN9646_XMII_RGMII_TX_DLY_EN) ? "ON +1.5ns" : "OFF");
-    LOG_I(TAG, "RX Ingress Delay:  %s", (ctrl1 & LAN9646_XMII_RGMII_RX_DLY_EN) ? "ON +1.5ns" : "OFF");
-
-    LOG_I(TAG, "");
-    LOG_I(TAG, "--- Flow Control ---");
-    LOG_I(TAG, "TX Flow Ctrl: %s", (ctrl0 & LAN9646_XMII_TX_FLOW_EN) ? "Enabled" : "Disabled");
-    LOG_I(TAG, "RX Flow Ctrl: %s", (ctrl0 & LAN9646_XMII_RX_FLOW_EN) ? "Enabled" : "Disabled");
-    LOG_I(TAG, "===================================================");
-}
-
-/*===========================================================================*/
-/*                          ALL PORTS STATUS                                  */
-/*===========================================================================*/
-
-static void print_all_ports_status(void) {
-    lan9646_port_status_t status;
-    const uint8_t ports[] = {1, 2, 3, 4, 6};
-    const char* port_names[] = {"Port 1 (PHY)", "Port 2 (PHY)", "Port 3 (PHY)",
-                                "Port 4 (PHY)", "Port 6 (GMAC)"};
-
-    LOG_I(TAG, "");
-    LOG_I(TAG, "========== All Ports Initial Status ==========");
-
-    for (int i = 0; i < 5; i++) {
-        uint8_t port = ports[i];
-
-        if (lan9646_switch_get_port_status(&g_lan9646, port, &status) != lan9646OK) {
-            LOG_E(TAG, "%s: READ ERROR", port_names[i]);
-            continue;
+        if (lan9646_read_reg32(&g_lan9646, base | 0x0A04, &val32) == lan9646OK) {
+            LOG_I(TAG, "P%d VLAN_MEMBER = 0x%02lX [P6=%d P2=%d P1=%d]",
+                  ports[i], (unsigned long)(val32 & 0x7F),
+                  (int)((val32 >> 5) & 1),
+                  (int)((val32 >> 1) & 1),
+                  (int)(val32 & 1));
         }
 
-        const char* spd_str;
-        switch (status.speed) {
-            case LAN9646_SPEED_1000M: spd_str = "1000M"; break;
-            case LAN9646_SPEED_100M:  spd_str = "100M"; break;
-            case LAN9646_SPEED_10M:   spd_str = "10M"; break;
-            default:                  spd_str = "---"; break;
+        if (lan9646_read_reg8(&g_lan9646, base | 0x0B04, &val8) == lan9646OK) {
+            LOG_I(TAG, "P%d MSTP_STATE = 0x%02X [TxEn=%d RxEn=%d]",
+                  ports[i], val8,
+                  (int)((val8 >> 2) & 1),
+                  (int)((val8 >> 1) & 1));
         }
+    }
+    LOG_I(TAG, "===========================================");
+}
 
-        LOG_I(TAG, "%s: %s  %s  %s",
-              port_names[i],
-              status.link_up ? "UP  " : "DOWN",
-              spd_str,
-              status.link_up ? (status.duplex == LAN9646_DUPLEX_FULL ? "Full" : "Half") : "---");
+static void debug_port6_registers(void) {
+    uint8_t ctrl0, ctrl1, status;
+
+    LOG_I(TAG, "");
+    LOG_I(TAG, "========== Port 6 Registers ==========");
+
+    if (lan9646_read_reg8(&g_lan9646, 0x6300, &ctrl0) == lan9646OK) {
+        LOG_I(TAG, "XMII_CTRL0 = 0x%02X [Duplex=%s, Speed100=%d]",
+              ctrl0, (ctrl0 & 0x40) ? "Full" : "Half", (ctrl0 >> 4) & 1);
     }
 
-    LOG_I(TAG, "===============================================");
+    if (lan9646_read_reg8(&g_lan9646, 0x6301, &ctrl1) == lan9646OK) {
+        LOG_I(TAG, "XMII_CTRL1 = 0x%02X [Speed1000=%s, TxDly=%d, RxDly=%d]",
+              ctrl1, (ctrl1 & 0x40) ? "10/100" : "1000", (ctrl1 >> 3) & 1, (ctrl1 >> 4) & 1);
+    }
+
+    if (lan9646_read_reg8(&g_lan9646, 0x6030, &status) == lan9646OK) {
+        uint8_t speed = (status >> 3) & 0x03;
+        LOG_I(TAG, "PORT_STATUS = 0x%02X [Speed=%s, Duplex=%s]",
+              status,
+              speed == 0 ? "10M" : (speed == 1 ? "100M" : "1000M"),
+              (status & 0x04) ? "Full" : "Half");
+    }
+    LOG_I(TAG, "=======================================");
 }
 
 /*===========================================================================*/
-/*                          PORT MONITOR                                      */
-/*===========================================================================*/
-
-static void print_port_monitor(uint8_t port) {
-    lan9646_port_status_t status;
-    lan9646_mib_simple_t mib;
-
-    if (lan9646_switch_get_port_status(&g_lan9646, port, &status) != lan9646OK) {
-        LOG_E(TAG, "P%d: READ ERROR", port);
-        return;
-    }
-
-    if (!status.link_up) {
-        LOG_I(TAG, "P%d: DOWN", port);
-        return;
-    }
-
-    /* Read MIB counters */
-    if (lan9646_switch_read_mib_simple(&g_lan9646, port, &mib) != lan9646OK) {
-        LOG_E(TAG, "P%d: MIB ERROR", port);
-        return;
-    }
-
-    const char* spd_str;
-    switch (status.speed) {
-        case LAN9646_SPEED_1000M: spd_str = "1G"; break;
-        case LAN9646_SPEED_100M:  spd_str = "100M"; break;
-        case LAN9646_SPEED_10M:   spd_str = "10M"; break;
-        default:                  spd_str = "??"; break;
-    }
-
-    LOG_I(TAG, "P%d: %s %s RX=%lu TX=%lu",
-          port, spd_str,
-          (status.duplex == LAN9646_DUPLEX_FULL) ? "FD" : "HD",
-          (unsigned long)mib.rx_packets,
-          (unsigned long)mib.tx_packets);
-}
-
-/*===========================================================================*/
-/*                          PORT 6 RGMII 1G CONFIG                            */
+/*                          CONFIGURE PORT 6 RGMII 1G                         */
 /*===========================================================================*/
 
 static lan9646r_t configure_port6_rgmii_1g(void) {
-    uint8_t ctrl0, ctrl1;
+    uint8_t ctrl0, ctrl1, port_ctrl;
 
     LOG_I(TAG, "Configuring Port 6 for RGMII 1G...");
 
-    /* XMII_CTRL0: Full duplex, Flow control enabled */
-    ctrl0 = LAN9646_XMII_DUPLEX | LAN9646_XMII_TX_FLOW_EN | LAN9646_XMII_RX_FLOW_EN;
+    ctrl0 = 0x68;  /* Full duplex + TX flow + RX flow */
+    ctrl1 = 0x08;  /* TX delay ON, 1G speed */
 
-    /* XMII_CTRL1: 1000Mbps (bit6=0), TX delay ON, RX delay OFF */
-    ctrl1 = LAN9646_XMII_RGMII_TX_DLY_EN;  /* TX delay = ON (+1.5ns) */
-
-    if (lan9646_write_reg8(&g_lan9646, LAN9646_REG_PORT_XMII_CTRL0(6), ctrl0) != lan9646OK ||
-        lan9646_write_reg8(&g_lan9646, LAN9646_REG_PORT_XMII_CTRL1(6), ctrl1) != lan9646OK) {
-        LOG_E(TAG, "Failed to configure Port 6!");
+    LOG_I(TAG, "  Writing XMII_CTRL0 = 0x%02X", ctrl0);
+    if (lan9646_write_reg8(&g_lan9646, 0x6300, ctrl0) != lan9646OK) {
+        LOG_E(TAG, "  Failed to write XMII_CTRL0!");
         return lan9646ERR;
     }
 
-    LOG_I(TAG, "Port 6 configured: RGMII 1G, Full Duplex, TX_DLY=ON");
+    LOG_I(TAG, "  Writing XMII_CTRL1 = 0x%02X", ctrl1);
+    if (lan9646_write_reg8(&g_lan9646, 0x6301, ctrl1) != lan9646OK) {
+        LOG_E(TAG, "  Failed to write XMII_CTRL1!");
+        return lan9646ERR;
+    }
+
+    /* Enable Port 6 */
+    lan9646_read_reg8(&g_lan9646, 0x6000, &port_ctrl);
+    port_ctrl |= 0x03;
+    lan9646_write_reg8(&g_lan9646, 0x6000, port_ctrl);
+
+    LOG_I(TAG, "  Port 6 config OK: RGMII 1G, Full Duplex, TX_DLY=ON");
     return lan9646OK;
+}
+
+/*===========================================================================*/
+/*                          ETH TX TEST                                       */
+/*===========================================================================*/
+
+static void eth_send_test_frame(void) {
+    Eth_BufIdxType bufIdx;
+    uint8_t* txBufPtr = NULL;
+    uint16_t bufLen = 64;
+    Std_ReturnType ret;
+
+    /* ARP broadcast frame */
+    static const uint8_t arp_frame[] = {
+        /* Destination: Broadcast */
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        /* Source: Our MAC */
+        0xAA, 0x12, 0x22, 0x33, 0x44, 0x55,
+        /* EtherType: 0x0806 (ARP) */
+        0x08, 0x06,
+        /* ARP Request */
+        0x00, 0x01, 0x08, 0x00, 0x06, 0x04, 0x00, 0x01,
+        /* Sender MAC + IP */
+        0xAA, 0x12, 0x22, 0x33, 0x44, 0x55,
+        0xC0, 0xA8, 0x01, 0x64,
+        /* Target MAC + IP */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0xC0, 0xA8, 0x01, 0x01,
+    };
+
+    LOG_I(TAG, "Sending ARP broadcast...");
+
+    /* Get TX buffer */
+    ret = Eth_43_GMAC_ProvideTxBuffer(ETH_CTRL_IDX, 0U, &bufIdx, &txBufPtr, &bufLen);
+    if (ret != E_OK || txBufPtr == NULL) {
+        LOG_E(TAG, "  ProvideTxBuffer failed: %d", ret);
+        return;
+    }
+    LOG_I(TAG, "  Got TX buffer idx=%d, len=%d", bufIdx, bufLen);
+
+    /* Copy frame data */
+    memcpy(txBufPtr, arp_frame, sizeof(arp_frame));
+    /* Pad to 64 bytes */
+    memset(txBufPtr + sizeof(arp_frame), 0, 64 - sizeof(arp_frame));
+
+    /* Transmit */
+    ret = Eth_43_GMAC_Transmit(ETH_CTRL_IDX, bufIdx, ETH_FRAME_TYPE_ARP, TRUE, 64, NULL);
+    if (ret == E_OK) {
+        LOG_I(TAG, "  TX queued OK");
+    } else {
+        LOG_E(TAG, "  Transmit failed: %d", ret);
+    }
 }
 
 /*===========================================================================*/
@@ -229,21 +243,43 @@ static lan9646r_t configure_port6_rgmii_1g(void) {
 int main(void) {
     uint16_t chip_id;
     uint8_t revision;
+    uint32_t tick = 0;
 
-    /* MCU Init */
-    Clock_Ip_Init(&Clock_Ip_aClockConfig[0]);
-    SysTick_Init();
-    Siul2_Port_Ip_Init(NUM_OF_CONFIGURED_PINS_PortContainer_0_BOARD_InitPeripherals,
-                       g_pin_mux_InitConfigArr_PortContainer_0_BOARD_InitPeripherals);
-    IntCtrl_Ip_Init(&IntCtrlConfig_0);
+    /*========== MCU Init ==========*/
+    /* Initialize OS Interface */
+    OsIf_Init(NULL_PTR);
+
+    /* Initialize all pins */
+    Port_Init(NULL_PTR);
+
+    /* Initialize MCU module */
+    Mcu_Init(NULL_PTR);
+
+    /* Initialize MCU clock */
+    Mcu_InitClock(McuClockSettingConfig_0);
+
+    while (Mcu_GetPllStatus() != MCU_PLL_LOCKED) {}
+
+    /* Use PLL clock */
+    Mcu_DistributePllClock();
+    Mcu_SetMode(McuModeSettingConf_0);
+
+    /* Initialize Platform driver */
+    Platform_Init(NULL_PTR);
+
+    /* Set timer frequency */
+    OsIf_SetTimerFrequency(160000000U, OSIF_USE_SYSTEM_TIMER);
+
+    /* Init log (after clock is ready) */
     log_init();
 
     LOG_I(TAG, "");
-    LOG_I(TAG, "######################################");
-    LOG_I(TAG, "#  LAN9646 GMAC Diagnostics Tool    #");
-    LOG_I(TAG, "######################################");
+    LOG_I(TAG, "========================================");
+    LOG_I(TAG, "  LAN9646 + Eth_43_GMAC Debug");
+    LOG_I(TAG, "========================================");
+    LOG_I(TAG, "MCU Init complete!");
 
-    /* Configure LAN9646 low-level */
+    /*========== LAN9646 Init ==========*/
     lan9646_cfg_t cfg = {
         .if_type = LAN9646_IF_I2C,
         .i2c_addr = LAN9646_I2C_ADDR_DEFAULT,
@@ -256,50 +292,101 @@ int main(void) {
         }
     };
 
+    LOG_I(TAG, "");
     LOG_I(TAG, "Initializing LAN9646...");
     if (lan9646_init(&g_lan9646, &cfg) != lan9646OK) {
         LOG_E(TAG, "LAN9646 init FAILED!");
         while(1);
     }
 
-    /* Verify chip ID */
     if (lan9646_get_chip_id(&g_lan9646, &chip_id, &revision) != lan9646OK) {
         LOG_E(TAG, "Failed to read chip ID!");
         while(1);
     }
-
-    if (chip_id != LAN9646_CHIP_ID) {
-        LOG_E(TAG, "Chip ID mismatch: 0x%04X (expected 0x%04X)", chip_id, LAN9646_CHIP_ID);
-        while(1);
-    }
-
     LOG_I(TAG, "Chip: 0x%04X Rev:%d", chip_id, revision);
 
     /* Configure Port 6 for RGMII 1G */
+    delay_ms(100);
     configure_port6_rgmii_1g();
 
-    /* Print Port 6 configuration */
-    print_port6_config();
+    /* Wait for link stabilization */
+    delay_ms(500);
 
-    /* Print clock configuration */
-    lan9646_switch_print_clock_config(&g_lan9646);
+    /* Debug registers */
+    debug_port6_registers();
+    debug_switch_config();
 
-    /* Print all ports initial status */
-    print_all_ports_status();
+    /*========== Eth_43_GMAC Init ==========*/
+    LOG_I(TAG, "");
+    LOG_I(TAG, "Initializing Eth_43_GMAC...");
+    Eth_43_GMAC_Init(NULL_PTR);
+    LOG_I(TAG, "  Eth_43_GMAC_Init OK");
+
+    /* Set controller to ACTIVE mode */
+    LOG_I(TAG, "  Setting controller mode to ACTIVE...");
+    Std_ReturnType ret = Eth_43_GMAC_SetControllerMode(ETH_CTRL_IDX, ETH_MODE_ACTIVE);
+    if (ret == E_OK) {
+        LOG_I(TAG, "  Controller ACTIVE!");
+    } else {
+        LOG_E(TAG, "  SetControllerMode failed: %d", ret);
+    }
+
+    /* Wait for GMAC to stabilize */
+    LOG_I(TAG, "Waiting 200ms...");
+    delay_ms(200);
+
+    /* Check P6 MIB before TX */
+    lan9646_mib_simple_t mib;
+    if (lan9646_switch_read_mib_simple(&g_lan9646, 6, &mib) == lan9646OK) {
+        LOG_I(TAG, "P6 MIB BEFORE TX: RX=%lu TX=%lu",
+              (unsigned long)mib.rx_packets, (unsigned long)mib.tx_packets);
+    }
+
+    /* Try to send test frame */
+    eth_send_test_frame();
+    delay_ms(100);
+
+    /* Poll TX/RX */
+    EthIf_MainFunctionTx();
+    EthIf_MainFunctionRx();
+
+    /* Check P6 MIB after TX */
+    if (lan9646_switch_read_mib_simple(&g_lan9646, 6, &mib) == lan9646OK) {
+        LOG_I(TAG, "P6 MIB AFTER TX:  RX=%lu TX=%lu",
+              (unsigned long)mib.rx_packets, (unsigned long)mib.tx_packets);
+    }
 
     LOG_I(TAG, "");
-    LOG_I(TAG, "--- Port Monitor (5s interval) ---");
-    LOG_I(TAG, "Format: Port: Speed Duplex RX TX");
+    LOG_I(TAG, "Ready - Monitoring...");
 
-    /* Main loop - monitor all ports */
+    /*========== Main Loop ==========*/
     while (1) {
-        SysTick_DelayMs(5000);
-        LOG_I(TAG, "");
-        print_port_monitor(1);
-        print_port_monitor(2);
-        print_port_monitor(3);
-        print_port_monitor(4);
-        print_port_monitor(6);
+        /* Poll ETH TX/RX */
+        EthIf_MainFunctionTx();
+        EthIf_MainFunctionRx();
+
+        if (++tick >= 50) {
+            tick = 0;
+
+            /* Check LAN9646 MIB counters */
+            if (lan9646_switch_read_mib_simple(&g_lan9646, 6, &mib) == lan9646OK) {
+                LOG_I(TAG, "P6 MIB: RX=%lu TX=%lu",
+                      (unsigned long)mib.rx_packets, (unsigned long)mib.tx_packets);
+            }
+            if (lan9646_switch_read_mib_simple(&g_lan9646, 1, &mib) == lan9646OK) {
+                LOG_I(TAG, "P1 MIB: RX=%lu TX=%lu",
+                      (unsigned long)mib.rx_packets, (unsigned long)mib.tx_packets);
+            }
+            if (lan9646_switch_read_mib_simple(&g_lan9646, 2, &mib) == lan9646OK) {
+                LOG_I(TAG, "P2 MIB: RX=%lu TX=%lu",
+                      (unsigned long)mib.rx_packets, (unsigned long)mib.tx_packets);
+            }
+
+            /* Send another test frame */
+            eth_send_test_frame();
+        }
+
+        delay_ms(100);
     }
 
     return 0;

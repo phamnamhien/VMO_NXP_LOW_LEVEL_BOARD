@@ -146,7 +146,7 @@ extern "C" {
 /** 
 * @brief This constant used for other modules to check if DIO is present in the project.   
 */
-#define USE_DIO_MODULE              (STD_OFF)
+#define USE_DIO_MODULE              (STD_ON)
 
 /** 
 * @brief This constant used for other modules to check if DPGA is present in the project.   
@@ -171,7 +171,7 @@ extern "C" {
 /** 
 * @brief This constant used for other modules to check if Eth_43_GMAC is present in the project.   
 */
-#define USE_ETH_43_GMAC_MODULE      (STD_OFF)
+#define USE_ETH_43_GMAC_MODULE      (STD_ON)
 
 /** 
 * @brief This constant used for other modules to check if ETH_43_NETC is present in the project.   
@@ -271,7 +271,7 @@ extern "C" {
 /** 
 * @brief This constant used for other modules to check if MCU is present in the project.   
 */
-#define USE_MCU_MODULE              (STD_OFF)
+#define USE_MCU_MODULE              (STD_ON)
 
 /** 
 * @brief This constant used for other modules to check if MEMACC is present in the project.   
@@ -311,7 +311,7 @@ extern "C" {
 /** 
 * @brief This constant used for other modules to check if PORT is present in the project.   
 */
-#define USE_PORT_MODULE             (STD_OFF)
+#define USE_PORT_MODULE             (STD_ON)
 
 /** 
 * @brief This constant used for other modules to check if PSI5 is present in the project.   
@@ -361,7 +361,7 @@ extern "C" {
 /** 
 * @brief This constant used for other modules to check if UART is present in the project.   
 */
-#define USE_UART_MODULE             (STD_OFF)
+#define USE_UART_MODULE             (STD_ON)
 
 /** 
 * @brief This constant used for other modules to check if WDG is present in the project.   

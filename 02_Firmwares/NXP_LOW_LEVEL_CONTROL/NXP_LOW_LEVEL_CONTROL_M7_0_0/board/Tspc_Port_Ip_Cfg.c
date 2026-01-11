@@ -126,7 +126,7 @@ PortContainer_0_BOARD_InitPeripherals:
   - {pin_num: P16, peripheral: LPUART0, signal: lpuart0_rx, pin_signal: PTB0, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: R17, peripheral: LPUART0, signal: lpuart0_tx, pin_signal: PTB1, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: T11, peripheral: SIUL2, signal: 'gpio, 34', pin_signal: PTB2, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: U10, peripheral: GMAC0, signal: gmac0_mii_rgmii_txd3, pin_signal: PTB3, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
+  - {pin_num: U10, peripheral: GMAC0, signal: gmac0_mii_rgmii_txd3, pin_signal: PTB3, pullSelect: pullDown, InitValue: state_1}
   - {pin_num: U3, peripheral: TRGMUX, signal: trgmux_in1, pin_signal: PTB4, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: C15, peripheral: LPUART9, signal: lpuart9_rx, pin_signal: PTB9, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: D15, peripheral: LPUART9, signal: lpuart9_tx, pin_signal: PTB10, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
@@ -134,27 +134,27 @@ PortContainer_0_BOARD_InitPeripherals:
   - {pin_num: J16, peripheral: LPUART7, signal: lpuart7_tx, pin_signal: PTB15, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: K17, peripheral: LPUART4, signal: lpuart4_tx, pin_signal: PTB16, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: K16, peripheral: LPUART4, signal: lpuart4_rx, pin_signal: PTB17, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: M6, peripheral: GMAC0, signal: gmac0_mii_rgmii_rx_clk, pin_signal: PTB22, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: M7, peripheral: GMAC0, signal: gmac0_mii_rgmii_rxd2, pin_signal: PTB23, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: P7, peripheral: GMAC0, signal: gmac0_mii_rgmii_rxd3, pin_signal: PTB24, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: P8, peripheral: GMAC0, signal: gmac0_rgmii_txctl, pin_signal: PTB25, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: P10, peripheral: GMAC0, signal: gmac0_mii_rgmii_txd2, pin_signal: PTB28, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: U12, peripheral: GMAC0, signal: 'gmac0_mii_rmii_rgmii_txd, 0', pin_signal: PTB29, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: U7, peripheral: GMAC1, signal: gmac1_mii_rgmii_txd2, pin_signal: PTC0, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: T8, peripheral: GMAC1, signal: gmac1_mii_rmii_rgmii_tx_clk, pin_signal: PTC1, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: T4, peripheral: GMAC1, signal: gmac1_mii_rgmii_rxd3, pin_signal: PTC2, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
+  - {pin_num: M6, peripheral: GMAC0, signal: gmac0_mii_rgmii_rx_clk, pin_signal: PTB22, InitValue: state_1}
+  - {pin_num: M7, peripheral: GMAC0, signal: gmac0_mii_rgmii_rxd2, pin_signal: PTB23, InitValue: state_1}
+  - {pin_num: P7, peripheral: GMAC0, signal: gmac0_mii_rgmii_rxd3, pin_signal: PTB24, InitValue: state_1}
+  - {pin_num: P8, peripheral: GMAC0, signal: gmac0_rgmii_txctl, pin_signal: PTB25, InitValue: state_1}
+  - {pin_num: P10, peripheral: GMAC0, signal: gmac0_mii_rgmii_txd2, pin_signal: PTB28, InitValue: state_1}
+  - {pin_num: U12, peripheral: GMAC0, signal: 'gmac0_mii_rmii_rgmii_txd, 0', pin_signal: PTB29, InitValue: state_1}
+  - {pin_num: U7, peripheral: GMAC1, signal: gmac1_mii_rgmii_txd2, pin_signal: PTC0, InitValue: state_1}
+  - {pin_num: T8, peripheral: GMAC1, signal: gmac1_mii_rmii_rgmii_tx_clk, pin_signal: PTC1, direction: OUTPUT, InitValue: state_1}
+  - {pin_num: T4, peripheral: GMAC1, signal: gmac1_mii_rgmii_rxd3, pin_signal: PTC2, InitValue: state_1}
   - {pin_num: F7, peripheral: JTAG, signal: jtag_tck_swd_clk, pin_signal: PTC4, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: F8, peripheral: JTAG, signal: jtag_tdi, pin_signal: PTC5, pullEnable: enabled, InitValue: state_1}
   - {pin_num: N15, peripheral: CAN1, signal: can1_tx, pin_signal: PTC8, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: N14, peripheral: CAN1, signal: can1_rx, pin_signal: PTC9, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: T17, peripheral: CAN5, signal: can5_tx, pin_signal: PTC10, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: T15, peripheral: CAN5, signal: can5_rx, pin_signal: PTC11, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: T9, peripheral: GMAC0, signal: 'gmac0_mii_rmii_rgmii_rxd, 0', pin_signal: PTC14, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: U9, peripheral: GMAC0, signal: 'gmac0_mii_rmii_rgmii_rxd, 1', pin_signal: PTC15, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: P6, peripheral: GMAC0, signal: gmac0_mii_rmii_rx_dv_rgmii_rxctl, pin_signal: PTC16, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: R6, peripheral: GMAC1, signal: 'gmac1_mii_rmii_rgmii_txd, 1', pin_signal: PTC17, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: U11, peripheral: GMAC0, signal: 'gmac0_mii_rmii_rgmii_txd, 1', pin_signal: PTC18, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
-  - {pin_num: T12, peripheral: GMAC0, signal: gmac0_mii_rmii_rgmii_tx_clk, pin_signal: PTC19, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
+  - {pin_num: T9, peripheral: GMAC0, signal: 'gmac0_mii_rmii_rgmii_rxd, 0', pin_signal: PTC14, InitValue: state_1}
+  - {pin_num: U9, peripheral: GMAC0, signal: 'gmac0_mii_rmii_rgmii_rxd, 1', pin_signal: PTC15, InitValue: state_1}
+  - {pin_num: P6, peripheral: GMAC0, signal: gmac0_mii_rmii_rx_dv_rgmii_rxctl, pin_signal: PTC16, InitValue: state_1}
+  - {pin_num: R6, peripheral: GMAC1, signal: 'gmac1_mii_rmii_rgmii_txd, 1', pin_signal: PTC17, pullEnable: disabled, InitValue: state_1}
+  - {pin_num: U11, peripheral: GMAC0, signal: 'gmac0_mii_rmii_rgmii_txd, 1', pin_signal: PTC18, InitValue: state_1}
+  - {pin_num: T12, peripheral: GMAC0, signal: gmac0_mii_rmii_rgmii_tx_clk, pin_signal: PTC19, direction: OUTPUT, InitValue: state_1}
   - {pin_num: P17, peripheral: CAN3, signal: can3_tx, pin_signal: PTC28, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: N16, peripheral: CAN3, signal: can3_rx, pin_signal: PTC29, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}
   - {pin_num: F3, peripheral: LPSPI3, signal: lpspi3_sout, pin_signal: PTD0, direction: OUTPUT, pullSelect: pullUp, pullEnable: enabled, InitValue: state_1}

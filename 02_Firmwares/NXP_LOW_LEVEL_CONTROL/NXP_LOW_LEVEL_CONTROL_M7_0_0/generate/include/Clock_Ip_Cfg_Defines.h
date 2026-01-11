@@ -146,19 +146,6 @@ extern "C"{
 #define CLOCK_IP_SPECIFIC_PERIPH_COUNT       (0U)
 
 /**
-* @brief            Number of clock configurations 0
-*/
-#define CLOCK_IP_CONFIGURED_IRCOSCS_0_NO       (3U)
-#define CLOCK_IP_CONFIGURED_XOSCS_0_NO       (2U)
-#define CLOCK_IP_CONFIGURED_PLLS_0_NO       (2U)
-#define CLOCK_IP_CONFIGURED_SELECTORS_0_NO       (18U)
-#define CLOCK_IP_CONFIGURED_DIVIDERS_0_NO       (31U)
-#define CLOCK_IP_CONFIGURED_DIVIDER_TRIGGERS_0_NO       (1U)
-#define CLOCK_IP_CONFIGURED_EXT_CLKS_0_NO       (4U)
-#define CLOCK_IP_CONFIGURED_GATES_0_NO       (133U)
-#define CLOCK_IP_CONFIGURED_CMUS_0_NO       (4U)
-
-/**
 * @brief            Supported power mode.
 */
 #define CLOCK_IP_HAS_RUN_MODE                 0U
@@ -189,16 +176,8 @@ extern "C"{
 /**
 * @brief            Clock ip supports clock frequency.
 */
-#define CLOCK_IP_GET_FREQUENCY_API                (STD_OFF)
+#define CLOCK_IP_GET_FREQUENCY_API                (STD_ON)
 
-/**
-* @brief            Clock ip supports ram wait states.
-*/
-#define CLOCK_IP_HAS_RAM_WAIT_STATES
-/**
-* @brief            Clock ip supports ram wait states.
-*/
-#define CLOCK_IP_HAS_FLASH_WAIT_STATES
 /**
 * @brief            Clock ip supports to disable FIRC in STDBY mode
 */
@@ -403,6 +382,9 @@ extern "C"{
 /**
 * @brief        Support for MultiPartition.
 */
+#define CLOCK_IP_MULTIPARTITION_SUPPORT                (STD_OFF)
+#define CLOCK_IP_PARTITION_0                   0U
+
 
 /*==================================================================================================
                                              ENUMS

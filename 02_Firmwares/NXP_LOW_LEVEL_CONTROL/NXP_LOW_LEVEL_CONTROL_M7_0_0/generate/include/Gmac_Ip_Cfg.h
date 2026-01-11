@@ -41,7 +41,7 @@ extern "C"{
  2) needed interfaces from external units
  3) internal and external interfaces from this unit
 ==================================================================================================*/
-#include "Gmac_Ip_Sa_PBcfg.h"
+#include "Gmac_Ip_PBcfg.h"
 
 #include "Std_Types.h"
 #include "Reg_eSys.h"
@@ -59,21 +59,21 @@ extern "C"{
 /*==================================================================================================
 *                                     FILE VERSION CHECKS
 ==================================================================================================*/
-/* Checks against Gmac_Ip_Sa_PBcfg.h */
-#if (GMAC_IP_CFG_VENDOR_ID != GMAC_IP_SA_PBCFG_VENDOR_ID)
-    #error "Gmac_Ip_Cfg.h and Gmac_Ip_Sa_PBcfg.h have different vendor ids"
+/* Checks against Gmac_Ip_PBcfg.h */
+#if (GMAC_IP_CFG_VENDOR_ID != GMAC_IP_PBCFG_VENDOR_ID)
+    #error "Gmac_Ip_Cfg.h and Gmac_Ip_PBcfg.h have different vendor ids"
 #endif
-#if ((GMAC_IP_CFG_AR_RELEASE_MAJOR_VERSION    != GMAC_IP_SA_PBCFG_AR_RELEASE_MAJOR_VERSION) || \
-     (GMAC_IP_CFG_AR_RELEASE_MINOR_VERSION    != GMAC_IP_SA_PBCFG_AR_RELEASE_MINOR_VERSION) || \
-     (GMAC_IP_CFG_AR_RELEASE_REVISION_VERSION != GMAC_IP_SA_PBCFG_AR_RELEASE_REVISION_VERSION) \
+#if ((GMAC_IP_CFG_AR_RELEASE_MAJOR_VERSION    != GMAC_IP_PBCFG_AR_RELEASE_MAJOR_VERSION) || \
+     (GMAC_IP_CFG_AR_RELEASE_MINOR_VERSION    != GMAC_IP_PBCFG_AR_RELEASE_MINOR_VERSION) || \
+     (GMAC_IP_CFG_AR_RELEASE_REVISION_VERSION != GMAC_IP_PBCFG_AR_RELEASE_REVISION_VERSION) \
     )
-     #error "AUTOSAR Version Numbers of Gmac_Ip.h and Gmac_Ip_Sa_PBcfg.h are different"
+     #error "AUTOSAR Version Numbers of Gmac_Ip.h and Gmac_Ip_PBcfg.h are different"
 #endif
-#if ((GMAC_IP_CFG_SW_MAJOR_VERSION != GMAC_IP_SA_PBCFG_SW_MAJOR_VERSION) || \
-     (GMAC_IP_CFG_SW_MINOR_VERSION != GMAC_IP_SA_PBCFG_SW_MINOR_VERSION) || \
-     (GMAC_IP_CFG_SW_PATCH_VERSION != GMAC_IP_SA_PBCFG_SW_PATCH_VERSION)    \
+#if ((GMAC_IP_CFG_SW_MAJOR_VERSION != GMAC_IP_PBCFG_SW_MAJOR_VERSION) || \
+     (GMAC_IP_CFG_SW_MINOR_VERSION != GMAC_IP_PBCFG_SW_MINOR_VERSION) || \
+     (GMAC_IP_CFG_SW_PATCH_VERSION != GMAC_IP_PBCFG_SW_PATCH_VERSION)    \
     )
-    #error "Software Version Numbers of Gmac_Ip_Cfg.h and Gmac_Ip_Sa_PBcfg.h are different"
+    #error "Software Version Numbers of Gmac_Ip_Cfg.h and Gmac_Ip_PBcfg.h are different"
 #endif
 
 #ifndef DISABLE_MCAL_INTERMODULE_ASR_CHECK
@@ -94,7 +94,7 @@ extern "C"{
 *                                      DEFINES AND MACROS
 ==================================================================================================*/
 #define GMAC_CONFIG_EXT \
-    GMAC_CONFIG_SA_PB 
+    GMAC_CONFIG_PB 
 
 #define GMAC_IP_DEV_ERROR_DETECT            (STD_OFF)
 
