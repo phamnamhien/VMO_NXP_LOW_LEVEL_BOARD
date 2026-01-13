@@ -72,20 +72,8 @@ extern const IntCtrl_Ip_CtrlConfigType intCtrlConfig;
 /* Declaration of interrupt handlers 
  * NOTE: For application specific handlers, these functions must be implemented in the application code!
  */
-extern void LPUART_UART_IP_0_IRQHandler(void);
-extern void LPUART_UART_IP_1_IRQHandler(void);
-extern void LPUART_UART_IP_2_IRQHandler(void);
-extern void LPUART_UART_IP_3_IRQHandler(void);
+extern void PIT_0_ISR(void);
 extern void LPUART_UART_IP_4_IRQHandler(void);
-extern void LPUART_UART_IP_5_IRQHandler(void);
-extern void LPUART_UART_IP_6_IRQHandler(void);
-extern void LPUART_UART_IP_7_IRQHandler(void);
-extern void LPUART_UART_IP_8_IRQHandler(void);
-extern void LPUART_UART_IP_9_IRQHandler(void);
-extern void PIT_0_IRQHandler(void);
-extern void GMAC0_CH0_TX_IRQHandler(void);
-extern void GMAC0_CH0_RX_IRQHandler(void);
-extern void GMAC0_Common_IRQHandler(void);
 #define PLATFORM_STOP_SEC_CONFIG_DATA_UNSPECIFIED
 #include "Platform_MemMap.h"
 

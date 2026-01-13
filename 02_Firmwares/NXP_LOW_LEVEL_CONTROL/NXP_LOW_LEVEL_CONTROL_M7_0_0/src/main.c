@@ -3,20 +3,24 @@
  * \brief           LAN9646 + Eth_43_GMAC Debug
  */
 
+#include <string.h>
+
 #include "Mcal.h"
 #include "Mcu.h"
 #include "Port.h"
 #include "OsIf.h"
+#include "Gpt.h"
 #include "Platform.h"
-#include "Eth_43_GMAC.h"
-#include "EthIf.h"
+//#include "Eth_43_GMAC.h"
+//#include "EthIf.h"
 
 #include "lan9646.h"
 #include "lan9646_switch.h"
 #include "s32k3xx_soft_i2c.h"
 #include "log_debug.h"
+#include "systick.h"
 
-#include <string.h>
+
 
 #define TAG "MAIN"
 
@@ -24,10 +28,8 @@
 /*                           CONFIGURATION                                    */
 /*===========================================================================*/
 
-#define LAN9646_SCL_PORT        ETH_MDC_PORT
-#define LAN9646_SCL_PIN         ETH_MDC_PIN
-#define LAN9646_SDA_PORT        ETH_MDIO_PORT
-#define LAN9646_SDA_PIN         ETH_MDIO_PIN
+#define LAN9646_SCL_CHANNEL     DioConf_DioChannel_SCL_CH
+#define LAN9646_SDA_CHANNEL  	DioConf_DioChannel_SDA_CH
 #define LAN9646_I2C_SPEED       5U
 
 #define ETH_CTRL_IDX            0U
@@ -44,10 +46,11 @@ static softi2c_t g_i2c;
 /*===========================================================================*/
 
 static void delay_ms(uint32_t ms) {
-    uint32_t start = OsIf_GetMilliseconds();
-    while ((OsIf_GetMilliseconds() - start) < ms) {
-        /* Wait */
-    }
+	SysTick_DelayMs(ms);
+//    uint32_t start = OsIf_GetMilliseconds();
+//    while ((OsIf_GetMilliseconds() - start) < ms) {
+//        /* Wait */
+//    }
 }
 
 /*===========================================================================*/
@@ -56,10 +59,8 @@ static void delay_ms(uint32_t ms) {
 
 static lan9646r_t i2c_init_cb(void) {
     softi2c_pins_t pins = {
-        .scl_port = LAN9646_SCL_PORT,
-        .scl_pin  = LAN9646_SCL_PIN,
-        .sda_port = LAN9646_SDA_PORT,
-        .sda_pin  = LAN9646_SDA_PIN,
+        .scl_channel = LAN9646_SCL_CHANNEL,
+        .sda_channel = LAN9646_SDA_CHANNEL,
         .delay_us = LAN9646_I2C_SPEED,
     };
     return (softi2c_init(&g_i2c, &pins) == softi2cOK) ? lan9646OK : lan9646ERR;
@@ -189,89 +190,105 @@ static lan9646r_t configure_port6_rgmii_1g(void) {
 /*===========================================================================*/
 
 static void eth_send_test_frame(void) {
-    Eth_BufIdxType bufIdx;
-    uint8_t* txBufPtr = NULL;
-    uint16_t bufLen = 64;
-    Std_ReturnType ret;
-
-    /* ARP broadcast frame */
-    static const uint8_t arp_frame[] = {
-        /* Destination: Broadcast */
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        /* Source: Our MAC */
-        0xAA, 0x12, 0x22, 0x33, 0x44, 0x55,
-        /* EtherType: 0x0806 (ARP) */
-        0x08, 0x06,
-        /* ARP Request */
-        0x00, 0x01, 0x08, 0x00, 0x06, 0x04, 0x00, 0x01,
-        /* Sender MAC + IP */
-        0xAA, 0x12, 0x22, 0x33, 0x44, 0x55,
-        0xC0, 0xA8, 0x01, 0x64,
-        /* Target MAC + IP */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0xC0, 0xA8, 0x01, 0x01,
-    };
-
-    LOG_I(TAG, "Sending ARP broadcast...");
-
-    /* Get TX buffer */
-    ret = Eth_43_GMAC_ProvideTxBuffer(ETH_CTRL_IDX, 0U, &bufIdx, &txBufPtr, &bufLen);
-    if (ret != E_OK || txBufPtr == NULL) {
-        LOG_E(TAG, "  ProvideTxBuffer failed: %d", ret);
-        return;
-    }
-    LOG_I(TAG, "  Got TX buffer idx=%d, len=%d", bufIdx, bufLen);
-
-    /* Copy frame data */
-    memcpy(txBufPtr, arp_frame, sizeof(arp_frame));
-    /* Pad to 64 bytes */
-    memset(txBufPtr + sizeof(arp_frame), 0, 64 - sizeof(arp_frame));
-
-    /* Transmit */
-    ret = Eth_43_GMAC_Transmit(ETH_CTRL_IDX, bufIdx, ETH_FRAME_TYPE_ARP, TRUE, 64, NULL);
-    if (ret == E_OK) {
-        LOG_I(TAG, "  TX queued OK");
-    } else {
-        LOG_E(TAG, "  Transmit failed: %d", ret);
-    }
+//    Eth_BufIdxType bufIdx;
+//    uint8_t* txBufPtr = NULL;
+//    uint16_t bufLen = 64;
+//    Std_ReturnType ret;
+//
+//    /* ARP broadcast frame */
+//    static const uint8_t arp_frame[] = {
+//        /* Destination: Broadcast */
+//        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+//        /* Source: Our MAC */
+//        0xAA, 0x12, 0x22, 0x33, 0x44, 0x55,
+//        /* EtherType: 0x0806 (ARP) */
+//        0x08, 0x06,
+//        /* ARP Request */
+//        0x00, 0x01, 0x08, 0x00, 0x06, 0x04, 0x00, 0x01,
+//        /* Sender MAC + IP */
+//        0xAA, 0x12, 0x22, 0x33, 0x44, 0x55,
+//        0xC0, 0xA8, 0x01, 0x64,
+//        /* Target MAC + IP */
+//        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//        0xC0, 0xA8, 0x01, 0x01,
+//    };
+//
+//    LOG_I(TAG, "Sending ARP broadcast...");
+//
+//    /* Get TX buffer */
+//    ret = Eth_43_GMAC_ProvideTxBuffer(ETH_CTRL_IDX, 0U, &bufIdx, &txBufPtr, &bufLen);
+//    if (ret != E_OK || txBufPtr == NULL) {
+//        LOG_E(TAG, "  ProvideTxBuffer failed: %d", ret);
+//        return;
+//    }
+//    LOG_I(TAG, "  Got TX buffer idx=%d, len=%d", bufIdx, bufLen);
+//
+//    /* Copy frame data */
+//    memcpy(txBufPtr, arp_frame, sizeof(arp_frame));
+//    /* Pad to 64 bytes */
+//    memset(txBufPtr + sizeof(arp_frame), 0, 64 - sizeof(arp_frame));
+//
+//    /* Transmit */
+//    ret = Eth_43_GMAC_Transmit(ETH_CTRL_IDX, bufIdx, ETH_FRAME_TYPE_ARP, TRUE, 64, NULL);
+//    if (ret == E_OK) {
+//        LOG_I(TAG, "  TX queued OK");
+//    } else {
+//        LOG_E(TAG, "  Transmit failed: %d", ret);
+//    }
 }
 
 /*===========================================================================*/
 /*                          MAIN                                             */
 /*===========================================================================*/
-
+#include "S32K388_MC_ME.h"
+#include "S32K388_LPUART.h"
 int main(void) {
     uint16_t chip_id;
     uint8_t revision;
     uint32_t tick = 0;
 
     /*========== MCU Init ==========*/
-    /* Initialize OS Interface */
-    OsIf_Init(NULL_PTR);
-
-    /* Initialize all pins */
-    Port_Init(NULL_PTR);
-
     /* Initialize MCU module */
     Mcu_Init(NULL_PTR);
 
     /* Initialize MCU clock */
     Mcu_InitClock(McuClockSettingConfig_0);
 
-    while (Mcu_GetPllStatus() != MCU_PLL_LOCKED) {}
-
-    /* Use PLL clock */
+#if (MCU_NO_PLL == STD_OFF)
+    while ( MCU_PLL_LOCKED != Mcu_GetPllStatus() )
+    {
+        /* Busy wait until the System PLL is locked */
+    }
+    //    /* Use PLL clock */
     Mcu_DistributePllClock();
+#endif
+
     Mcu_SetMode(McuModeSettingConf_0);
 
+
+    /* Initialize OS Interface */
+    OsIf_Init(NULL_PTR);
+
+    /* Initialize all pins */
+    Port_Init(NULL_PTR);
     /* Initialize Platform driver */
     Platform_Init(NULL_PTR);
 
-    /* Set timer frequency */
-    OsIf_SetTimerFrequency(160000000U, OSIF_USE_SYSTEM_TIMER);
+    /* Initialize the high level configuration structure of Gpt driver */
+	#if (STD_ON == GPT_PRECOMPILE_SUPPORT)
+		Gpt_Init(NULL_PTR);
+	#else
+		Gpt_Init(&Gpt_Config_VS_0);
+	#endif
+
+    /* Initialize SysTick (GPT) */
+    SysTick_Init();
+
+    Uart_Init(NULL_PTR);
 
     /* Init log (after clock is ready) */
     log_init();
+
 
     LOG_I(TAG, "");
     LOG_I(TAG, "========================================");
@@ -319,17 +336,17 @@ int main(void) {
     /*========== Eth_43_GMAC Init ==========*/
     LOG_I(TAG, "");
     LOG_I(TAG, "Initializing Eth_43_GMAC...");
-    Eth_43_GMAC_Init(NULL_PTR);
+    // Eth_43_GMAC_Init(NULL_PTR);
     LOG_I(TAG, "  Eth_43_GMAC_Init OK");
 
     /* Set controller to ACTIVE mode */
     LOG_I(TAG, "  Setting controller mode to ACTIVE...");
-    Std_ReturnType ret = Eth_43_GMAC_SetControllerMode(ETH_CTRL_IDX, ETH_MODE_ACTIVE);
-    if (ret == E_OK) {
-        LOG_I(TAG, "  Controller ACTIVE!");
-    } else {
-        LOG_E(TAG, "  SetControllerMode failed: %d", ret);
-    }
+//    Std_ReturnType ret = Eth_43_GMAC_SetControllerMode(ETH_CTRL_IDX, ETH_MODE_ACTIVE);
+//    if (ret == E_OK) {
+//        LOG_I(TAG, "  Controller ACTIVE!");
+//    } else {
+//        LOG_E(TAG, "  SetControllerMode failed: %d", ret);
+//    }
 
     /* Wait for GMAC to stabilize */
     LOG_I(TAG, "Waiting 200ms...");
@@ -346,9 +363,9 @@ int main(void) {
     eth_send_test_frame();
     delay_ms(100);
 
-    /* Poll TX/RX */
-    EthIf_MainFunctionTx();
-    EthIf_MainFunctionRx();
+//    /* Poll TX/RX */
+//    EthIf_MainFunctionTx();
+//    EthIf_MainFunctionRx();
 
     /* Check P6 MIB after TX */
     if (lan9646_switch_read_mib_simple(&g_lan9646, 6, &mib) == lan9646OK) {
@@ -361,9 +378,9 @@ int main(void) {
 
     /*========== Main Loop ==========*/
     while (1) {
-        /* Poll ETH TX/RX */
-        EthIf_MainFunctionTx();
-        EthIf_MainFunctionRx();
+//        /* Poll ETH TX/RX */
+//        EthIf_MainFunctionTx();
+//        EthIf_MainFunctionRx();
 
         if (++tick >= 50) {
             tick = 0;
@@ -391,4 +408,5 @@ int main(void) {
 
     return 0;
 }
+
 

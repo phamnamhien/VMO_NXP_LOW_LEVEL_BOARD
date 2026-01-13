@@ -68,24 +68,12 @@ extern "C" {
 #include "Platform_MemMap.h"
 /* List of configurations for interrupts  */
 static const IntCtrl_Ip_IrqConfigType aIrqConfiguration[] = {
-    {LPUART0_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_0_IRQHandler},
-    {LPUART1_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_1_IRQHandler},
-    {LPUART2_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_2_IRQHandler},
-    {LPUART3_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_3_IRQHandler},
-    {LPUART4_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_4_IRQHandler},
-    {LPUART5_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_5_IRQHandler},
-    {LPUART6_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_6_IRQHandler},
-    {LPUART7_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_7_IRQHandler},
-    {LPUART8_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_8_IRQHandler},
-    {LPUART9_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_9_IRQHandler},
-    {PIT0_IRQn, (boolean)TRUE, 0U, &PIT_0_IRQHandler},
-    {GMAC0_CH0_TX_IRQn, (boolean)TRUE, 0U, &GMAC0_CH0_TX_IRQHandler},
-    {GMAC0_CH0_RX_IRQn, (boolean)TRUE, 0U, &GMAC0_CH0_RX_IRQHandler},
-    {GMAC0_Common_IRQn, (boolean)TRUE, 0U, &GMAC0_Common_IRQHandler},
+    {PIT0_IRQn, (boolean)TRUE, 15U, &PIT_0_ISR},
+    {LPUART4_IRQn, (boolean)TRUE, 5U, &LPUART_UART_IP_4_IRQHandler},
 };
 /* Configuration structure for interrupt controller */
 const IntCtrl_Ip_CtrlConfigType intCtrlConfig = {
-    14U,
+    2U,
     aIrqConfiguration
 };
 #define PLATFORM_STOP_SEC_CONFIG_DATA_UNSPECIFIED

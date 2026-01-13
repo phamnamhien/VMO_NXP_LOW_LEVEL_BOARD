@@ -95,7 +95,7 @@ extern "C"{
 
 #define RAM_IP_TIMEOUT_TYPE                (OSIF_COUNTER_DUMMY)
 
-#define RAM_IP_TIMEOUT_VALUE_US            (500000U)
+#define RAM_IP_TIMEOUT_VALUE_US            (50000U)
 
 /**
 * @brief        Support for User mode.

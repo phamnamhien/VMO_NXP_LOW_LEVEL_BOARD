@@ -81,7 +81,7 @@ extern "C"{
 #define UART_RUNTIME_ERROR_DETECT               (STD_ON)
 
 /* @brief Number of Channels configured. */
-#define UART_CH_MAX_CONFIG                      (10U)
+#define UART_CH_MAX_CONFIG                      (1U)
 
 /* @brief Switches the Uart_GetVersionInfo() API ON or OFF. Support for version info API. */
 #define UART_VERSION_INFO_API                   (STD_OFF)

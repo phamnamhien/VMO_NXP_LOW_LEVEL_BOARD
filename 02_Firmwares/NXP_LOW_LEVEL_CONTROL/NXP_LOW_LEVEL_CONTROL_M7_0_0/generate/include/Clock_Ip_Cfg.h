@@ -95,7 +95,7 @@ extern "C"{
 
 #define CLOCK_IP_TIMEOUT_TYPE                (OSIF_COUNTER_DUMMY)
 
-#define CLOCK_IP_TIMEOUT_VALUE_US            (500000)
+#define CLOCK_IP_TIMEOUT_VALUE_US            (50000)
 
 /**
 * @brief        Support for User mode.

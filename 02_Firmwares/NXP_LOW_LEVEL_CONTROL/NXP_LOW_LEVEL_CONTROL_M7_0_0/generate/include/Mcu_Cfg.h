@@ -168,8 +168,6 @@ extern "C"{
 *                                           DEFINES AND MACROS
 ==================================================================================================*/
 
-#define MCU_CONFIG_EXT \
-    MCU_CONFIG_PB
 
 /**
 * @brief      Specifies the InstanceId of this module instance.
@@ -403,7 +401,7 @@ extern "C"{
 /**
 * @brief            Pre-compile Support.
 */
-#define MCU_PRECOMPILE_SUPPORT (STD_OFF)
+#define MCU_PRECOMPILE_SUPPORT (STD_ON)
 
 #ifdef MCU_GET_MIDR_API
   #if (MCU_GET_MIDR_API == STD_ON)

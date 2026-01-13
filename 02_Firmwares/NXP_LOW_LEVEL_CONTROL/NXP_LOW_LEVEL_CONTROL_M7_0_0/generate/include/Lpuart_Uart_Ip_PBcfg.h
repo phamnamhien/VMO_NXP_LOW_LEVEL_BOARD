@@ -94,44 +94,8 @@ extern "C"{
 * @api
 */
 
-#ifndef LPUART_UART_IP_INSTANCE_USING_0
-    #define LPUART_UART_IP_INSTANCE_USING_0   0U
-#endif
-
-#ifndef LPUART_UART_IP_INSTANCE_USING_1
-    #define LPUART_UART_IP_INSTANCE_USING_1   1U
-#endif
-
-#ifndef LPUART_UART_IP_INSTANCE_USING_2
-    #define LPUART_UART_IP_INSTANCE_USING_2   2U
-#endif
-
-#ifndef LPUART_UART_IP_INSTANCE_USING_3
-    #define LPUART_UART_IP_INSTANCE_USING_3   3U
-#endif
-
 #ifndef LPUART_UART_IP_INSTANCE_USING_4
     #define LPUART_UART_IP_INSTANCE_USING_4   4U
-#endif
-
-#ifndef LPUART_UART_IP_INSTANCE_USING_5
-    #define LPUART_UART_IP_INSTANCE_USING_5   5U
-#endif
-
-#ifndef LPUART_UART_IP_INSTANCE_USING_6
-    #define LPUART_UART_IP_INSTANCE_USING_6   6U
-#endif
-
-#ifndef LPUART_UART_IP_INSTANCE_USING_7
-    #define LPUART_UART_IP_INSTANCE_USING_7   7U
-#endif
-
-#ifndef LPUART_UART_IP_INSTANCE_USING_8
-    #define LPUART_UART_IP_INSTANCE_USING_8   8U
-#endif
-
-#ifndef LPUART_UART_IP_INSTANCE_USING_9
-    #define LPUART_UART_IP_INSTANCE_USING_9   9U
 #endif
 
 /*==================================================================================================
@@ -154,16 +118,7 @@ extern "C"{
 * @brief    Declare callback functions if any .
 */
 #define LPUART_UART_IP_CONFIG_PB \
-extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_0;\
-extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_1;\
-extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_2;\
-extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_3;\
-extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_4;\
-extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_5;\
-extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_6;\
-extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_7;\
-extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_8;\
-extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_9;
+extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_0;
 
 #ifdef __cplusplus
 }

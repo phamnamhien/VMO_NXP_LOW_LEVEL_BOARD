@@ -100,16 +100,7 @@ extern "C"{
 ==================================================================================================*/
 
 #define UART_IPW_CONFIG_PB \
-extern const Uart_Ipw_HwConfigType Uart_Ipw_xHwConfigPB_0;\
-extern const Uart_Ipw_HwConfigType Uart_Ipw_xHwConfigPB_1;\
-extern const Uart_Ipw_HwConfigType Uart_Ipw_xHwConfigPB_2;\
-extern const Uart_Ipw_HwConfigType Uart_Ipw_xHwConfigPB_3;\
-extern const Uart_Ipw_HwConfigType Uart_Ipw_xHwConfigPB_4;\
-extern const Uart_Ipw_HwConfigType Uart_Ipw_xHwConfigPB_5;\
-extern const Uart_Ipw_HwConfigType Uart_Ipw_xHwConfigPB_6;\
-extern const Uart_Ipw_HwConfigType Uart_Ipw_xHwConfigPB_7;\
-extern const Uart_Ipw_HwConfigType Uart_Ipw_xHwConfigPB_8;\
-extern const Uart_Ipw_HwConfigType Uart_Ipw_xHwConfigPB_9;
+extern const Uart_Ipw_HwConfigType Uart_Ipw_xHwConfigPB_0;
 
 #ifndef UART_IPW_LPUART_HW_USING
     #define UART_IPW_LPUART_HW_USING

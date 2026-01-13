@@ -1,5 +1,5 @@
 /*==================================================================================================
-*   Project              : RTD AUTOSAR 4.7 
+*   Project              : RTD AUTOSAR 4.7
 *   Platform             : CORTEXM
 *   Peripheral           : SIUL2
 *   Dependencies         : none
@@ -8,11 +8,11 @@
 *   Autosar Revision     : ASR_REL_4_7_REV_0000
 *   Autosar Conf.Variant :
 *   SW Version           : 6.0.0
-*   Build Version        : S32K3_S32M27x_Real-Time_Drivers_AUTOSAR_R21-11_Version_6_0_0_D2506_ASR_REL_4_7_REV_0000_20250610
+*   Build Version        : S32K3_RTD_6_0_0_D2506_ASR_REL_4_7_REV_0000_20250610
 *
 *   Copyright 2020 - 2025 NXP
 *
-*   NXP Confidential. This software is owned or controlled by NXP and may only be
+*   NXP Confidential and Proprietary. This software is owned or controlled by NXP and may only be
 *   used strictly in accordance with the applicable license terms. By expressly
 *   accepting such terms or by downloading, installing, activating and/or otherwise
 *   using the software, you are agreeing that you have read, and that you agree to
@@ -25,7 +25,7 @@
 #define SIUL2_PORT_IP_CFG_H
 
 /**
-*   @file      Siul2_Port_Ip_Cfg.h
+*   @file    Siul2_Port_Ip_Cfg.h
 *
 *   @addtogroup Port_CFG
 *   @{
@@ -35,15 +35,15 @@
 extern "C"{
 #endif
 
-
 /*==================================================================================================
-                                         INCLUDE FILES
- 1) system and project includes
- 2) needed interfaces from external units
- 3) internal and external interfaces from this unit
+*                                        INCLUDE FILES
+* 1) system and project includes
+* 2) needed interfaces from external units
+* 3) internal and external interfaces from this unit
 ==================================================================================================*/
-#include "S32K388_SIUL2.h"
 #include "Siul2_Port_Ip_Types.h"
+
+#include "Siul2_Port_Ip_PBcfg.h"
 
 /*==================================================================================================
 *                              SOURCE FILE VERSION INFORMATION
@@ -63,6 +63,7 @@ extern "C"{
 #if (SIUL2_PORT_IP_VENDOR_ID_CFG_H != SIUL2_PORT_IP_TYPES_VENDOR_ID_H)
     #error "Siul2_Port_Ip_Cfg.h and Siul2_Port_Ip_Types.h have different vendor ids"
 #endif
+
 /* Check if Siul2_Port_Ip_Cfg.h and Siul2_Port_Ip_Types.h are of the same Autosar version */
 #if ((SIUL2_PORT_IP_AR_RELEASE_MAJOR_VERSION_CFG_H    != SIUL2_PORT_IP_TYPES_AR_RELEASE_MAJOR_VERSION_H) || \
      (SIUL2_PORT_IP_AR_RELEASE_MINOR_VERSION_CFG_H    != SIUL2_PORT_IP_TYPES_AR_RELEASE_MINOR_VERSION_H) || \
@@ -70,6 +71,7 @@ extern "C"{
     )
     #error "AutoSar Version Numbers of Siul2_Port_Ip_Cfg.h and Siul2_Port_Ip_Types.h are different"
 #endif
+
 /* Check if Siul2_Port_Ip_Cfg.h and Siul2_Port_Ip_Types.h are of the same Software version */
 #if ((SIUL2_PORT_IP_SW_MAJOR_VERSION_CFG_H != SIUL2_PORT_IP_TYPES_SW_MAJOR_VERSION_H) || \
      (SIUL2_PORT_IP_SW_MINOR_VERSION_CFG_H != SIUL2_PORT_IP_TYPES_SW_MINOR_VERSION_H) || \
@@ -77,67 +79,72 @@ extern "C"{
     )
     #error "Software Version Numbers of Siul2_Port_Ip_Cfg.h and Siul2_Port_Ip_Types.h are different"
 #endif
+
+/* Check if the files Siul2_Port_Ip_Cfg.h and Siul2_Port_Ip_PBcfg.h are of the same version */
+#if (SIUL2_PORT_IP_VENDOR_ID_CFG_H != SIUL2_PORT_IP_VENDOR_ID_PBCFG_H)
+    #error "Siul2_Port_Ip_Cfg.h and Siul2_Port_Ip_PBcfg.h have different vendor IDs"
+#endif
+/* Check if the files Siul2_Port_Ip_Cfg.h and Siul2_Port_Ip_PBcfg.h are of the same Autosar version */
+#if ((SIUL2_PORT_IP_AR_RELEASE_MAJOR_VERSION_CFG_H != SIUL2_PORT_IP_AR_RELEASE_MAJOR_VERSION_PBCFG_H) ||   \
+     (SIUL2_PORT_IP_AR_RELEASE_MINOR_VERSION_CFG_H != SIUL2_PORT_IP_AR_RELEASE_MINOR_VERSION_PBCFG_H) ||   \
+     (SIUL2_PORT_IP_AR_RELEASE_REVISION_VERSION_CFG_H != SIUL2_PORT_IP_AR_RELEASE_REVISION_VERSION_PBCFG_H) \
+    )
+    #error "AutoSar Version Numbers of Siul2_Port_Ip_Cfg.h and Siul2_Port_Ip_PBcfg.h are different"
+#endif
+/* Check if the files Siul2_Port_Ip_Cfg.h and Siul2_Port_Ip_PBcfg.h are of the same software version */
+#if ((SIUL2_PORT_IP_SW_MAJOR_VERSION_CFG_H != SIUL2_PORT_IP_SW_MAJOR_VERSION_PBCFG_H) || \
+     (SIUL2_PORT_IP_SW_MINOR_VERSION_CFG_H != SIUL2_PORT_IP_SW_MINOR_VERSION_PBCFG_H) || \
+     (SIUL2_PORT_IP_SW_PATCH_VERSION_CFG_H != SIUL2_PORT_IP_SW_PATCH_VERSION_PBCFG_H)     \
+    )
+    #error "Software Version Numbers of Siul2_Port_Ip_Cfg.h and Siul2_Port_Ip_PBcfg.h are different"
+#endif
 /*==================================================================================================
-                                           CONSTANTS
+*                                          CONSTANTS
 ==================================================================================================*/
 
 /*==================================================================================================
-                                      DEFINES AND MACROS
+*                                      DEFINES AND MACROS
 ==================================================================================================*/
+
 #define SIUL2_MSCR_SSS_MASK                      (0xFU)
 #define SIUL2_MSCR_SSS_SHIFT                     (0U)
-#define SIUL2_MSCR_SSS_WIDTH                     (4U)
 #define SIUL2_MSCR_SSS(x)                        (((uint32)(((uint32)(x)) << SIUL2_MSCR_SSS_SHIFT)) & SIUL2_MSCR_SSS_MASK)
 
 #define SIUL2_MSCR_SRE_MASK                      (0x4000U)
 #define SIUL2_MSCR_SRE_SHIFT                     (14U)
-#define SIUL2_MSCR_SRE_WIDTH                     (1U)
 #define SIUL2_MSCR_SRE(x)                        (((uint32)(((uint32)(x)) << SIUL2_MSCR_SRE_SHIFT)) & SIUL2_MSCR_SRE_MASK)
 
-
-/*! @brief Definitions for PortContainer_0_BOARD_InitPeripherals Functional Group */
-
 /*! @brief User number of configured pins */
-#define NUM_OF_CONFIGURED_PINS_PortContainer_0_BOARD_InitPeripherals 91
+#define NUM_OF_CONFIGURED_PINS 91
 
 #define PORT_START_SEC_CONFIG_DATA_UNSPECIFIED
 #include "Port_MemMap.h"
 
-/*! @brief User configuration structure */
-extern const Siul2_Port_Ip_PinSettingsConfig g_pin_mux_InitConfigArr_PortContainer_0_BOARD_InitPeripherals[NUM_OF_CONFIGURED_PINS_PortContainer_0_BOARD_InitPeripherals];
+SIUL2_PORT_CONFIG_PB 
 
 #define PORT_STOP_SEC_CONFIG_DATA_UNSPECIFIED
 #include "Port_MemMap.h"
-
-/*! @brief Defines for user pin and port configurations */
-#define ETH_RST_PIN             2u
-#define ETH_RST_PORT            PTB_L_HALF
-#define ETH_INT_PIN             4u
-#define ETH_INT_PORT            PTB_L_HALF
-#define ETH_MDIO_PIN            0u
-#define ETH_MDIO_PORT           PTD_H_HALF
-#define ETH_MDC_PIN             1u
-#define ETH_MDC_PORT            PTD_H_HALF
-
 /*==================================================================================================
-                                           ENUMS
+*                                             ENUMS
 ==================================================================================================*/
 
 /*==================================================================================================
-                               STRUCTURES AND OTHER TYPEDEFS
+*                                STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/
 
 /*==================================================================================================
-                               GLOBAL VARIABLE DECLARATIONS
+*                                GLOBAL VARIABLE DECLARATIONS
 ==================================================================================================*/
 
 /*==================================================================================================
-                               FUNCTION PROTOTYPES
+*                                    FUNCTION PROTOTYPES
 ==================================================================================================*/
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SIUL2_PORT_IP_CFG_H */
+/** @} */
 
+#endif /* SIUL2_PORT_IP_CFG_H */

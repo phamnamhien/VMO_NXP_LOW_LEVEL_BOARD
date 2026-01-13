@@ -97,7 +97,7 @@ extern "C"{
 
 #define POWER_IP_TIMEOUT_TYPE                (OSIF_COUNTER_DUMMY)
 
-#define POWER_IP_TIMEOUT_VALUE_US            (500000U)
+#define POWER_IP_TIMEOUT_VALUE_US            (50000U)
 
 
 /**

@@ -505,7 +505,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 8U
     {
         AIPS_PLAT_CLK,                    /* name */
-        2U,                              /* value */
+        4U,                              /* value */
         {
             0U,
         }
@@ -1765,7 +1765,7 @@ static const Clock_Ip_CmuConfigType Clock_Ip_CmuConfigurations_0[CLOCK_IP_CONFIG
         ),
         CLOCK_IP_MAXIMUM_5_PERCENTAGE_DEVIATION,            /* Monitor maximum allowed frequency variation. */
         CLOCK_IP_LOW_LATENCY_1US,            /* Latency of clock monitor reaction. */
-        80000000U,
+        40000000U,
         {
                 0U,          /* Start index in register values array */
                 0U,          /* End index in register values array */
@@ -1821,7 +1821,7 @@ static const Clock_Ip_ConfiguredFrequencyType Clock_Ip_ConfiguredFrequencyConfig
     #if CLOCK_IP_CONFIGURED_FREQUENCIES_COUNT > 4U
     {
         AIPS_PLAT_CLK,
-        80000000U,
+        40000000U,
     },
     #endif
     #if CLOCK_IP_CONFIGURED_FREQUENCIES_COUNT > 5U

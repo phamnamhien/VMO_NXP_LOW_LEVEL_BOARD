@@ -127,7 +127,7 @@ extern "C"
 * @details        A pointer to such a structure is provided to the MCU initialization routines for configuration.
 *
 */
-const Mcu_ConfigType Mcu_Config=
+const Mcu_ConfigType Mcu_PreCompileConfig=
 {
 #if (MCU_INIT_CLOCK == STD_ON)
     /* Globally enable/disable SCM, loss of clock and loss of lock notification. */

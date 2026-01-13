@@ -197,6 +197,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="AMMCLib"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
 						<entry excluding="Debugger|Linker_Files" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Project_Settings"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="board"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/include"/>
@@ -410,6 +411,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="AMMCLib"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
 						<entry excluding="Debugger|Linker_Files" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Project_Settings"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="board"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/include"/>
@@ -623,6 +625,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="AMMCLib"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
 						<entry excluding="Debugger|Linker_Files" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Project_Settings"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="board"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/include"/>
@@ -836,6 +839,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="AMMCLib"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
 						<entry excluding="Debugger|Linker_Files" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Project_Settings"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="board"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/include"/>
@@ -881,7 +885,7 @@
 		<COND_TOOLCHAIN_CUSTOM_OPTION/>
 	</storageModule>
 	<storageModule moduleId="com.nxp.s32ds.cle.uct.internal.core.toolchainScriptProfile">
-		<COND_TOOLCHAIN_COMPONENTS_OPTION/>
+		<COND_TOOLCHAIN_COMPONENTS_OPTION>COPY=platform.os.freertos_heap_4;platform.driver.gpt;platform.os.freertosCM7;platform.driver.Platform;platform.driver.clock;platform.driver.osif;platform.driver.mcu;platform.driver.uart;platform.driver.port;platform.os.freertos;platform.driver.dio</COND_TOOLCHAIN_COMPONENTS_OPTION>
 	</storageModule>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Release_FLASH">
@@ -898,7 +902,7 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="com.nxp.s32ds.cle.uct.core">
-		<sdkComponents>platform.middleware.tcpip;platform.os.freertos;platform.os.freertos_heap_4;platform.os.freertosCM7;platform.driver.det;platform.driver.siul2_dio;platform.driver.rte_dio;platform.driver.pit;platform.driver.rte_gpt;platform.driver.clock;platform.driver.rte_mcu;platform.driver.osif;platform.driver.rte_osif;platform.driver.lpuart_uart;platform.driver.rte_uart;platform.driver.IntCtrl_Ip;platform.driver.siul2_port;platform.driver.rte_port;platform.driver.gmac;platform.driver.rte_eth;platform.driver.eth_43_gmac;platform.driver.ethif;platform.driver.mka;platform.driver.ethswt;platform.driver.ethtrcv;platform.driver.mcu;platform.driver.Platform;platform.driver.rte_platform;platform.driver.port;platform.driver.dio;platform.driver.uart</sdkComponents>
+		<sdkComponents>platform.middleware.tcpip;platform.os.freertos;platform.os.freertos_heap_4;platform.os.freertosCM7;platform.driver.det;platform.driver.siul2_dio;platform.driver.rte_dio;platform.driver.pit;platform.driver.rte_gpt;platform.driver.clock;platform.driver.rte_mcu;platform.driver.osif;platform.driver.rte_osif;platform.driver.rte_uart;platform.driver.IntCtrl_Ip;platform.driver.siul2_port;platform.driver.rte_port;platform.driver.gmac;platform.driver.rte_eth;platform.driver.eth_43_gmac;platform.driver.ethif;platform.driver.mka;platform.driver.ethswt;platform.driver.ethtrcv;platform.driver.mcu;platform.driver.Platform;platform.driver.rte_platform;platform.driver.port;platform.driver.dio;platform.driver.uart;platform.driver.gpt</sdkComponents>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

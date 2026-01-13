@@ -1,2 +1,2 @@
 1,,
-,PB,ClockConfig0
+,PC,ClockConfig0

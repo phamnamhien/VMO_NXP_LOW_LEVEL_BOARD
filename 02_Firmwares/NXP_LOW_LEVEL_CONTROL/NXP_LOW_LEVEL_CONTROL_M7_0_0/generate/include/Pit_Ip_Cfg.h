@@ -43,7 +43,7 @@ extern "C"{
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
 /* Include all variants header files. */
-#include "Pit_Ip_SA_PBcfg.h"
+#include "Pit_Ip_PBcfg.h"
 /*==================================================================================================
 *                              SOURCE FILE VERSION INFORMATION
 ==================================================================================================*/
@@ -58,22 +58,22 @@ extern "C"{
 /*==================================================================================================
 *                                     FILE VERSION CHECKS
 ==================================================================================================*/
-#if (PIT_IP_VENDOR_ID_CFG != PIT_IP_VENDOR_ID_SA_PBCFG_H)
-    #error "Pit_Ip_Cfg.h and Pit_Ip_SA_PBcfg.h have different vendor ids"
+#if (PIT_IP_VENDOR_ID_CFG != PIT_IP_VENDOR_ID_PBCFG_H)
+    #error "Pit_Ip_Cfg.h and Pit_Ip_PBcfg.h have different vendor ids"
 #endif
 /* Check if this header file and header file are of the same Autosar version */
-#if ((PIT_IP_AR_RELEASE_MAJOR_VERSION_CFG != PIT_IP_AR_RELEASE_MAJOR_VERSION_SA_PBCFG_H) || \
-     (PIT_IP_AR_RELEASE_MINOR_VERSION_CFG != PIT_IP_AR_RELEASE_MINOR_VERSION_SA_PBCFG_H) || \
-     (PIT_IP_AR_RELEASE_REVISION_VERSION_CFG != PIT_IP_AR_RELEASE_REVISION_VERSION_SA_PBCFG_H) \
+#if ((PIT_IP_AR_RELEASE_MAJOR_VERSION_CFG != PIT_IP_AR_RELEASE_MAJOR_VERSION_PBCFG_H) || \
+     (PIT_IP_AR_RELEASE_MINOR_VERSION_CFG != PIT_IP_AR_RELEASE_MINOR_VERSION_PBCFG_H) || \
+     (PIT_IP_AR_RELEASE_REVISION_VERSION_CFG != PIT_IP_AR_RELEASE_REVISION_VERSION_PBCFG_H) \
     )
-    #error "AutoSar Version Numbers of Pit_Ip_Cfg.h and Pit_Ip_SA_PBcfg.h are different"
+    #error "AutoSar Version Numbers of Pit_Ip_Cfg.h and Pit_Ip_PBcfg.h are different"
 #endif
 /* Check if this header file and header file are of the same Software version */
-#if ((PIT_IP_SW_MAJOR_VERSION_CFG != PIT_IP_SW_MAJOR_VERSION_SA_PBCFG_H) || \
-     (PIT_IP_SW_MINOR_VERSION_CFG != PIT_IP_SW_MINOR_VERSION_SA_PBCFG_H) || \
-     (PIT_IP_SW_PATCH_VERSION_CFG != PIT_IP_SW_PATCH_VERSION_SA_PBCFG_H) \
+#if ((PIT_IP_SW_MAJOR_VERSION_CFG != PIT_IP_SW_MAJOR_VERSION_PBCFG_H) || \
+     (PIT_IP_SW_MINOR_VERSION_CFG != PIT_IP_SW_MINOR_VERSION_PBCFG_H) || \
+     (PIT_IP_SW_PATCH_VERSION_CFG != PIT_IP_SW_PATCH_VERSION_PBCFG_H) \
     )
-    #error "Software Version Numbers of Pit_Ip_Cfg.h and Pit_Ip_SA_PBcfg.h are different"
+    #error "Software Version Numbers of Pit_Ip_Cfg.h and Pit_Ip_PBcfg.h are different"
 #endif
     /*==================================================================================================
 *                                          CONSTANTS

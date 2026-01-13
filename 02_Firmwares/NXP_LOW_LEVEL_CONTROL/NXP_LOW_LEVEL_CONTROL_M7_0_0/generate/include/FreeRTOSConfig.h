@@ -48,14 +48,14 @@
 #define configMINIMAL_STACK_SIZE                    ((unsigned short) 512 )
 #define configMAX_TASK_NAME_LEN                     90
 #define configENABLE_MPU                            0
-#define configUSE_MPU_WRAPPERS_V1                   1
+#define configUSE_MPU_WRAPPERS_V1                   0
 #define configFIRST_CONFIGURABLE_REGION             ((unsigned short) 0 )
 #define configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY 0
 #define configALLOW_UNPRIVILEGED_CRITICAL_SECTIONS  0
 #define configUSE_16_BIT_TICKS                      0
 #define configIDLE_SHOULD_YIELD                     1
 #define configUSE_PREEMPTION                        1
-#define configNUM_THREAD_LOCAL_STORAGE_POINTERS     3
+#define configNUM_THREAD_LOCAL_STORAGE_POINTERS     2
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION     0
 #define configUSE_TASK_NOTIFICATIONS                1
 #define configUSE_TIME_SLICING                      1
@@ -66,7 +66,7 @@
 #define configRECORD_STACK_HIGH_ADDRESS             0
 #define configUSE_HW_SEMA42                         0
 /* Definition assert() function. */
-#define configASSERT(x)                             if((x)==0) {__asm volatile ("cpsid i " ::: "memory"); for( ;; );}
+#define configASSERT(x)                             if((x)==0) {__asm volatile (" cpsid i " ::: "memory");}
 
 /* The highest interrupt priority that can be used by any interrupt service
 routine that makes calls to interrupt safe FreeRTOS API functions.  DO NOT CALL

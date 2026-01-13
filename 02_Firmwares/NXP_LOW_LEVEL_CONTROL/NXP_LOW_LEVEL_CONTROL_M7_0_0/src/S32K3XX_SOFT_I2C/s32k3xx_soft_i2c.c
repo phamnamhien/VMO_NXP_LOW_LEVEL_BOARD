@@ -32,8 +32,8 @@
  * Version:         v1.0.0
  */
 #include "s32k3xx_soft_i2c.h"
-#include "Siul2_Port_Ip.h"
-#include "Siul2_Dio_Ip.h"
+
+
 
 /* Timeout for clock stretching (in loop iterations) */
 #define S32K3XX_SOFTI2C_TIMEOUT_CNT 10000U
@@ -82,7 +82,7 @@ prv_delay_us(uint32_t us) {
  */
 static void
 prv_scl_high(softi2c_t* handle) {
-	Siul2_Dio_Ip_WritePin(handle->pins.scl_port, handle->pins.scl_pin, 1U);
+	Dio_WriteChannel(handle->pins.scl_channel, STD_HIGH);
 }
 
 /**
@@ -91,7 +91,7 @@ prv_scl_high(softi2c_t* handle) {
  */
 static void
 prv_scl_low(softi2c_t* handle) {
-	Siul2_Dio_Ip_WritePin(handle->pins.scl_port, handle->pins.scl_pin, 0U);
+	Dio_WriteChannel(handle->pins.scl_channel, STD_LOW);
 }
 
 /**
@@ -100,7 +100,7 @@ prv_scl_low(softi2c_t* handle) {
  */
 static void
 prv_sda_high(softi2c_t* handle) {
-	Siul2_Dio_Ip_WritePin(handle->pins.sda_port, handle->pins.sda_pin, 1U);
+	Dio_WriteChannel(handle->pins.sda_channel, STD_HIGH);
 }
 
 /**
@@ -109,7 +109,7 @@ prv_sda_high(softi2c_t* handle) {
  */
 static void
 prv_sda_low(softi2c_t* handle) {
-	Siul2_Dio_Ip_WritePin(handle->pins.sda_port, handle->pins.sda_pin, 0U);
+	Dio_WriteChannel(handle->pins.sda_channel, STD_LOW);
 }
 
 /**
@@ -119,7 +119,7 @@ prv_sda_low(softi2c_t* handle) {
  */
 static uint8_t
 prv_sda_read(softi2c_t* handle) {
-    return Siul2_Dio_Ip_ReadPin(handle->pins.sda_port, handle->pins.sda_pin);
+	return Dio_ReadChannel(handle->pins.sda_channel);
 }
 
 /**
@@ -132,7 +132,7 @@ prv_wait_scl_high(softi2c_t* handle) {
     uint32_t timeout;
 
     timeout = S32K3XX_SOFTI2C_TIMEOUT_CNT;
-    while (Siul2_Dio_Ip_ReadPin(handle->pins.scl_port, handle->pins.scl_pin) == 0 && timeout > 0) {
+    while (Dio_ReadChannel(handle->pins.scl_channel) == STD_LOW && timeout > 0) {
         --timeout;
     }
 
@@ -152,10 +152,8 @@ softi2c_init(softi2c_t* handle, const softi2c_pins_t* pins) {
     }
 
     /* Copy pin configuration */
-    handle->pins.scl_port = pins->scl_port;
-    handle->pins.scl_pin = pins->scl_pin;
-    handle->pins.sda_port = pins->sda_port;
-    handle->pins.sda_pin = pins->sda_pin;
+    handle->pins.scl_channel = pins->scl_channel;
+    handle->pins.sda_channel = pins->sda_channel;
     handle->pins.delay_us = pins->delay_us;
 
     /* Initialize pins to idle state (both high) */
