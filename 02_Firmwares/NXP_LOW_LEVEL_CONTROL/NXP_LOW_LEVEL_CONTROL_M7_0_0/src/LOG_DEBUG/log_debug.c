@@ -10,11 +10,20 @@
 
 static log_level_t current_level = LOG_LEVEL_INFO;
 static uint8_t is_initialized = 0;
+<<<<<<< Updated upstream
 void log_init(void) {
 	if(!is_initialized) {
 	    Lpuart_Uart_Ip_Init(LOG_UART_CHANNEL, &Lpuart_Uart_Ip_xHwConfigPB_0);
 	    is_initialized = 1;
 	}
+=======
+
+void log_init(void) {
+    if(!is_initialized) {
+//        Uart_Init(NULL_PTR);
+        is_initialized = 1;
+    }
+>>>>>>> Stashed changes
 }
 
 void log_set_level(log_level_t level) {
@@ -39,7 +48,10 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         default: return;
     }
 
+<<<<<<< Updated upstream
     /* Lấy timestamp */
+=======
+>>>>>>> Stashed changes
     uint32 tick = SysTick_GetTick();
     uint32 sec = tick / 1000;
     uint32 ms = tick % 1000;
