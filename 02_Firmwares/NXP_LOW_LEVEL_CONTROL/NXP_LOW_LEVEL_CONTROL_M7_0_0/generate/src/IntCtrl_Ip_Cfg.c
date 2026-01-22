@@ -66,24 +66,18 @@ extern "C" {
 ==================================================================================================*/
 #define PLATFORM_START_SEC_CONFIG_DATA_UNSPECIFIED
 #include "Platform_MemMap.h"
-/* List of configuration for interrupts #1 */
-static const IntCtrl_Ip_IrqConfigType aIrqConfiguration1[] = {
-    {LPUART0_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_0_IRQHandler},
-    {LPUART1_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_1_IRQHandler},
-    {LPUART2_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_2_IRQHandler},
-    {LPUART3_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_3_IRQHandler},
-    {LPUART4_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_4_IRQHandler},
-    {LPUART5_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_5_IRQHandler},
-    {LPUART6_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_6_IRQHandler},
-    {LPUART7_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_7_IRQHandler},
-    {LPUART8_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_8_IRQHandler},
-    {LPUART9_IRQn, (boolean)TRUE, 0U, &LPUART_UART_IP_9_IRQHandler},
-    {PIT0_IRQn, (boolean)TRUE, 0U, &PIT_0_ISR},
+/* List of configurations for interrupts  */
+static const IntCtrl_Ip_IrqConfigType aIrqConfiguration[] = {
+    {PIT0_IRQn, (boolean)TRUE, 9U, &PIT_0_ISR},
+    {LPUART4_IRQn, (boolean)TRUE, 5U, &LPUART_UART_IP_4_IRQHandler},
+    {GMAC0_CH0_TX_IRQn, (boolean)TRUE, 7U, &GMAC0_CH0_TX_IRQHandler},
+    {GMAC0_CH0_RX_IRQn, (boolean)TRUE, 8U, &GMAC0_CH0_RX_IRQHandler},
+    {GMAC0_Common_IRQn, (boolean)TRUE, 6U, &GMAC0_Common_IRQHandler},
 };
-/* Configuration structure for interrupt controller #1*/
-const IntCtrl_Ip_CtrlConfigType IntCtrlConfig_0 = {
-    11U,
-    aIrqConfiguration1
+/* Configuration structure for interrupt controller */
+const IntCtrl_Ip_CtrlConfigType intCtrlConfig = {
+    5U,
+    aIrqConfiguration
 };
 #define PLATFORM_STOP_SEC_CONFIG_DATA_UNSPECIFIED
 #include "Platform_MemMap.h"

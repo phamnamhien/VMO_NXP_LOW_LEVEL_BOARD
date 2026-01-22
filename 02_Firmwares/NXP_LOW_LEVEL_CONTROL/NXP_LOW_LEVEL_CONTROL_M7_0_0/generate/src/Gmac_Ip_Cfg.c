@@ -125,11 +125,11 @@ extern "C"{
 ==================================================================================================*/
 
 #if (STD_OFF == GMAC_HAS_CACHE_MANAGEMENT)
-#define ETH_START_SEC_VAR_CLEARED_UNSPECIFIED_NO_CACHEABLE
-#include "Eth_MemMap.h"
+#define ETH_43_GMAC_START_SEC_VAR_CLEARED_UNSPECIFIED_NO_CACHEABLE
+#include "Eth_43_GMAC_MemMap.h"
 #else
-#define ETH_START_SEC_VAR_CLEARED_UNSPECIFIED
-#include "Eth_MemMap.h"
+#define ETH_43_GMAC_START_SEC_VAR_CLEARED_UNSPECIFIED
+#include "Eth_43_GMAC_MemMap.h"
 #endif
 #ifdef GMAC_0_RXRING_0_DATA
     /*! @brief Reception data buffers for Rx Ring 0 */
@@ -181,15 +181,15 @@ extern "C"{
 #endif
 
 #if (STD_OFF == GMAC_HAS_CACHE_MANAGEMENT)
-#define ETH_STOP_SEC_VAR_CLEARED_UNSPECIFIED_NO_CACHEABLE
-#include "Eth_MemMap.h"
+#define ETH_43_GMAC_STOP_SEC_VAR_CLEARED_UNSPECIFIED_NO_CACHEABLE
+#include "Eth_43_GMAC_MemMap.h"
 #else
-#define ETH_STOP_SEC_VAR_CLEARED_UNSPECIFIED
-#include "Eth_MemMap.h"
+#define ETH_43_GMAC_STOP_SEC_VAR_CLEARED_UNSPECIFIED
+#include "Eth_43_GMAC_MemMap.h"
 #endif
 
-#define ETH_START_SEC_VAR_CLEARED_UNSPECIFIED_NO_CACHEABLE
-#include "Eth_MemMap.h"
+#define ETH_43_GMAC_START_SEC_VAR_CLEARED_UNSPECIFIED_NO_CACHEABLE
+#include "Eth_43_GMAC_MemMap.h"
 #ifdef GMAC_0_RXRING_0_DESCR
     /*! @brief Reception buffer descriptors for Rx Ring 0 */
     VAR_ALIGN(Gmac_Ip_BufferDescriptorType GMAC_0_RxRing_0_DescBuffer[GMAC_0_MAX_RXBUFF_SUPPORTED], FEATURE_GMAC_BUFFDESCR_ALIGNMENT_BYTES)
@@ -239,11 +239,11 @@ extern "C"{
     VAR_ALIGN(Gmac_Ip_BufferDescriptorType GMAC_1_TxRing_2_DescBuffer[GMAC_1_MAX_TXBUFF_SUPPORTED], FEATURE_GMAC_BUFFDESCR_ALIGNMENT_BYTES)
 #endif
 
-#define ETH_STOP_SEC_VAR_CLEARED_UNSPECIFIED_NO_CACHEABLE
-#include "Eth_MemMap.h"
+#define ETH_43_GMAC_STOP_SEC_VAR_CLEARED_UNSPECIFIED_NO_CACHEABLE
+#include "Eth_43_GMAC_MemMap.h"
 
-#define ETH_START_SEC_VAR_CLEARED_UNSPECIFIED
-#include "Eth_MemMap.h"
+#define ETH_43_GMAC_START_SEC_VAR_CLEARED_UNSPECIFIED
+#include "Eth_43_GMAC_MemMap.h"
 
 /* Instance state structures used to hold driver runtime data */
 #ifdef INST_GMAC_0
@@ -253,12 +253,12 @@ extern "C"{
     Gmac_Ip_StateType GMAC_1_StateStructure;
 #endif
 
-#define ETH_STOP_SEC_VAR_CLEARED_UNSPECIFIED
-#include "Eth_MemMap.h"
+#define ETH_43_GMAC_STOP_SEC_VAR_CLEARED_UNSPECIFIED
+#include "Eth_43_GMAC_MemMap.h"
 
 
-#define ETH_START_SEC_CONST_16
-#include "Eth_MemMap.h"
+#define ETH_43_GMAC_START_SEC_CONST_16
+#include "Eth_43_GMAC_MemMap.h"
 
 const uint16 Gmac_aRxExternalBuffLength[2U] =
 {
@@ -267,8 +267,8 @@ const uint16 Gmac_aRxExternalBuffLength[2U] =
     1536U /* default value for instance that is not configured */
 };
 
-#define ETH_STOP_SEC_CONST_16
-#include "Eth_MemMap.h"
+#define ETH_43_GMAC_STOP_SEC_CONST_16
+#include "Eth_43_GMAC_MemMap.h"
 /*==================================================================================================
 *                                   LOCAL FUNCTION PROTOTYPES
 ==================================================================================================*/

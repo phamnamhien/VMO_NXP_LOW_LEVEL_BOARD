@@ -16,7 +16,7 @@ outputs:
 - {id: AES_APP6_CLK.outFreq, value: 48 MHz}
 - {id: AES_APP7_CLK.outFreq, value: 48 MHz}
 - {id: AES_CLK.outFreq, value: 48 MHz}
-- {id: AIPS_PLAT_CLK.outFreq, value: 80 MHz}
+- {id: AIPS_PLAT_CLK.outFreq, value: 40 MHz}
 - {id: AIPS_SLOW_CLK.outFreq, value: 40 MHz}
 - {id: BCTU0_CLK.outFreq, value: 160 MHz}
 - {id: CLKOUT_RUN_CLK.outFreq, value: 8 MHz}
@@ -26,7 +26,7 @@ outputs:
 - {id: CMP1_CLK.outFreq, value: 40 MHz}
 - {id: CMP2_CLK.outFreq, value: 40 MHz}
 - {id: CORE_CLK.outFreq, value: 160 MHz}
-- {id: CRC0_CLK.outFreq, value: 80 MHz}
+- {id: CRC0_CLK.outFreq, value: 40 MHz}
 - {id: DCM0_CLK.outFreq, value: 40 MHz}
 - {id: DCM_CLK.outFreq, value: 40 MHz}
 - {id: DMAMUX0_CLK.outFreq, value: 160 MHz}
@@ -64,10 +64,10 @@ outputs:
 - {id: EDMA0_TCD7_CLK.outFreq, value: 160 MHz}
 - {id: EDMA0_TCD8_CLK.outFreq, value: 160 MHz}
 - {id: EDMA0_TCD9_CLK.outFreq, value: 160 MHz}
-- {id: EIM0_CLK.outFreq, value: 80 MHz}
-- {id: EIM1_CLK.outFreq, value: 80 MHz}
-- {id: EIM2_CLK.outFreq, value: 80 MHz}
-- {id: EIM3_CLK.outFreq, value: 80 MHz}
+- {id: EIM0_CLK.outFreq, value: 40 MHz}
+- {id: EIM1_CLK.outFreq, value: 40 MHz}
+- {id: EIM2_CLK.outFreq, value: 40 MHz}
+- {id: EIM3_CLK.outFreq, value: 40 MHz}
 - {id: EMIOS0_CLK.outFreq, value: 160 MHz}
 - {id: EMIOS1_CLK.outFreq, value: 160 MHz}
 - {id: EMIOS2_CLK.outFreq, value: 160 MHz}
@@ -88,41 +88,41 @@ outputs:
 - {id: FLEXIO0_CLK.outFreq, value: 160 MHz}
 - {id: FXOSCOUT.outFreq, value: 16 MHz}
 - {id: GMAC0_MII_RGMII_RX.outFreq, value: 125 MHz}
-- {id: GMAC0_RX_CLK.outFreq, value: 48 MHz}
+- {id: GMAC0_RX_CLK.outFreq, value: 48 MHz, locked: true, accuracy: '0.001'}
 - {id: GMAC0_TX_CLK.outFreq, value: 125 MHz}
 - {id: GMAC1_RX_CLK.outFreq, value: 48 MHz}
 - {id: GMAC1_TX_CLK.outFreq, value: 48 MHz}
 - {id: GMAC_TS_CLK.outFreq, value: 125 MHz}
 - {id: HSE_CLK.outFreq, value: 160 MHz}
-- {id: INTM_CLK.outFreq, value: 80 MHz}
+- {id: INTM_CLK.outFreq, value: 40 MHz}
 - {id: LBIST_CLK.outFreq, value: 40 MHz}
 - {id: LCU0_CLK.outFreq, value: 160 MHz}
 - {id: LCU1_CLK.outFreq, value: 160 MHz}
 - {id: LPI2C0_CLK.outFreq, value: 40 MHz}
 - {id: LPI2C1_CLK.outFreq, value: 40 MHz}
-- {id: LPSPI0_CLK.outFreq, value: 80 MHz}
+- {id: LPSPI0_CLK.outFreq, value: 40 MHz}
 - {id: LPSPI1_CLK.outFreq, value: 40 MHz}
 - {id: LPSPI2_CLK.outFreq, value: 40 MHz}
 - {id: LPSPI3_CLK.outFreq, value: 40 MHz}
 - {id: LPSPI4_CLK.outFreq, value: 40 MHz}
 - {id: LPSPI5_CLK.outFreq, value: 40 MHz}
-- {id: LPUART0_CLK.outFreq, value: 80 MHz}
-- {id: LPUART10_CLK.outFreq, value: 80 MHz}
-- {id: LPUART11_CLK.outFreq, value: 80 MHz}
-- {id: LPUART12_CLK.outFreq, value: 80 MHz}
-- {id: LPUART13_CLK.outFreq, value: 80 MHz}
-- {id: LPUART14_CLK.outFreq, value: 80 MHz}
-- {id: LPUART15_CLK.outFreq, value: 80 MHz}
-- {id: LPUART1_CLK.outFreq, value: 80 MHz}
-- {id: LPUART2_CLK.outFreq, value: 80 MHz}
-- {id: LPUART3_CLK.outFreq, value: 80 MHz}
-- {id: LPUART4_CLK.outFreq, value: 80 MHz}
-- {id: LPUART5_CLK.outFreq, value: 80 MHz}
-- {id: LPUART6_CLK.outFreq, value: 80 MHz}
-- {id: LPUART7_CLK.outFreq, value: 80 MHz}
-- {id: LPUART8_CLK.outFreq, value: 80 MHz}
-- {id: LPUART9_CLK.outFreq, value: 80 MHz}
-- {id: MSCM_CLK.outFreq, value: 80 MHz}
+- {id: LPUART0_CLK.outFreq, value: 40 MHz}
+- {id: LPUART10_CLK.outFreq, value: 40 MHz}
+- {id: LPUART11_CLK.outFreq, value: 40 MHz}
+- {id: LPUART12_CLK.outFreq, value: 40 MHz}
+- {id: LPUART13_CLK.outFreq, value: 40 MHz}
+- {id: LPUART14_CLK.outFreq, value: 40 MHz}
+- {id: LPUART15_CLK.outFreq, value: 40 MHz}
+- {id: LPUART1_CLK.outFreq, value: 40 MHz}
+- {id: LPUART2_CLK.outFreq, value: 40 MHz}
+- {id: LPUART3_CLK.outFreq, value: 40 MHz}
+- {id: LPUART4_CLK.outFreq, value: 40 MHz}
+- {id: LPUART5_CLK.outFreq, value: 40 MHz}
+- {id: LPUART6_CLK.outFreq, value: 40 MHz}
+- {id: LPUART7_CLK.outFreq, value: 40 MHz}
+- {id: LPUART8_CLK.outFreq, value: 40 MHz}
+- {id: LPUART9_CLK.outFreq, value: 40 MHz}
+- {id: MSCM_CLK.outFreq, value: 40 MHz}
 - {id: MU2A_CLK.outFreq, value: 40 MHz}
 - {id: MU2B_CLK.outFreq, value: 40 MHz}
 - {id: MU3A_CLK.outFreq, value: 40 MHz}
@@ -148,7 +148,7 @@ outputs:
 - {id: SAI1_CLK.outFreq, value: 40 MHz}
 - {id: SCS_CLK.outFreq, value: 160 MHz}
 - {id: SDA_AP_CLK.outFreq, value: 160 MHz}
-- {id: SEMA42_CLK.outFreq, value: 80 MHz}
+- {id: SEMA42_CLK.outFreq, value: 40 MHz}
 - {id: SIRCOUT.outFreq, value: 32 kHz}
 - {id: SIUL2_CLK.outFreq, value: 40 MHz}
 - {id: STCU0_CLK.outFreq, value: 40 MHz}
@@ -171,6 +171,9 @@ outputs:
 - {id: TSENSE0_CLK.outFreq, value: 40 MHz}
 - {id: WKPU0_CLK.outFreq, value: 40 MHz}
 settings:
+- {id: ClockDisableFlashWaitStatesConfig, value: Enabled}
+- {id: ClockDisableRamWaitStatesConfig, value: Enabled}
+- {id: ClockGetFrequencyAPI, value: Enabled}
 - {id: CORE_MFD.scale, value: '120', locked: true}
 - {id: CORE_PLLODIV_0_DE, value: Enabled}
 - {id: CORE_PLLODIV_1_DE, value: Enabled}
@@ -179,7 +182,7 @@ settings:
 - {id: MC_CGM_MUX_0.sel, value: PHI0}
 - {id: MC_CGM_MUX_0_DIV0.scale, value: '1', locked: true}
 - {id: MC_CGM_MUX_0_DIV0_Trigger, value: Common}
-- {id: MC_CGM_MUX_0_DIV1.scale, value: '2', locked: true}
+- {id: MC_CGM_MUX_0_DIV1.scale, value: '4', locked: true}
 - {id: MC_CGM_MUX_0_DIV1_Trigger, value: Common}
 - {id: MC_CGM_MUX_0_DIV2.scale, value: '4', locked: true}
 - {id: MC_CGM_MUX_0_DIV2_Trigger, value: Common}

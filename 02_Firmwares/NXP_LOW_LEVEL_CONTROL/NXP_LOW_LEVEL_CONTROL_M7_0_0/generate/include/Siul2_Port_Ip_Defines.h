@@ -113,7 +113,7 @@ extern "C"{
 #endif /* ifndef MCAL_ENABLE_USER_MODE_SUPPORT */
 
 /* Pre-processor switch to enable/disable development error detection for Siul2 Ip API */
-#define SIUL2_PORT_IP_DEV_ERROR_DETECT                         (STD_ON)
+#define SIUL2_PORT_IP_DEV_ERROR_DETECT                         (STD_OFF)
 
 #define PORT_SIUL2_0_IMCRS_IDX_END_U16     ((uint16)463)
 

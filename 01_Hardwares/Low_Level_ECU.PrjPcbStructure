@@ -1,0 +1,13 @@
+Record=TopLevelDocument|FileName=01- Revision and Contents.SchDoc|SheetNumber=1
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=02- Block Diagram.SchDoc|SheetNumber=2
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=03- Power Supply.SchDoc|SheetNumber=3
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=04- Sub Power Supply.SchDoc|SheetNumber=4
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=05- MCU POWER.SchDoc|SheetNumber=5
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=06- MCU PORTA_B.SchDoc|SheetNumber=6
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=07-MCU PORTC_D.SchDoc|SheetNumber=7
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=08- MCU PORTE_F_G.SchDoc|SheetNumber=8
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=09- CAN.SchDoc|SheetNumber=9
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=10- RS485.SchDoc|SheetNumber=10
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=11- Ethernet MAC.SchDoc|SheetNumber=11
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=12- BLE and FLASH.SchDoc|SheetNumber=12
+Record=NoMainPathDocument|SourceDocument=01- Revision and Contents.SchDoc|FileName=13- EtherCAT.SchDoc|SheetNumber=13

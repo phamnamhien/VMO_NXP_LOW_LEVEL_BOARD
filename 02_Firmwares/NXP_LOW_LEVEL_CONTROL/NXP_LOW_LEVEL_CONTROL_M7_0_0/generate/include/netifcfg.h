@@ -1,5 +1,5 @@
 /* ###################################################################
-**     Copyright 2020-2025 NXP
+**     Copyright 2020 NXP
 **     All rights reserved.
 **
 **     Redistribution and use in source and binary forms, with or without modification,
@@ -57,31 +57,30 @@ typedef struct {
     char name[2];                           /* Interface name */
 } netif_custom_t;
 
+/* Number of active network interfaces. */
+#define ETH_43_ETHIF_NUMBER      1
+
 /* Number of Ethernet Interfaces for the stack */
-#define NETIF_NUMBER       1
+#define ETHIF_NUMBER       ETH_43_ETHIF_NUMBER
 
 /* Number of buffer descriptors for Rx ring */
-#define NETIF_RXBD_NUM      
+#define ETH_43_ETH_RXBD_NUM      5
 
 /* Number of buffer descriptors for Tx ring */
-#define NETIF_TXBD_NUM      
+#define ETH_43_ETH_TXBD_NUM      5
 
 /* Buffer length for Rx */
-#define NETIF_MAX_RXBUFFLEN_SUPPORTED      
+#define ETH_43_ETH_MAX_RXBUFFLEN_SUPPORTED      1536
 
 /* Buffer length for Tx */
-#define NETIF_MAX_TXBUFFLEN_SUPPORTED      
+#define ETH_43_ETH_MAX_TXBUFFLEN_SUPPORTED      1536
 
 /* Enable/Disable release of RX resource in TCPIP stack */
-#define NETIF_RELEASE_RX_RESOURCE    STD_ON
-/* Ethernet tx buffer is internally/externally used */
-#define NETIF_ETH_TX_BUFFER_USED    STD_OFF
-#define NETIF_IRQ_ENABLED    STD_OFF
-#define NETIF_SEND_MULTI_BUFFER_FRAME_API    STD_OFF
-#define TCPIP_BACKLOG_MANAGEMENT_SUPPORT    STD_OFF
+#define TCPIP_RELEASE_RX_RESOURCE    TRUE
 
 /* Network interfaces configuration */
-extern netif_custom_t *netif_cfg[NETIF_NUMBER];
+extern netif_custom_t *netif_cfg[ETHIF_NUMBER];
+
 
 #endif /* LWIP_NETIFCFG_H */
 

@@ -94,7 +94,14 @@ void NMI_Handler(void)
 }
 void HardFault_Handler(void)
 {
-    while(TRUE){};
+    volatile uint32_t cfsr = *(volatile uint32_t*)0xE000ED28;
+    volatile uint32_t hfsr = *(volatile uint32_t*)0xE000ED2C;
+    volatile uint32_t bfar = *(volatile uint32_t*)0xE000ED38;
+    (void)cfsr;
+    (void)hfsr;
+    (void)bfar;
+    /* Đặt breakpoint ở đây, xem giá trị cfsr, hfsr, bfar trong debugger */
+    while(1);
 }
 void MemManage_Handler(void)
 {
