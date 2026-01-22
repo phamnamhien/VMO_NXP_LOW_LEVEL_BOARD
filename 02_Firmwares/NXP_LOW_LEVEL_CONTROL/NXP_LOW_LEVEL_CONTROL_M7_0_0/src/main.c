@@ -67,32 +67,43 @@ static void delay_ms(uint32_t ms) {
         }
     }
 }
-/* Configure LAN9646 Port 6 for RGMII 1G */
+
+/* Thêm vào configure_port6_rgmii_1g() để debug */
 static lan9646r_t configure_port6_rgmii_1g(void) {
     uint8_t ctrl0, ctrl1, port_ctrl;
+    uint8_t read_back;
 
     LOG_I(TAG, "Configuring Port 6 for RGMII 1G...");
 
-    ctrl0 = 0x68;
-    ctrl1 = 0x08;
+    ctrl0 = 0x68;  /* RGMII, 1G speed */
+    ctrl1 = 0x08;  /* TX_DLY enable */
 
-    if (lan9646_write_reg8(&g_lan9646, 0x6300, ctrl0) != lan9646OK) {
-        LOG_E(TAG, "Failed to write XMII_CTRL0!");
-        return lan9646ERR;
-    }
+    lan9646_write_reg8(&g_lan9646, 0x6300, ctrl0);
+    lan9646_write_reg8(&g_lan9646, 0x6301, ctrl1);
 
-    if (lan9646_write_reg8(&g_lan9646, 0x6301, ctrl1) != lan9646OK) {
-        LOG_E(TAG, "Failed to write XMII_CTRL1!");
-        return lan9646ERR;
-    }
-
+    /* Enable port */
     lan9646_read_reg8(&g_lan9646, 0x6000, &port_ctrl);
-    port_ctrl |= 0x03;
+    port_ctrl |= 0x03;  /* TX/RX enable */
     lan9646_write_reg8(&g_lan9646, 0x6000, port_ctrl);
 
-    LOG_I(TAG, "Port 6 config OK: RGMII 1G, Full Duplex, TX_DLY=ON");
+    /* Verify */
+    lan9646_read_reg8(&g_lan9646, 0x6300, &read_back);
+    LOG_I(TAG, "XMII_CTRL0: 0x%02X (expect 0x68)", read_back);
+
+    lan9646_read_reg8(&g_lan9646, 0x6301, &read_back);
+    LOG_I(TAG, "XMII_CTRL1: 0x%02X (expect 0x08)", read_back);
+
+    lan9646_read_reg8(&g_lan9646, 0x6000, &read_back);
+    LOG_I(TAG, "PORT6_CTRL: 0x%02X (expect bit0,1=1)", read_back);
+
+    /* Check link status */
+    uint8_t link_status;
+    lan9646_read_reg8(&g_lan9646, 0x6100, &link_status);
+    LOG_I(TAG, "PORT6 Link Status: 0x%02X", link_status);
+
     return lan9646OK;
 }
+
 static void debug_gmac_tx(void)
 {
     Eth_BufIdxType bufIdx;
@@ -173,7 +184,6 @@ static void debug_gmac_clock(void)
 
 static void device_init(void) {
     OsIf_Init(NULL_PTR);
-    Port_Init(NULL_PTR);
 
     Mcu_Init(NULL_PTR);
     Mcu_InitClock(McuClockSettingConfig_0);
@@ -185,27 +195,38 @@ static void device_init(void) {
 
     Mcu_SetMode(McuModeSettingConf_0);
 
+    Port_Init(NULL_PTR);
     Platform_Init(NULL_PTR);
-
     Uart_Init(NULL_PTR);
     log_init();
 
-    Eth_Init(NULL_PTR);
-
-    /* Set RGMII mode AFTER Eth_Init */
     LOG_I("INIT", "Setting RGMII mode...");
 
-    /* MAC_CONF_SEL = 2 for RGMII */
+    /* Log BEFORE Eth_Init */
+    LOG_I("INIT", "DCMRWF1 before Eth_Init: 0x%08lX", (unsigned long)IP_DCM_GPR->DCMRWF1);
+    LOG_I("INIT", "DCMRWF3 before Eth_Init: 0x%08lX", (unsigned long)IP_DCM_GPR->DCMRWF3);
+
+    Eth_Init(NULL_PTR);
+
+    /* Log AFTER Eth_Init */
+    LOG_I("INIT", "DCMRWF1 after Eth_Init: 0x%08lX", (unsigned long)IP_DCM_GPR->DCMRWF1);
+    LOG_I("INIT", "DCMRWF3 after Eth_Init: 0x%08lX", (unsigned long)IP_DCM_GPR->DCMRWF3);
+
+    /* Thử ghi và verify */
+    IP_DCM_GPR->DCMRWF3 |= (1U << 0);  /* RX_CLK_MUX_BYPASS */
+    LOG_I("INIT", "DCMRWF3 after set bypass: 0x%08lX", (unsigned long)IP_DCM_GPR->DCMRWF3);
+
     uint32_t dcmrwf1 = IP_DCM_GPR->DCMRWF1;
-    dcmrwf1 = (dcmrwf1 & ~0x7U) | 2U;
+    dcmrwf1 = (dcmrwf1 & ~0x7U) | 2U;  /* MAC_CONF_SEL = 2 */
     IP_DCM_GPR->DCMRWF1 = dcmrwf1;
+    LOG_I("INIT", "DCMRWF1 after set RGMII: 0x%08lX", (unsigned long)IP_DCM_GPR->DCMRWF1);
 
-    /* RX_CLK MUX Bypass */
-    IP_DCM_GPR->DCMRWF3 |= (1U << 0);
-
-    LOG_I("INIT", "DCMRWF1: 0x%08lX", (unsigned long)IP_DCM_GPR->DCMRWF1);
-    LOG_I("INIT", "DCMRWF3: 0x%08lX", (unsigned long)IP_DCM_GPR->DCMRWF3);
+    uint8_t mac[6];
+    Eth_43_GMAC_GetPhysAddr(0, mac);
+    LOG_I(TAG, "GMAC MAC: %02X:%02X:%02X:%02X:%02X:%02X",
+          mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
+
 
 static void lan9646_init_device(void) {
     uint16_t chip_id;

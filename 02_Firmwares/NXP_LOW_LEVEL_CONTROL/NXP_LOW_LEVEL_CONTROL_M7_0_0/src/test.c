@@ -447,14 +447,23 @@ static void mainLoopTask(void* pvParameters)
                     last_print = time_now;
 
                     LOG_I(TAG, "--- Stats at %lu sec ---", (unsigned long)time_now);
-                    LOG_I(TAG, "IP: %s", ip4addr_ntoa(netif_ip4_addr(&network_interfaces[0])));
 
+                    /* Thêm debug MAC address */
+                    uint8_t mac[6];
+                    Eth_43_GMAC_GetPhysAddr(0, mac);
+                    LOG_I(TAG, "GMAC MAC: %02X:%02X:%02X:%02X:%02X:%02X",
+                          mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+                    LOG_I(TAG, "IP: %s", ip4addr_ntoa(netif_ip4_addr(&network_interfaces[0])));
         #if LWIP_STATS
                     LOG_I(TAG, "Link RX: %u, TX: %u", lwip_stats.link.recv, lwip_stats.link.xmit);
                     LOG_I(TAG, "ARP RX: %u, TX: %u", lwip_stats.etharp.recv, lwip_stats.etharp.xmit);
                     LOG_I(TAG, "IP RX: %u, drop: %u", lwip_stats.ip.recv, lwip_stats.ip.drop);
                     LOG_I(TAG, "ICMP RX: %u, TX: %u", lwip_stats.icmp.recv, lwip_stats.icmp.xmit);
         #endif
+                    /* Thêm TX debug */
+                    LOG_I(TAG, "TX Packets: %lu", (unsigned long)IP_GMAC_0->TX_PACKET_COUNT_GOOD_BAD);
+                    LOG_I(TAG, "RX Packets: %lu", (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
 
                     /* GMAC TX debug */
                     uint32_t dma_status = IP_GMAC_0->DMA_CH0_STATUS;
