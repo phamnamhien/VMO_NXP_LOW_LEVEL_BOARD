@@ -129,6 +129,28 @@ void start_example(void);
 void tcpip_init_complete_callback(void);
 #endif
 
+/* Debug RX frames */
+static void debug_rx_frames(void)
+{
+    Eth_RxStatusType rxStatus;
+
+    /* Gọi Eth_43_GMAC_Receive để xử lý RX */
+    Eth_43_GMAC_Receive(0, 0, &rxStatus);
+
+    /* Check RX status */
+    if (rxStatus != ETH_NOT_RECEIVED) {
+        LOG_I(TAG, "RX Status: %d (0=NOT_RECEIVED, 1=RECEIVED, 2=RECEIVED_MORE)", rxStatus);
+
+        /* In thêm RX counters */
+        LOG_I(TAG, "RX Good: %lu, RX CRC Err: %lu",
+              (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD,
+              (unsigned long)IP_GMAC_0->RX_CRC_ERROR_PACKETS);
+        LOG_I(TAG, "RX Unicast: %lu, RX Broadcast: %lu",
+              (unsigned long)IP_GMAC_0->RX_UNICAST_PACKETS_GOOD,
+              (unsigned long)IP_GMAC_0->RX_BROADCAST_PACKETS_GOOD);
+    }
+}
+
 #if LWIP_NETIF_STATUS_CALLBACK
 static void status_callback(struct netif *state_netif)
 {
@@ -381,6 +403,14 @@ static void test_init(void* arg)
     Std_ReturnType ret = Eth_43_GMAC_SetControllerMode(0, ETH_MODE_ACTIVE);
     LOG_I(TAG, "GMAC SetControllerMode result: %d", ret);
 
+    /* Test raw TX */
+    extern void test_raw_tx(void);
+    for (int i = 0; i < 5; i++) {
+        test_raw_tx();
+        sys_msleep(1000);
+    }
+    extern void debug_lan9646_mib(void);
+    debug_lan9646_mib();
     LOG_I(TAG, "=== GMAC Status AFTER SetControllerMode ===");
     debug_gmac_status();
 
@@ -430,10 +460,13 @@ static void mainLoopTask(void* pvParameters)
     uint32_t last_print = 0;
 
     while (1) {
+        /* Check RX frames liên tục */
+        debug_rx_frames();
+
 #if NO_SYS
         sys_check_timeouts();
 #else
-        sys_msleep(1000);
+        sys_msleep(100);  /* Giảm xuống 100ms để check RX thường xuyên hơn */
 #endif
 
 #if defined(USING_RTD)
@@ -444,39 +477,39 @@ static void mainLoopTask(void* pvParameters)
 
         /* Print stats every 5 seconds */
         if (time_now - last_print >= 5) {
-                    last_print = time_now;
+            last_print = time_now;
 
-                    LOG_I(TAG, "--- Stats at %lu sec ---", (unsigned long)time_now);
+            LOG_I(TAG, "--- Stats at %lu sec ---", (unsigned long)time_now);
 
-                    /* Thêm debug MAC address */
-                    uint8_t mac[6];
-                    Eth_43_GMAC_GetPhysAddr(0, mac);
-                    LOG_I(TAG, "GMAC MAC: %02X:%02X:%02X:%02X:%02X:%02X",
-                          mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+            /* Debug MAC address */
+            uint8_t mac[6];
+            Eth_43_GMAC_GetPhysAddr(0, mac);
+            LOG_I(TAG, "GMAC MAC: %02X:%02X:%02X:%02X:%02X:%02X",
+                  mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-                    LOG_I(TAG, "IP: %s", ip4addr_ntoa(netif_ip4_addr(&network_interfaces[0])));
-        #if LWIP_STATS
-                    LOG_I(TAG, "Link RX: %u, TX: %u", lwip_stats.link.recv, lwip_stats.link.xmit);
-                    LOG_I(TAG, "ARP RX: %u, TX: %u", lwip_stats.etharp.recv, lwip_stats.etharp.xmit);
-                    LOG_I(TAG, "IP RX: %u, drop: %u", lwip_stats.ip.recv, lwip_stats.ip.drop);
-                    LOG_I(TAG, "ICMP RX: %u, TX: %u", lwip_stats.icmp.recv, lwip_stats.icmp.xmit);
-        #endif
-                    /* Thêm TX debug */
-                    LOG_I(TAG, "TX Packets: %lu", (unsigned long)IP_GMAC_0->TX_PACKET_COUNT_GOOD_BAD);
-                    LOG_I(TAG, "RX Packets: %lu", (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
+            LOG_I(TAG, "IP: %s", ip4addr_ntoa(netif_ip4_addr(&network_interfaces[0])));
+#if LWIP_STATS
+            LOG_I(TAG, "Link RX: %u, TX: %u", lwip_stats.link.recv, lwip_stats.link.xmit);
+            LOG_I(TAG, "ARP RX: %u, TX: %u", lwip_stats.etharp.recv, lwip_stats.etharp.xmit);
+            LOG_I(TAG, "IP RX: %u, drop: %u", lwip_stats.ip.recv, lwip_stats.ip.drop);
+            LOG_I(TAG, "ICMP RX: %u, TX: %u", lwip_stats.icmp.recv, lwip_stats.icmp.xmit);
+#endif
+            /* TX debug */
+            LOG_I(TAG, "TX Packets: %lu", (unsigned long)IP_GMAC_0->TX_PACKET_COUNT_GOOD_BAD);
+            LOG_I(TAG, "RX Packets: %lu", (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
 
-                    /* GMAC TX debug */
-                    uint32_t dma_status = IP_GMAC_0->DMA_CH0_STATUS;
-                    uint32_t mtl_tx_debug = IP_GMAC_0->MTL_TXQ0_DEBUG;
-                    uint32_t mac_debug = IP_GMAC_0->MAC_DEBUG;
+            /* GMAC TX debug */
+            uint32_t dma_status = IP_GMAC_0->DMA_CH0_STATUS;
+            uint32_t mtl_tx_debug = IP_GMAC_0->MTL_TXQ0_DEBUG;
+            uint32_t mac_debug = IP_GMAC_0->MAC_DEBUG;
 
-                    LOG_I(TAG, "DMA_STATUS: 0x%08lX [TPS=%lu RPS=%lu]",
-                          (unsigned long)dma_status,
-                          (unsigned long)((dma_status >> 12) & 0xF),
-                          (unsigned long)((dma_status >> 8) & 0xF));
-                    LOG_I(TAG, "MTL_TX_DEBUG: 0x%08lX", (unsigned long)mtl_tx_debug);
-                    LOG_I(TAG, "MAC_DEBUG: 0x%08lX", (unsigned long)mac_debug);
-                }
+            LOG_I(TAG, "DMA_STATUS: 0x%08lX [TPS=%lu RPS=%lu]",
+                  (unsigned long)dma_status,
+                  (unsigned long)((dma_status >> 12) & 0xF),
+                  (unsigned long)((dma_status >> 8) & 0xF));
+            LOG_I(TAG, "MTL_TX_DEBUG: 0x%08lX", (unsigned long)mtl_tx_debug);
+            LOG_I(TAG, "MAC_DEBUG: 0x%08lX", (unsigned long)mac_debug);
+        }
 
         if (time_now - start_time >= tests_timeout) {
             LOG_W(TAG, "Test timeout, shutting down...");
@@ -541,3 +574,4 @@ uint32_t ulMainGetRunTimeCounterValue(void)
     return 0UL;
 }
 #endif
+
