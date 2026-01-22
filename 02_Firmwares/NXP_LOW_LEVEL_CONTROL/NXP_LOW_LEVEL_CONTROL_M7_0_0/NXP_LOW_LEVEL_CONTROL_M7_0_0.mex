@@ -3589,8 +3589,8 @@
                            <array name="EthCtrlConfig">
                               <struct name="0">
                                  <setting name="Name" value="EthCtrlConfig_0"/>
-                                 <setting name="EthCtrlEnableMii" value="true"/>
-                                 <setting name="EthCtrlEnableMmd" value="true"/>
+                                 <setting name="EthCtrlEnableMii" value="false"/>
+                                 <setting name="EthCtrlEnableMmd" value="false"/>
                                  <setting name="EthCtrlEnableRxInterrupt" value="true"/>
                                  <setting name="EthCtrlEnableTxInterrupt" value="true"/>
                                  <setting name="EthCtrlIdx" value="0"/>

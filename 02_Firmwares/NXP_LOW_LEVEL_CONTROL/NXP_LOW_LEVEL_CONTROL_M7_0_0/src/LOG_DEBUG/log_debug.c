@@ -2,21 +2,48 @@
  * log_debug.c
  */
 #include "log_debug.h"
-#include "systick.h"
 #include "string.h"
+#include "OsIf.h"
+#include "osif_rtd_port.h"
+
+#ifdef USING_OS_FREERTOS
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
+#else
+#include "systick.h"
+#endif
 
 static log_level_t current_level = LOG_LEVEL_INFO;
 static uint8_t is_initialized = 0;
 
+#ifdef USING_OS_FREERTOS
+static SemaphoreHandle_t log_mutex = NULL;
+#endif
+
 void log_init(void) {
     if(!is_initialized) {
-//        Uart_Init(NULL_PTR);
+#ifdef USING_OS_FREERTOS
+        log_mutex = xSemaphoreCreateMutex();
+#endif
         is_initialized = 1;
     }
 }
 
 void log_set_level(log_level_t level) {
     current_level = level;
+}
+
+static uint32_t log_get_tick(void) {
+#ifdef USING_OS_FREERTOS
+    if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+        return xTaskGetTickCount() * portTICK_PERIOD_MS;
+    } else {
+        return OsIf_GetMilliseconds();
+    }
+#else
+    return SysTick_GetTick();
+#endif
 }
 
 void log_write(log_level_t level, const char* tag, const char* format, ...) {
@@ -35,12 +62,21 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         default: return;
     }
 
-    uint32 tick = SysTick_GetTick();
+#ifdef USING_OS_FREERTOS
+    uint8_t mutex_taken = 0;
+    if (log_mutex != NULL && xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+        if (xSemaphoreTake(log_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            mutex_taken = 1;
+        }
+    }
+#endif
+
+    uint32 tick = log_get_tick();
     uint32 sec = tick / 1000;
     uint32 ms = tick % 1000;
 
     int len = snprintf(buffer, sizeof(buffer), "[%lu.%03lu] %s (%s): ",
-                      sec, ms, level_str, tag);
+                      (unsigned long)sec, (unsigned long)ms, level_str, tag);
 
     va_list args;
     va_start(args, format);
@@ -54,4 +90,11 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
     if (ret == E_OK) {
         while (Uart_GetStatus(LOG_UART_CHANNEL, &bytesTransferred, UART_SEND) == UART_STATUS_OPERATION_ONGOING && timeout-- > 0);
     }
+
+#ifdef USING_OS_FREERTOS
+    if (mutex_taken) {
+        xSemaphoreGive(log_mutex);
+    }
+#endif
 }
+

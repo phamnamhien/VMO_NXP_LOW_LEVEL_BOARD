@@ -105,13 +105,7 @@ extern "C"{
 #endif /* defined(ETH_43_GMAC_MACSEC_SUPPORT) */
 
 
-#if !defined(ETH_43_GMAC_MDIO_CLAUSE22_API)
-    #define ETH_43_GMAC_MDIO_CLAUSE22_API    (STD_ON)
-#endif /* !defined(ETH_43_GMAC_MDIO_CLAUSE22_API) */
 
-#if !defined(ETH_43_GMAC_MDIO_CLAUSE45_API)
-    #define ETH_43_GMAC_MDIO_CLAUSE45_API    (STD_ON)
-#endif /* !defined(ETH_43_GMAC_MDIO_CLAUSE45_API) */
 
 #if !defined(ETH_43_GMAC_RX_IRQ_ENABLED)
     #define ETH_43_GMAC_RX_IRQ_ENABLED      (STD_ON)

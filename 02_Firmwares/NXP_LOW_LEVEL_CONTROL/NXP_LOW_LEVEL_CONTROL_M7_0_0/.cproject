@@ -212,7 +212,9 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="AMMCLib"/>
-						<entry excluding="Debugger|Linker_Files" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Project_Settings"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
+						<entry excluding="Linker_Files|Debugger" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Project_Settings"/>
+						<entry excluding="src/EthIf.c" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="RTD"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="board"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/include"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/src"/>
@@ -221,9 +223,7 @@
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src/LOG_DEBUG"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src/S32K3XX_SOFT_I2C"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src/SYSTICK"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="RTD"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="stacks"/>
+						<entry excluding="tcpip/lwip/src/apps/http/fsdata.c" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="stacks"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -442,18 +442,15 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="AMMCLib"/>
-						<entry excluding="Debugger|Linker_Files" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Project_Settings"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="RTD"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="board"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/include"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/src"/>
-						<entry excluding="TEST_GMAC|LAN9646_SOFT_I2C_EXAMPLE|LAN9646_READONLY_TEST|SYSTICK|LAN9646|S32K3XX_SOFT_I2C|LOG_DEBUG" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src/LAN9646"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src/LOG_DEBUG"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src/S32K3XX_SOFT_I2C"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src/SYSTICK"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="RTD"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
-						<entry excluding="SYSTICK|LAN9646|S32K3XX_SOFT_I2C|LOG_DEBUG" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="stacks"/>
 					</sourceEntries>
 				</configuration>
@@ -673,18 +670,15 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="AMMCLib"/>
-						<entry excluding="Debugger|Linker_Files" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Project_Settings"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="RTD"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="board"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/include"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/src"/>
-						<entry excluding="TEST_GMAC|LAN9646_SOFT_I2C_EXAMPLE|LAN9646_READONLY_TEST|SYSTICK|LAN9646|S32K3XX_SOFT_I2C|LOG_DEBUG" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src/LAN9646"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src/LOG_DEBUG"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src/S32K3XX_SOFT_I2C"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src/SYSTICK"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="RTD"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
-						<entry excluding="SYSTICK|LAN9646|S32K3XX_SOFT_I2C|LOG_DEBUG" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="stacks"/>
 					</sourceEntries>
 				</configuration>
@@ -904,18 +898,15 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="AMMCLib"/>
-						<entry excluding="Debugger|Linker_Files" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Project_Settings"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="RTD"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="board"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/include"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="generate/src"/>
-						<entry excluding="TEST_GMAC|LAN9646_SOFT_I2C_EXAMPLE|LAN9646_READONLY_TEST|SYSTICK|LAN9646|S32K3XX_SOFT_I2C|LOG_DEBUG" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src/LAN9646"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src/LOG_DEBUG"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src/S32K3XX_SOFT_I2C"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src/SYSTICK"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="RTD"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="FreeRTOS"/>
-						<entry excluding="SYSTICK|LAN9646|S32K3XX_SOFT_I2C|LOG_DEBUG" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="stacks"/>
 					</sourceEntries>
 				</configuration>
@@ -970,7 +961,9 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="com.nxp.s32ds.cle.uct.core">
-		<sdkComponents>platform.os.freertos;platform.os.freertos_heap_4;platform.os.freertosCM7;platform.driver.siul2_dio;platform.driver.rte_dio;platform.driver.pit;platform.driver.rte_gpt;platform.driver.IntCtrl_Ip;platform.driver.siul2_port;platform.driver.rte_port;platform.driver.gmac;platform.driver.rte_eth;platform.middleware.freertos;platform.driver.Platform;platform.driver.det;platform.driver.rte_platform;platform.driver.clock;platform.driver.rte_mcu;platform.driver.osif;platform.driver.rte_osif;platform.driver.mcu;platform.middleware.tcpip;platform.driver.eth_43_gmac;platform.driver.ethif;platform.driver.mka;platform.driver.ethswt;platform.driver.ethtrcv;platform.driver.dio;platform.driver.gpt;platform.driver.uart;platform.driver.rte_uart;platform.driver.port</sdkComponents>
+		<sdkComponents>platform.os.freertos;platform.os.freertos_heap_4;platform.os.freertosCM7;platform.driver.rte_dio;platform.driver.pit;platform.driver.rte_gpt;platform.driver.rte_port;platform.driver.rte_eth;platform.middleware.freertos;platform.driver.Platform;platform.driver.det;platform.driver.rte_platform;platform.driver.clock;platform.driver.rte_mcu;platform.driver.osif;platform.driver.rte_osif;platform.driver.mcu;platform.middleware.tcpip;platform.driver.eth_43_gmac;platform.driver.ethif;platform.driver.mka;platform.driver.ethswt;platform.driver.ethtrcv;platform.driver.dio;platform.driver.gpt;platform.driver.uart;platform.driver.rte_uart;platform.driver.port</sdkComponents>
+		<COND_TOOLCHAIN_ADD_REMOVE_COMPONENTS_OPTION>true</COND_TOOLCHAIN_ADD_REMOVE_COMPONENTS_OPTION>
+		<COND_TOOLCHAIN_COPY_SOURCES>true</COND_TOOLCHAIN_COPY_SOURCES>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>
