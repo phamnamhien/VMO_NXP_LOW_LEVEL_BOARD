@@ -44,7 +44,7 @@ extern "C"{
 * 3) internal and external interfaces from this unit
 * 4) user callback header files
 ==================================================================================================*/
-#include "Lpuart_Uart_Ip_Sa_PBcfg.h"
+#include "Lpuart_Uart_Ip_PBcfg.h"
 #include "Std_Types.h"
 
 /*==================================================================================================
@@ -62,20 +62,20 @@ extern "C"{
                                       FILE VERSION CHECKS
 ==================================================================================================*/
 /* Checks against Lpuart_Uart_Ip_PBcfg.h */
-#if (LPUART_UART_IP_CFG_VENDOR_ID != LPUART_UART_IP_SA_PBCFG_VENDOR_ID)
-    #error "Lpuart_Uart_Ip_Cfg.h and Lpuart_Uart_Ip_Sa_PBcfg.h have different vendor ids"
+#if (LPUART_UART_IP_CFG_VENDOR_ID != LPUART_UART_IP_PBCFG_VENDOR_ID)
+    #error "Lpuart_Uart_Ip_Cfg.h and Lpuart_Uart_Ip_PBcfg.h have different vendor ids"
 #endif
-#if ((LPUART_UART_IP_CFG_AR_RELEASE_MAJOR_VERSION    != LPUART_UART_IP_SA_PBCFG_AR_RELEASE_MAJOR_VERSION) || \
-     (LPUART_UART_IP_CFG_AR_RELEASE_MINOR_VERSION    != LPUART_UART_IP_SA_PBCFG_AR_RELEASE_MINOR_VERSION) || \
-     (LPUART_UART_IP_CFG_AR_RELEASE_REVISION_VERSION != LPUART_UART_IP_SA_PBCFG_AR_RELEASE_REVISION_VERSION) \
+#if ((LPUART_UART_IP_CFG_AR_RELEASE_MAJOR_VERSION    != LPUART_UART_IP_PBCFG_AR_RELEASE_MAJOR_VERSION) || \
+     (LPUART_UART_IP_CFG_AR_RELEASE_MINOR_VERSION    != LPUART_UART_IP_PBCFG_AR_RELEASE_MINOR_VERSION) || \
+     (LPUART_UART_IP_CFG_AR_RELEASE_REVISION_VERSION != LPUART_UART_IP_PBCFG_AR_RELEASE_REVISION_VERSION) \
     )
-     #error "AUTOSAR Version Numbers of Lpuart_Uart_Ip_Cfg.h and Lpuart_Uart_Ip_Sa_PBcfg.h are different"
+     #error "AUTOSAR Version Numbers of Lpuart_Uart_Ip_Cfg.h and Lpuart_Uart_Ip_PBcfg.h are different"
 #endif
-#if ((LPUART_UART_IP_CFG_SW_MAJOR_VERSION != LPUART_UART_IP_SA_PBCFG_SW_MAJOR_VERSION) || \
-     (LPUART_UART_IP_CFG_SW_MINOR_VERSION != LPUART_UART_IP_SA_PBCFG_SW_MINOR_VERSION) || \
-     (LPUART_UART_IP_CFG_SW_PATCH_VERSION != LPUART_UART_IP_SA_PBCFG_SW_PATCH_VERSION) \
+#if ((LPUART_UART_IP_CFG_SW_MAJOR_VERSION != LPUART_UART_IP_PBCFG_SW_MAJOR_VERSION) || \
+     (LPUART_UART_IP_CFG_SW_MINOR_VERSION != LPUART_UART_IP_PBCFG_SW_MINOR_VERSION) || \
+     (LPUART_UART_IP_CFG_SW_PATCH_VERSION != LPUART_UART_IP_PBCFG_SW_PATCH_VERSION) \
     )
-    #error "Software Version Numbers of Lpuart_Uart_Ip_Cfg.h and Lpuart_Uart_Ip_Sa_PBcfg.h are different"
+    #error "Software Version Numbers of Lpuart_Uart_Ip_Cfg.h and Lpuart_Uart_Ip_PBcfg.h are different"
 #endif
 
 #ifndef DISABLE_MCAL_INTERMODULE_ASR_CHECK
@@ -100,7 +100,7 @@ extern "C"{
 ==================================================================================================*/
 
 #define LPUART_UART_IP_CONFIG_EXT \
-     LPUART_UART_IP_SA_CONFIG_PB 
+     LPUART_UART_IP_CONFIG_PB 
 
 /*==================================================================================================
 *                                  GLOBAL VARIABLE DECLARATIONS

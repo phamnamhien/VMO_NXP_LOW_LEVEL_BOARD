@@ -97,7 +97,7 @@ extern "C"{
 /* General OSIF configuration */
 #define OSIF_MODULE_ID                   (255U)
 
-#define OSIF_DRIVER_INSTANCE             (0U)
+#define OSIF_DRIVER_INSTANCE             (255U)
 
 #define OSIF_ENABLE_USER_MODE_SUPPORT     (STD_OFF)
 
@@ -115,7 +115,7 @@ extern "C"{
 
 #define OSIF_DEV_ERROR_DETECT            (STD_ON)
 #define USING_COHORT_DOMAIN_ID     (STD_OFF)
-#define USING_OS_BAREMETAL
+#define USING_OS_FREERTOS
 
 #define USING_GET_CORE_ID
 

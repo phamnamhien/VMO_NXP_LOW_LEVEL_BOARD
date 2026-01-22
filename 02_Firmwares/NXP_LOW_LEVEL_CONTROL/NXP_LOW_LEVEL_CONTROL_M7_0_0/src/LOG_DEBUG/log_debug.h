@@ -8,7 +8,8 @@
 #ifndef LOG_DEBUG_H_
 #define LOG_DEBUG_H_
 
-#include "Lpuart_Uart_Ip.h"
+#include "CDD_Uart.h"
+#include "Lpuart_Uart_Ip_Irq.h"
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -23,7 +24,7 @@ typedef enum {
 } log_level_t;
 
 /* Debug UART channel */
-#define LOG_UART_CHANNEL 4
+#define LOG_UART_CHANNEL 0
 
 /* Log macros */
 #define LOG_E(tag, ...) log_write(LOG_LEVEL_ERROR, tag, __VA_ARGS__)

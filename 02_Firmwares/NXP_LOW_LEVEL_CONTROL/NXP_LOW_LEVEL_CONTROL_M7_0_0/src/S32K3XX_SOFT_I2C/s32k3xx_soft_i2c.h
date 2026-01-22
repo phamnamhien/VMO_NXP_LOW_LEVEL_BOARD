@@ -36,8 +36,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "Siul2_Port_Ip.h"
-#include "Siul2_Dio_Ip.h"
+#include "Port.h"
+#include "Dio.h"
 
 
 #ifdef __cplusplus
@@ -66,10 +66,8 @@ typedef enum {
  *                  Example: For 100kHz -> delay_us = 500000/100000 = 5
  */
 typedef struct {
-	Siul2_Dio_Ip_GpioType* scl_port; 	/*!< SCL port base (e.g., IP_SIUL2_0) */
-    uint16_t scl_pin;                 	/*!< SCL pin number (MSCR index) */
-    Siul2_Dio_Ip_GpioType* sda_port; 	/*!< SDA port base (e.g., IP_SIUL2_0) */
-    uint16_t sda_pin;                 	/*!< SDA pin number (MSCR index) */
+	Dio_ChannelType scl_channel;
+    Dio_ChannelType sda_channel;
     uint32_t delay_us;                	/*!< Half clock period in microseconds (for speed control) */
 } softi2c_pins_t;
 

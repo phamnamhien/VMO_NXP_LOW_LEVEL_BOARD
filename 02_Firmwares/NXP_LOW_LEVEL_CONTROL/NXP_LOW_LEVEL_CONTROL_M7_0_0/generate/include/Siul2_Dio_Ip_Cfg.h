@@ -63,7 +63,7 @@ extern "C"{
 #define DIO_VIRTWRAPPER_SUPPORT                 (STD_OFF)
 
 /* Pre-processor switch to enable/disable development error detection for Dio Ip API */
-#define SIUL2_DIO_IP_DEV_ERROR_DETECT            (STD_ON)
+#define SIUL2_DIO_IP_DEV_ERROR_DETECT            (STD_OFF)
 
 /* GPIO - Peripheral instance base addresses */
 /** Peripheral PTA base address */

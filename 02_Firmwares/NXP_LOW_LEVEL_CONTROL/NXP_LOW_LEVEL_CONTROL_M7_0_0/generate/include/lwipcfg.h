@@ -49,14 +49,14 @@
 #pragma GCC diagnostic pop
 #endif /* defined(__NEWLIB__) */
 
-#define LWIP_HTTPD_APP              0
-#define LWIP_HTTPD_APP_NETCONN      0
+#define LWIP_HTTPD_APP              1
+#define LWIP_HTTPD_APP_NETCONN      1
 #define LWIP_TCPECHO_APP            1
 #define LWIP_TCPECHO_APP_NETCONN    1
 #define LWIP_UDPECHO_APP            1
 #define LWIP_UDPECHO_APP_NETCONN    1
 
-#define LWIP_LWIPERF_APP            0
+#define LWIP_LWIPERF_APP            1
 #define LWIP_NETBIOS_APP            0
 #define LWIP_SNTP_APP               0
 #define LWIP_NETIO_APP              0
@@ -64,7 +64,7 @@
 #define LWIP_DNS_APP                0
 #define LWIP_SHELL_APP              0
 
-#define LWIP_CHARGEN_APP            0
+#define LWIP_CHARGEN_APP            1
 #define LWIP_SOCKET_EXAMPLES_APP    0
 #define LWIP_RTP_APP                0
 

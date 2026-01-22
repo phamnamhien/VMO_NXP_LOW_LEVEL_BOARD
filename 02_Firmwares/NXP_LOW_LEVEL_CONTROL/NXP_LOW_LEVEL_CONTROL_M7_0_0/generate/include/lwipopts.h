@@ -1,5 +1,5 @@
 /* ###################################################################
-**     Copyright 2020-2025 NXP
+**     Copyright 2020-2024 NXP
 **     Copyright (c) 2001-2003 Swedish Institute of Computer Science.
 **     All rights reserved.
 **
@@ -98,7 +98,7 @@
 #define TCP_MSS                 1460
 
 /* TCP sender buffer space (bytes). */
-#define TCP_SND_BUF             7300
+#define TCP_SND_BUF             11680
 
 /* TCP sender buffer space (pbufs). This must be at least = 2 *
    TCP_SND_BUF/TCP_MSS for things to work. */
@@ -110,7 +110,7 @@
 #define TCP_SNDLOWAT           (TCP_SND_BUF/2)
 
 /* TCP receive window. */
-#define TCP_WND                 7300
+#define TCP_WND                 11680
 
 /* Maximum number of retransmissions of data segments. */
 #define TCP_MAXRTX              2
@@ -204,26 +204,7 @@ a lot of data that needs to be copied, this should be set high. */
 * define SYS_LIGHTWEIGHT_PROT in lwipopts.h if you want inter-task protection
 * for certain critical regions during buffer allocation, deallocation and memory
 * allocation and deallocation. */
-#define SYS_LIGHTWEIGHT_PROT        1
-
-/**
- * Set this to 1 if you want to free PBUF_RAM pbufs (or call mem_free()) from
- * interrupt context (or another context that doesn't allow waiting for a
- * semaphore).
- * If set to 1, mem_malloc will be protected by a semaphore and SYS_ARCH_PROTECT,
- * while mem_free will only use SYS_ARCH_PROTECT. mem_malloc SYS_ARCH_UNPROTECTs
- * with each loop so that mem_free can run.
- *
- * ATTENTION: As you can see from the above description, this leads to dis-/enabling
- * interrupts often, which can be slow! Also, on low memory, mem_malloc
- * can need longer.
- *
- * If you don't want that, at least for NO_SYS=0, you can still use the following
- * functions to enqueue a deallocation call which then runs in the tcpip_thread
- * context:
- * - pbuf_free_callback(p);
- * - mem_free_callback(m); */
-#define LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT 0
+#define SYS_LIGHTWEIGHT_PROT        (NO_SYS==0)
 
 #define NETIF_CHECKSUM_SETTING      NETIF_CHECKSUM_DISABLE_ALL
 /* ---------- Statistics options ---------- */
@@ -284,7 +265,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_NETIF_LINK_CALLBACK        0
 #define LWIP_NETIF_STATUS_CALLBACK      0
 
-#define LWIP_NETCONN_SEM_PER_THREAD     0
+#define LWIP_NETCONN_SEM_PER_THREAD     1
 
 #define LWIP_SOCKET_SET_ERRNO           1
 

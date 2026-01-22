@@ -86,7 +86,7 @@
 /* VTOR address configuration enable */
 #define INT_CTRL_IP_ENABLE_VTOR_CONFIG            (STD_OFF)
 /* IP standalone APIs  */
-#define INT_CTRL_IP_STANDALONE_APIS               (STD_ON)
+#define INT_CTRL_IP_STANDALONE_APIS               (STD_OFF)
 /* First implemented interrupt vector */
 #define INT_CTRL_IP_IRQ_MIN                       (INT0_IRQn)
 /* Last implemented interrupt vector */
