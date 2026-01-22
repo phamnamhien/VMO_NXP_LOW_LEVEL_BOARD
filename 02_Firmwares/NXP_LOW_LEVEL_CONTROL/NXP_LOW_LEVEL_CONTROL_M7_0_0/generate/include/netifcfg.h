@@ -64,10 +64,10 @@ typedef struct {
 #define ETHIF_NUMBER       ETH_43_ETHIF_NUMBER
 
 /* Number of buffer descriptors for Rx ring */
-#define ETH_43_ETH_RXBD_NUM      5
+#define ETH_43_ETH_RXBD_NUM      32
 
 /* Number of buffer descriptors for Tx ring */
-#define ETH_43_ETH_TXBD_NUM      5
+#define ETH_43_ETH_TXBD_NUM      16
 
 /* Buffer length for Rx */
 #define ETH_43_ETH_MAX_RXBUFFLEN_SUPPORTED      1536

@@ -148,18 +148,18 @@ extern "C"{
 
 /* Maximum number of configured buffers per Tx FIFO */
 #if !defined(ETH_43_GMAC_MAX_TXBUFF_SUPPORTED)
-    #define ETH_43_GMAC_MAX_TXBUFF_SUPPORTED        (5U)
-#elif (ETH_43_GMAC_MAX_TXBUFF_SUPPORTED < 5)
+    #define ETH_43_GMAC_MAX_TXBUFF_SUPPORTED        (16U)
+#elif (ETH_43_GMAC_MAX_TXBUFF_SUPPORTED < 16)
     #undef ETH_43_GMAC_MAX_TXBUFF_SUPPORTED
-    #define ETH_43_GMAC_MAX_TXBUFF_SUPPORTED        (5U)
+    #define ETH_43_GMAC_MAX_TXBUFF_SUPPORTED        (16U)
 #endif /* !defined(ETH_43_GMAC_MAX_TXBUFF_SUPPORTED) */
 
 /* Maximum number of configured buffers per Rx FIFO */
 #if !defined(ETH_43_GMAC_MAX_RXBUFF_SUPPORTED)
-    #define ETH_43_GMAC_MAX_RXBUFF_SUPPORTED        (5U)
-#elif (ETH_43_GMAC_MAX_RXBUFF_SUPPORTED < 5)
+    #define ETH_43_GMAC_MAX_RXBUFF_SUPPORTED        (32U)
+#elif (ETH_43_GMAC_MAX_RXBUFF_SUPPORTED < 32)
     #undef ETH_43_GMAC_MAX_RXBUFF_SUPPORTED
-    #define ETH_43_GMAC_MAX_RXBUFF_SUPPORTED        (5U)
+    #define ETH_43_GMAC_MAX_RXBUFF_SUPPORTED        (32U)
 #endif /* !defined(ETH_43_GMAC_MAX_RXBUFF_SUPPORTED) */
 
 /*==================================================================================================

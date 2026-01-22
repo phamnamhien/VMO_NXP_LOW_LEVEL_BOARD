@@ -3691,7 +3691,7 @@
                                        <struct name="0">
                                           <setting name="Name" value="EthCtrlConfigEgressFifo_0"/>
                                           <setting name="EthCtrlConfigEgressFifoBufLenByte" value="1536"/>
-                                          <setting name="EthCtrlConfigEgressFifoBufTotal" value="5"/>
+                                          <setting name="EthCtrlConfigEgressFifoBufTotal" value="16"/>
                                           <setting name="EthCtrlConfigEgressFifoIdx" value="0"/>
                                           <setting name="EthCtrlConfigMTLEgressQueueSizeInBytes" value="4096"/>
                                           <setting name="EthCtrlConfigEgressFifoCallback" value="Eth_43_GMAC_TxIrqCallback"/>
@@ -3729,7 +3729,7 @@
                                        <struct name="0">
                                           <setting name="Name" value="EthCtrlConfigIngressFifo_0"/>
                                           <setting name="EthCtrlConfigIngressFifoBufLenByte" value="1536"/>
-                                          <setting name="EthCtrlConfigIngressFifoBufTotal" value="5"/>
+                                          <setting name="EthCtrlConfigIngressFifoBufTotal" value="32"/>
                                           <setting name="EthCtrlConfigIngressFifoIdx" value="0"/>
                                           <setting name="EthCtrlConfigMTLIngressQueueSizeInBytes" value="4096"/>
                                           <setting name="EthCtrlConfigIngressFifoCallback" value="Eth_43_GMAC_RxIrqCallback"/>

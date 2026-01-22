@@ -193,7 +193,7 @@ static const Eth_43_GMAC_EgressCfgType Eth_43_GMAC_aEgressConfigPB[1U] =
 {
     /* The configuration structure for Eth_43_GMAC_aEgressConfigPB_[0U] - IP_0 */
     {
-        5U,  /* Total number of buffers across all Tx FIFOs */
+        16U,  /* Total number of buffers across all Tx FIFOs */
         1U, /* Total number of configured Tx FIFOs */
         { 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U } /* Map between VLAN PCPs and Tx FIFOs */
     }
@@ -203,7 +203,7 @@ static const Eth_43_GMAC_IngressCfgType Eth_43_GMAC_aIngressConfigPB[1U] =
 {
     /* The configuration structure for Eth_43_GMAC_aIngressConfigPB_[0U] - IP_0 */
     {
-        5U,  /* Total number of buffers across all Rx FIFOs */
+        32U,  /* Total number of buffers across all Rx FIFOs */
         1U /* Total number of configured Rx FIFOs */
     }
 };
