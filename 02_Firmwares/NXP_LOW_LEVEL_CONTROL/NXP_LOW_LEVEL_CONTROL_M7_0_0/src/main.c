@@ -1,6 +1,6 @@
 /**
  * \file            main.c
- * \brief           LAN9646 + Eth + FreeRTOS + lwIP
+ * \brief           LAN9646 + GMAC + lwIP - RGMII 100Mbps
  */
 
 #include <string.h>
@@ -14,15 +14,12 @@
 #include "OsIf.h"
 #include "Platform.h"
 #include "Gpt.h"
-#include "ethif_port.h"
 #include "Eth_43_GMAC.h"
 
 #include "lan9646.h"
-#include "lan9646_switch.h"
 #include "s32k3xx_soft_i2c.h"
 #include "log_debug.h"
 
-/* lwIP includes */
 #if defined(USING_OS_FREERTOS)
 #include "FreeRTOS.h"
 #include "task.h"
@@ -30,78 +27,29 @@
 
 #include "lwip/opt.h"
 #include "lwip/sys.h"
-#include "lwip/timeouts.h"
-#include "lwip/debug.h"
-#include "lwip/stats.h"
 #include "lwip/init.h"
 #include "lwip/tcpip.h"
 #include "lwip/netif.h"
-#include "lwip/api.h"
-#include "lwip/arch.h"
-#include "lwip/tcp.h"
-#include "lwip/udp.h"
-#include "lwip/dns.h"
 #include "lwip/dhcp.h"
-#include "lwip/autoip.h"
 #include "lwip/etharp.h"
 #include "netif/ethernet.h"
 #include "netifcfg.h"
 #include "lwipcfg.h"
 
 #if LWIP_HTTPD_APP
-#if LWIP_HTTPD_APP_NETCONN
-#include "apps/httpserver/httpserver-netconn.h"
-#else
 #include "lwip/apps/httpd.h"
 #endif
-#endif
-
 #if LWIP_LWIPERF_APP
 #include "lwip/apps/lwiperf.h"
 #endif
-
-#if LWIP_NETBIOS_APP
-#include "lwip/apps/netbiosns.h"
-#endif
-
-#if LWIP_SNTP_APP
-#include "lwip/apps/sntp.h"
-#endif
-
-#include "lwip/apps/mdns.h"
-
 #if LWIP_TCPECHO_APP
-#if LWIP_TCPECHO_APP_NETCONN
-#include "apps/tcpecho/tcpecho.h"
-#else
 #include "apps/tcpecho_raw/tcpecho_raw.h"
 #endif
-#endif
-
 #if LWIP_UDPECHO_APP
-#if LWIP_UDPECHO_APP_NETCONN
-#include "apps/udpecho/udpecho.h"
-#else
 #include "apps/udpecho_raw/udpecho_raw.h"
 #endif
-#endif
 
-#if !NO_SYS
-#include "apps/ccov/ccov.h"
-#endif
-
-#include "apps/netif_shutdown/netif_shutdown.h"
-
-#if NO_SYS
-#include "lwip/ip4_frag.h"
-#include "lwip/igmp.h"
-#endif
-
-#if defined(GMACIF_NUMBER)
-#include "gmacif.h"
-#else
 #include "ethif_port.h"
-#endif
 
 #define TAG "MAIN"
 
@@ -109,46 +57,41 @@
 #define LAN9646_SDA_CHANNEL     DioConf_DioChannel_SDA_CH
 #define LAN9646_I2C_SPEED       5U
 
-#ifndef LWIP_INIT_COMPLETE_CALLBACK
-#define LWIP_INIT_COMPLETE_CALLBACK 0
-#endif
+/*===========================================================================*/
+/*                          GLOBAL VARIABLES                                  */
+/*===========================================================================*/
 
 static lan9646_t g_lan9646;
 static softi2c_t g_i2c;
-
 struct netif network_interfaces[ETHIF_NUMBER];
 
 #if LWIP_DHCP
 struct dhcp netif_dhcp;
 #endif
 
-#if LWIP_AUTOIP
-struct autoip netif_autoip;
-#endif
-
-#if defined(USING_RTD)
 uint32 start_time = 0;
-#else
-uint32_t start_time = 0;
-#endif
-
 uint32 tests_timeout = 1200;
 
 extern void sys_init(void);
 
-#if defined(USING_OS_FREERTOS)
-void vApplicationMallocFailedHook(void);
-void vApplicationStackOverflowHook(TaskHandle_t pxTask, char *pcTaskName);
-#define mainQUEUE_SEND_TASK_PRIORITY (tskIDLE_PRIORITY + 1)
-#endif
+/*===========================================================================*/
+/*                          DELAY FUNCTION                                    */
+/*===========================================================================*/
 
-static void mainLoopTask(void *pvParameters);
+//static void delay_ms(uint32_t ms) {
+//    uint32_t start = OsIf_GetCounter(OSIF_COUNTER_DUMMY);
+//    uint32_t ticks = OsIf_MicrosToTicks(ms * 1000, OSIF_COUNTER_DUMMY);
+//    while ((OsIf_GetCounter(OSIF_COUNTER_DUMMY) - start) < ticks) {}
+//}
+static void delay_ms(uint32_t ms) {
+    for (volatile uint32_t i = 0; i < ms * 16000; i++) {
+        __asm("nop");
+    }
+}
+/*===========================================================================*/
+/*                          I2C CALLBACKS                                     */
+/*===========================================================================*/
 
-#if LWIP_INIT_COMPLETE_CALLBACK
-void tcpip_init_complete_callback(void);
-#endif
-
-/* I2C Callbacks */
 static lan9646r_t i2c_init_cb(void) {
     softi2c_pins_t pins = {
         .scl_channel = LAN9646_SCL_CHANNEL,
@@ -178,203 +121,158 @@ static lan9646r_t i2c_mem_read_cb(uint8_t dev_addr, uint16_t mem_addr,
            ? lan9646OK : lan9646ERR;
 }
 
-static void delay_ms(uint32_t ms) {
-    volatile uint32_t i, j;
-    for (i = 0; i < ms; i++) {
-        for (j = 0; j < 16000; j++) {
-            __asm("NOP");
-        }
-    }
-}
+/*===========================================================================*/
+/*                          DEBUG FUNCTIONS                                   */
+/*===========================================================================*/
 
-static void debug_rgmii_clocks(void)
-{
-    LOG_I(TAG, "=== RGMII Clock Debug ===");
-
-    /* DCM_GPR clock config */
-    uint32_t dcmrwf1 = IP_DCM_GPR->DCMRWF1;
-    uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
-
-    LOG_I(TAG, "DCMRWF1: 0x%08lX", (unsigned long)dcmrwf1);
-    LOG_I(TAG, "  MAC_CONF_SEL: %lu (0=MII 1=RMII 2=RGMII)",
-          (unsigned long)(dcmrwf1 & 0x7));
-
-    LOG_I(TAG, "DCMRWF3: 0x%08lX", (unsigned long)dcmrwf3);
-    LOG_I(TAG, "  RX_CLK_MUX_BYPASS: %lu", (unsigned long)(dcmrwf3 & 0x1));
-    LOG_I(TAG, "  TX_CLK_TERM_EN: %lu", (unsigned long)((dcmrwf3 >> 1) & 0x1));
-    LOG_I(TAG, "  RX_CLK_TERM_EN: %lu", (unsigned long)((dcmrwf3 >> 2) & 0x1));
-    LOG_I(TAG, "  TX_CLK_OUT_EN: %lu", (unsigned long)((dcmrwf3 >> 3) & 0x1));
-    LOG_I(TAG, "  TX_CLK_DLY_EN: %lu", (unsigned long)((dcmrwf3 >> 4) & 0x1));
-    LOG_I(TAG, "  RX_CLK_DLY_EN: %lu", (unsigned long)((dcmrwf3 >> 5) & 0x1));
-
-    /* MC_CGM Clock MUXes - ĐÚNG! */
-    LOG_I(TAG, "MC_CGM MUX_7_CSS: 0x%08lX (GMAC0_RX_CLK)",
-          (unsigned long)IP_MC_CGM->MUX_7_CSS);
-    LOG_I(TAG, "MC_CGM MUX_8_CSS: 0x%08lX (GMAC0_TX_CLK)",
-          (unsigned long)IP_MC_CGM->MUX_8_CSS);
-    LOG_I(TAG, "MC_CGM MUX_9_CSS: 0x%08lX (GMAC0_TS_CLK)",
-          (unsigned long)IP_MC_CGM->MUX_9_CSS);
-
-    /* Dividers */
-    LOG_I(TAG, "MC_CGM MUX_8_DC_0: 0x%08lX (GMAC0_TX_CLK divider)",
-          (unsigned long)IP_MC_CGM->MUX_8_DC_0);
-
-    /* Check LAN9646 clock output */
-    uint8_t lan_clk_ctrl;
-    lan9646_read_reg8(&g_lan9646, 0x0024, &lan_clk_ctrl);
-    LOG_I(TAG, "LAN9646 Output Clock (0x0024): 0x%02X", lan_clk_ctrl);
-    LOG_I(TAG, "  SYNCLKO Enable: %d", (lan_clk_ctrl >> 4) & 1);
-    LOG_I(TAG, "  Frequency: %s", (lan_clk_ctrl & 0x08) ? "125MHz" : "25MHz");
-    LOG_I(TAG, "  Source: %d (0=XI, 1-4=Port RX)", lan_clk_ctrl & 0x7);
-}
-
-static void debug_gmac_clocks(void)
-{
+static void debug_gmac_clocks(void) {
     LOG_I(TAG, "=== GMAC Clock Source ===");
-
-    /* MUX_8 = GMAC0_TX_CLK */
     uint32_t mux8_css = IP_MC_CGM->MUX_8_CSS;
     uint32_t mux8_dc0 = IP_MC_CGM->MUX_8_DC_0;
 
-    LOG_I(TAG, "MUX_8_CSS: 0x%08lX", (unsigned long)mux8_css);
-    LOG_I(TAG, "  GMAC TX Clock Select: %lu", (unsigned long)((mux8_css >> 24) & 0x3F));
-    LOG_I(TAG, "  Switch Status: 0x%lX", (unsigned long)(mux8_css & 0xFFFFFF));
+    uint32_t source = (mux8_css >> 24) & 0x3F;
+    uint32_t div_en = (mux8_dc0 >> 31) & 1;
+    uint32_t div_val = (mux8_dc0 & 0xFF) + 1;
 
-    LOG_I(TAG, "MUX_8_DC_0: 0x%08lX", (unsigned long)mux8_dc0);
-    LOG_I(TAG, "  Divider Enable: %lu", (unsigned long)((mux8_dc0 >> 31) & 1));
-    LOG_I(TAG, "  Divider: %lu", (unsigned long)(mux8_dc0 & 0xFF));
+    LOG_I(TAG, "MUX_8_CSS: 0x%08lX (Source=%lu)", (unsigned long)mux8_css, (unsigned long)source);
+    LOG_I(TAG, "MUX_8_DC_0: 0x%08lX (Enable=%lu, Divider=%lu)",
+          (unsigned long)mux8_dc0, (unsigned long)div_en, (unsigned long)div_val);
 
-    /* MUX_7 = GMAC0_RX_CLK */
-    uint32_t mux7_css = IP_MC_CGM->MUX_7_CSS;
-    LOG_I(TAG, "MUX_7_CSS: 0x%08lX (GMAC RX Clock)", (unsigned long)mux7_css);
+    /* Tính tần số thực tế - giả sử source 12 = 125MHz */
+    if (div_en) {
+        LOG_I(TAG, "TX CLK = 125MHz / %lu = %lu MHz",
+              (unsigned long)div_val, (unsigned long)(125 / div_val));
+    }
 }
 
-static void debug_lan9646_detail(void)
-{
-    LOG_I(TAG, "=== LAN9646 Port 6 Detail ===");
+static void debug_gmac_status(void) {
+    LOG_I(TAG, "=== GMAC Status ===");
+    uint32_t mac_cfg = IP_GMAC_0->MAC_CONFIGURATION;
+    uint32_t dma_tx = IP_GMAC_0->DMA_CH0_TX_CONTROL;
+    uint32_t dma_rx = IP_GMAC_0->DMA_CH0_RX_CONTROL;
+    uint32_t dma_stat = IP_GMAC_0->DMA_DEBUG_STATUS0;
 
+    LOG_I(TAG, "MAC_CFG: 0x%08lX [TE=%lu RE=%lu PS=%lu FES=%lu]",
+          (unsigned long)mac_cfg,
+          (mac_cfg >> 1) & 1, (mac_cfg >> 0) & 1,
+          (mac_cfg >> 15) & 1, (mac_cfg >> 14) & 1);
+    LOG_I(TAG, "DMA_TX: 0x%08lX [ST=%lu]", (unsigned long)dma_tx, dma_tx & 1);
+    LOG_I(TAG, "DMA_RX: 0x%08lX [SR=%lu]", (unsigned long)dma_rx, dma_rx & 1);
+    LOG_I(TAG, "TX Packets: %lu", IP_GMAC_0->TX_PACKET_COUNT_GOOD);
+    LOG_I(TAG, "RX Packets: %lu", IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
+    LOG_I(TAG, "RX CRC Err: %lu", IP_GMAC_0->RX_CRC_ERROR_PACKETS);
+    LOG_I(TAG, "DMA Status: 0x%08lX", (unsigned long)dma_stat);
+}
+
+static void debug_lan9646_detail(void) {
+    LOG_I(TAG, "=== LAN9646 Port 6 Detail ===");
     uint8_t xmii_ctrl0, xmii_ctrl1, port_status, mstp_state;
     uint32_t membership;
 
-    /* XMII Control */
     lan9646_read_reg8(&g_lan9646, 0x6300, &xmii_ctrl0);
     lan9646_read_reg8(&g_lan9646, 0x6301, &xmii_ctrl1);
-    LOG_I(TAG, "XMII_CTRL0: 0x%02X", xmii_ctrl0);
-    LOG_I(TAG, "XMII_CTRL1: 0x%02X [TX_DLY=%d RX_DLY=%d]",
-          xmii_ctrl1, (xmii_ctrl1 >> 3) & 1, (xmii_ctrl1 >> 4) & 1);
-
-    /* Port Status */
     lan9646_read_reg8(&g_lan9646, 0x6030, &port_status);
+    lan9646_read_reg8(&g_lan9646, 0x6B04, &mstp_state);
+    lan9646_read_reg32(&g_lan9646, 0x6A04, &membership);
+
+    LOG_I(TAG, "XMII_CTRL0: 0x%02X", xmii_ctrl0);
+    LOG_I(TAG, "XMII_CTRL1: 0x%02X [TX_DLY=%d RX_DLY=%d Speed1G=%d]",
+          xmii_ctrl1, (xmii_ctrl1 >> 3) & 1, (xmii_ctrl1 >> 4) & 1, !(xmii_ctrl1 & 0x40));
     LOG_I(TAG, "PORT_STATUS: 0x%02X [Speed=%d Duplex=%d]",
           port_status, (port_status >> 3) & 3, (port_status >> 2) & 1);
-
-    /* MSTP State */
-    lan9646_read_reg8(&g_lan9646, 0x6B04, &mstp_state);
-    LOG_I(TAG, "MSTP_STATE: 0x%02X [TX=%d RX=%d Learn=%d]",
-          mstp_state,
-          (mstp_state >> 2) & 1,
-          (mstp_state >> 1) & 1,
-          !(mstp_state & 1));
-
-    /* Membership */
-    lan9646_read_reg32(&g_lan9646, 0x6A04, &membership);
+    LOG_I(TAG, "MSTP_STATE: 0x%02X [TX=%d RX=%d]",
+          mstp_state, (mstp_state >> 2) & 1, (mstp_state >> 1) & 1);
     LOG_I(TAG, "MEMBERSHIP: 0x%08lX", (unsigned long)membership);
-
-    /* MAC Control */
-    uint8_t mac_ctrl0, mac_ctrl1;
-    lan9646_read_reg8(&g_lan9646, 0x6400, &mac_ctrl0);
-    lan9646_read_reg8(&g_lan9646, 0x6401, &mac_ctrl1);
-    LOG_I(TAG, "MAC_CTRL0: 0x%02X", mac_ctrl0);
-    LOG_I(TAG, "MAC_CTRL1: 0x%02X", mac_ctrl1);
-
-    /* Switch Operation */
-    uint8_t sw_op;
-    lan9646_read_reg8(&g_lan9646, 0x0300, &sw_op);
-    LOG_I(TAG, "SWITCH_OP: 0x%02X", sw_op);
-
-    /* LUE Control */
-    uint8_t lue_ctrl0;
-    lan9646_read_reg8(&g_lan9646, 0x0310, &lue_ctrl0);
-    LOG_I(TAG, "LUE_CTRL0: 0x%02X", lue_ctrl0);
 }
 
-static void debug_lan9646_mib(void)
-{
+/* MIB Counter indices - CHÍNH XÁC theo datasheet */
+#define MIB_RX_BROADCAST        0x0A
+#define MIB_RX_UNICAST          0x0C
+#define MIB_TX_BROADCAST        0x18
+#define MIB_TX_UNICAST          0x1A
+static uint32_t read_mib_counter(uint8_t port, uint8_t index) {
+    uint16_t base = (uint16_t)port << 12;
+    uint32_t ctrl, data = 0;
+    uint32_t timeout = 1000;
+
+    /* Set MIB Index [23:16] and Read Enable [25] */
+    ctrl = ((uint32_t)index << 16) | 0x02000000UL;
+    lan9646_write_reg32(&g_lan9646, base | 0x0500, ctrl);
+
+    /* Poll until bit 25 auto-clears */
+    do {
+        lan9646_read_reg32(&g_lan9646, base | 0x0500, &ctrl);
+        if (--timeout == 0) break;
+    } while (ctrl & 0x02000000UL);
+
+    /* Read counter data from 0xN504 */
+    lan9646_read_reg32(&g_lan9646, base | 0x0504, &data);
+    return data;
+}
+
+static void debug_lan9646_mib(void) {
     LOG_I(TAG, "=== LAN9646 Port 6 MIB ===");
 
-    uint32_t ctrl, data;
+    uint32_t tx_bc = read_mib_counter(6, 0x03);
+    uint32_t tx_uc = read_mib_counter(6, 0x05);
+    uint32_t rx_bc = read_mib_counter(6, 0x22);
+    uint32_t rx_uc = read_mib_counter(6, 0x24);
 
-    /* TX Broadcast */
-    ctrl = (0x63 << 16) | 0x02000000;
-    lan9646_write_reg32(&g_lan9646, 0x6500, ctrl);
-    delay_ms(1);
-    lan9646_read_reg32(&g_lan9646, 0x6504, &data);
-    LOG_I(TAG, "P6 TX Broadcast: %lu", (unsigned long)data);
-
-    /* TX Unicast */
-    ctrl = (0x65 << 16) | 0x02000000;
-    lan9646_write_reg32(&g_lan9646, 0x6500, ctrl);
-    delay_ms(1);
-    lan9646_read_reg32(&g_lan9646, 0x6504, &data);
-    LOG_I(TAG, "P6 TX Unicast: %lu", (unsigned long)data);
-
-    /* RX Broadcast */
-    ctrl = (0x0A << 16) | 0x02000000;
-    lan9646_write_reg32(&g_lan9646, 0x6500, ctrl);
-    delay_ms(1);
-    lan9646_read_reg32(&g_lan9646, 0x6504, &data);
-    LOG_I(TAG, "P6 RX Broadcast: %lu", (unsigned long)data);
-
-    /* RX Unicast */
-    ctrl = (0x0C << 16) | 0x02000000;
-    lan9646_write_reg32(&g_lan9646, 0x6500, ctrl);
-    delay_ms(1);
-    lan9646_read_reg32(&g_lan9646, 0x6504, &data);
-    LOG_I(TAG, "P6 RX Unicast: %lu", (unsigned long)data);
-}
-static void debug_gmac_status(void)
-{
-    LOG_I(TAG, "=== GMAC Status ===");
-
-    /* MAC config */
-    uint32_t mac_cfg = IP_GMAC_0->MAC_CONFIGURATION;
-    LOG_I(TAG, "MAC_CFG: 0x%08lX [TE=%d RE=%d]",
-          (unsigned long)mac_cfg,
-          (int)((mac_cfg >> 1) & 1),  /* TE - TX Enable */
-          (int)((mac_cfg >> 0) & 1)); /* RE - RX Enable */
-
-    /* DMA status */
-    uint32_t dma_ch0_tx = IP_GMAC_0->DMA_CH0_TX_CONTROL;
-    uint32_t dma_ch0_rx = IP_GMAC_0->DMA_CH0_RX_CONTROL;
-    LOG_I(TAG, "DMA_TX: 0x%08lX [ST=%d]", (unsigned long)dma_ch0_tx, (int)(dma_ch0_tx & 1));
-    LOG_I(TAG, "DMA_RX: 0x%08lX [SR=%d]", (unsigned long)dma_ch0_rx, (int)(dma_ch0_rx & 1));
-
-    /* TX/RX counters */
-    LOG_I(TAG, "TX Packets: %lu", (unsigned long)IP_GMAC_0->TX_PACKET_COUNT_GOOD_BAD);
-    LOG_I(TAG, "RX Packets: %lu", (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
-    LOG_I(TAG, "RX CRC Err: %lu", (unsigned long)IP_GMAC_0->RX_CRC_ERROR_PACKETS);
-
-    /* DMA running status */
-    uint32_t dma_status = IP_GMAC_0->DMA_CH0_STATUS;
-    LOG_I(TAG, "DMA Status: 0x%08lX [TPS=%lu RPS=%lu]",
-          (unsigned long)dma_status,
-          (unsigned long)((dma_status >> 12) & 0xF),  /* TX Process State */
-          (unsigned long)((dma_status >> 8) & 0xF));  /* RX Process State */
+    LOG_I(TAG, "P6 TX Broadcast: %lu", (unsigned long)tx_bc);
+    LOG_I(TAG, "P6 TX Unicast: %lu", (unsigned long)tx_uc);
+    LOG_I(TAG, "P6 RX Broadcast: %lu", (unsigned long)rx_bc);
+    LOG_I(TAG, "P6 RX Unicast: %lu", (unsigned long)rx_uc);
 }
 
-static lan9646r_t configure_port6_rgmii_1g(void) {
-    uint8_t ctrl0, ctrl1;
+static void debug_rgmii_clocks(void) {
+    LOG_I(TAG, "=== RGMII Clock Debug ===");
+    uint32_t dcmrwf1 = IP_DCM_GPR->DCMRWF1;
+    uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
 
-    LOG_I(TAG, "Configuring Port 6 for RGMII 1G...");
+    LOG_I(TAG, "DCMRWF1: 0x%08lX [MAC_CONF_SEL=%lu]",
+          (unsigned long)dcmrwf1, dcmrwf1 & 0x7);
+    LOG_I(TAG, "DCMRWF3: 0x%08lX", (unsigned long)dcmrwf3);
+    LOG_I(TAG, "  RX_CLK_MUX_BYPASS: %lu", dcmrwf3 & 1);
+    LOG_I(TAG, "  TX_CLK_OUT_EN: %lu", (dcmrwf3 >> 3) & 1);
+}
 
-    /* XMII Control - THỬ ENABLE TX/RX DELAY */
-    ctrl0 = 0x68;  /* Full duplex, 1G, TX/RX FC enabled */
-    ctrl1 = 0x18;  /* TX_DLY=ON (bit3), RX_DLY=ON (bit4) */
+/*===========================================================================*/
+/*                          LAN9646 CONFIGURATION - 100Mbps                   */
+/*===========================================================================*/
+static void debug_lan9646_all_ports_mib(void) {
+    LOG_I(TAG, "=== LAN9646 All Ports MIB ===");
+
+    for (int port = 1; port <= 4; port++) {
+        uint32_t tx_uc = read_mib_counter(port, MIB_TX_UNICAST);
+        uint32_t tx_bc = read_mib_counter(port, MIB_TX_BROADCAST);
+        uint32_t rx_uc = read_mib_counter(port, MIB_RX_UNICAST);
+        uint32_t rx_bc = read_mib_counter(port, MIB_RX_BROADCAST);
+        LOG_I(TAG, "Port %d: TX(uc=%lu bc=%lu) RX(uc=%lu bc=%lu)",
+              port, (unsigned long)tx_uc, (unsigned long)tx_bc,
+              (unsigned long)rx_uc, (unsigned long)rx_bc);
+    }
+
+    uint32_t tx6_uc = read_mib_counter(6, MIB_TX_UNICAST);
+    uint32_t tx6_bc = read_mib_counter(6, MIB_TX_BROADCAST);
+    uint32_t rx6_uc = read_mib_counter(6, MIB_RX_UNICAST);
+    uint32_t rx6_bc = read_mib_counter(6, MIB_RX_BROADCAST);
+    LOG_I(TAG, "Port 6: TX(uc=%lu bc=%lu) RX(uc=%lu bc=%lu)",
+          (unsigned long)tx6_uc, (unsigned long)tx6_bc,
+          (unsigned long)rx6_uc, (unsigned long)rx6_bc);
+}
+
+static lan9646r_t configure_port6_rgmii_100m(void) {
+    LOG_I(TAG, "Configuring Port 6 for RGMII 100M...");
+
+    uint8_t ctrl0 = 0x78;
+    uint8_t ctrl1 = 0x40;
 
     lan9646_write_reg8(&g_lan9646, 0x6300, ctrl0);
     lan9646_write_reg8(&g_lan9646, 0x6301, ctrl1);
 
-    LOG_I(TAG, "XMII: CTRL0=0x%02X CTRL1=0x%02X (TX_DLY=ON RX_DLY=ON)", ctrl0, ctrl1);
+    LOG_I(TAG, "XMII: CTRL0=0x%02X CTRL1=0x%02X", ctrl0, ctrl1);
+    LOG_I(TAG, "  TX_DLY=%d, RX_DLY=%d", (ctrl1 >> 3) & 1, (ctrl1 >> 4) & 1);
+
 
     /* Disable VLAN */
     uint8_t lue_ctrl0;
@@ -392,22 +290,18 @@ static lan9646r_t configure_port6_rgmii_1g(void) {
     lan9646_write_reg32(&g_lan9646, 0x3A04, 0x6B);
     lan9646_write_reg32(&g_lan9646, 0x4A04, 0x67);
 
-    /* MSTP State */
+    /* MSTP State - Enable TX/RX */
     for (int port = 1; port <= 4; port++) {
         uint16_t base = (uint16_t)port << 12;
         lan9646_write_reg8(&g_lan9646, base | 0x0B01, 0x00);
         lan9646_write_reg8(&g_lan9646, base | 0x0B04, 0x07);
     }
-
     lan9646_write_reg8(&g_lan9646, 0x6B01, 0x00);
     lan9646_write_reg8(&g_lan9646, 0x6B04, 0x07);
 
-    /* Verify */
-    delay_ms(10);
-    debug_lan9646_detail();
-
     return lan9646OK;
 }
+
 
 static void lan9646_init_device(void) {
     uint16_t chip_id;
@@ -438,24 +332,75 @@ static void lan9646_init_device(void) {
     LOG_I(TAG, "Chip: 0x%04X Rev:%d", chip_id, revision);
 
     delay_ms(100);
-    configure_port6_rgmii_1g();
-    delay_ms(500);
+    configure_port6_rgmii_100m();
+    delay_ms(100);
+    debug_lan9646_detail();
 
-    LOG_I(TAG, "LAN9646 ready");
+    LOG_I(TAG, "LAN9646 ready (100Mbps)");
 }
 
+/*===========================================================================*/
+/*                          GMAC CONFIGURATION - 100Mbps                      */
+/*===========================================================================*/
+
+static void configure_gmac_100m(void) {
+    LOG_I(TAG, "Configuring GMAC for 100Mbps...");
+
+    uint32_t mac_cfg = IP_GMAC_0->MAC_CONFIGURATION;
+    mac_cfg &= ~((1U << 15) | (1U << 14) | (1U << 13));
+    mac_cfg |= (1U << 15);  /* PS = 1 */
+    mac_cfg |= (1U << 14);  /* FES = 1 */
+    mac_cfg |= (1U << 13);  /* DM = 1 */
+    mac_cfg |= (1U << 11);  /* ECRSFD */
+    IP_GMAC_0->MAC_CONFIGURATION = mac_cfg;
+
+    uint32_t ext_cfg = IP_GMAC_0->MAC_EXT_CONFIGURATION;
+    ext_cfg |= (1U << 12);
+    IP_GMAC_0->MAC_EXT_CONFIGURATION = ext_cfg;
+
+    LOG_I(TAG, "MAC_CFG: 0x%08lX", (unsigned long)IP_GMAC_0->MAC_CONFIGURATION);
+}
+
+static void configure_gmac_tx_clock_100m(void) {
+    LOG_I(TAG, "Configuring GMAC TX Clock for 25MHz...");
+
+    /* Disable trước khi thay đổi */
+    IP_MC_CGM->MUX_8_DC_0 = 0x00000000;
+    for (volatile int i = 0; i < 1000; i++);
+
+    /* 125MHz / 5 = 25MHz → divider value = 4 */
+    IP_MC_CGM->MUX_8_DC_0 = 0x80000004;
+
+    LOG_I(TAG, "MUX_8_DC_0: 0x%08lX", (unsigned long)IP_MC_CGM->MUX_8_DC_0);
+}
+
+static void configure_gmac_rgmii_delay(void) {
+    LOG_I(TAG, "Configuring GMAC RGMII...");
+
+    /* DCMRWF1: Set MAC_CONF_SEL = 2 (RGMII) */
+    uint32_t dcmrwf1 = IP_DCM_GPR->DCMRWF1;
+    dcmrwf1 = (dcmrwf1 & ~0x7U) | 2U;
+    IP_DCM_GPR->DCMRWF1 = dcmrwf1;
+
+    /* DCMRWF3: Chỉ cần bypass và output enable, KHÔNG có delay bits */
+    uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
+    dcmrwf3 |= (1U << 0);   /* RX_CLK_MUX_BYPASS = 1 */
+    dcmrwf3 |= (1U << 3);   /* TX_CLK_OUT_EN = 1 */
+    /* Bit 1,2 là termination, không phải delay */
+    IP_DCM_GPR->DCMRWF3 = dcmrwf3;
+
+    LOG_I(TAG, "DCMRWF1: 0x%08lX", (unsigned long)IP_DCM_GPR->DCMRWF1);
+    LOG_I(TAG, "DCMRWF3: 0x%08lX", (unsigned long)IP_DCM_GPR->DCMRWF3);
+}
+
+/*===========================================================================*/
+/*                          NETWORK INTERFACE                                 */
+/*===========================================================================*/
+
 #if LWIP_NETIF_STATUS_CALLBACK
-static void status_callback(struct netif *state_netif)
-{
+static void status_callback(struct netif *state_netif) {
     if (netif_is_up(state_netif)) {
-#if LWIP_IPV4
         LOG_I(TAG, "Network UP - IP: %s", ip4addr_ntoa(netif_ip4_addr(state_netif)));
-#else
-        LOG_I(TAG, "Network UP");
-#endif
-#if LWIP_MDNS_RESPONDER
-        mdns_resp_netif_settings_changed(state_netif);
-#endif
     } else {
         LOG_W(TAG, "Network DOWN");
     }
@@ -463,46 +408,33 @@ static void status_callback(struct netif *state_netif)
 #endif
 
 #if LWIP_NETIF_LINK_CALLBACK
-static void link_callback(struct netif *state_netif)
-{
-    if (netif_is_link_up(state_netif)) {
-        LOG_I(TAG, "Link UP");
-    } else {
-        LOG_W(TAG, "Link DOWN");
-    }
+static void link_callback(struct netif *state_netif) {
+    LOG_I(TAG, "Link %s", netif_is_link_up(state_netif) ? "UP" : "DOWN");
 }
 #endif
 
-static void interface_init(void)
-{
+static void interface_init(void) {
     LOG_I(TAG, "Initializing network interfaces...");
 
     for (int i = 0; i < ETHIF_NUMBER; i++) {
-#if LWIP_IPV4
         ip4_addr_t ipaddr, netmask, gw;
-#endif
-#if LWIP_DHCP || LWIP_AUTOIP
-        err_t err;
-#endif
 
-#if LWIP_IPV4
         ip4_addr_set_zero(&gw);
         ip4_addr_set_zero(&ipaddr);
         ip4_addr_set_zero(&netmask);
 
         if ((!netif_cfg[i]->has_dhcp) && (!netif_cfg[i]->has_auto_ip)) {
-            IP4_ADDR((&gw), netif_cfg[i]->gw[0], netif_cfg[i]->gw[1],
+            IP4_ADDR(&gw, netif_cfg[i]->gw[0], netif_cfg[i]->gw[1],
                      netif_cfg[i]->gw[2], netif_cfg[i]->gw[3]);
-            IP4_ADDR((&ipaddr), netif_cfg[i]->ip_addr[0], netif_cfg[i]->ip_addr[1],
+            IP4_ADDR(&ipaddr, netif_cfg[i]->ip_addr[0], netif_cfg[i]->ip_addr[1],
                      netif_cfg[i]->ip_addr[2], netif_cfg[i]->ip_addr[3]);
-            IP4_ADDR((&netmask), netif_cfg[i]->netmask[0], netif_cfg[i]->netmask[1],
+            IP4_ADDR(&netmask, netif_cfg[i]->netmask[0], netif_cfg[i]->netmask[1],
                      netif_cfg[i]->netmask[2], netif_cfg[i]->netmask[3]);
 
             LOG_I(TAG, "Static IP: %d.%d.%d.%d",
                   netif_cfg[i]->ip_addr[0], netif_cfg[i]->ip_addr[1],
                   netif_cfg[i]->ip_addr[2], netif_cfg[i]->ip_addr[3]);
         }
-#endif
 
 #if NO_SYS
         netif_set_default(netif_add(&network_interfaces[i], &ipaddr, &netmask,
@@ -513,31 +445,15 @@ static void interface_init(void)
 #endif
 
 #if LWIP_IPV6
-        if (netif_cfg[i]->has_IPv6) {
-            netif_create_ip6_linklocal_address(&network_interfaces[i], 1);
-            LOG_I(TAG, "IPv6 link-local created");
-        }
+        netif_create_ip6_linklocal_address(&network_interfaces[i], 1);
+        LOG_I(TAG, "IPv6 link-local created");
 #endif
 
 #if LWIP_NETIF_STATUS_CALLBACK
         netif_set_status_callback(&network_interfaces[i], status_callback);
 #endif
-
 #if LWIP_NETIF_LINK_CALLBACK
         netif_set_link_callback(&network_interfaces[i], link_callback);
-#endif
-
-#if LWIP_AUTOIP
-        if (netif_cfg[i]->has_auto_ip) {
-            autoip_set_struct(&network_interfaces[i], &netif_autoip);
-        }
-#endif
-
-#if LWIP_DHCP
-        if (netif_cfg[i]->has_dhcp) {
-            dhcp_set_struct(&network_interfaces[i], &netif_dhcp);
-            LOG_I(TAG, "DHCP enabled");
-        }
 #endif
 
         netif_set_up(&network_interfaces[i]);
@@ -545,112 +461,53 @@ static void interface_init(void)
 
 #if LWIP_DHCP
         if (netif_cfg[i]->has_dhcp) {
-            err = dhcp_start((struct netif *)&network_interfaces[i]);
-            if (err == ERR_OK) {
-                LOG_I(TAG, "DHCP started");
-            } else {
-                LOG_E(TAG, "DHCP failed: %d", err);
-            }
-        }
-#endif
-
-#if LWIP_AUTOIP
-        else if (netif_cfg[i]->has_auto_ip) {
-            err = autoip_start(&network_interfaces[i]);
-            if (err == ERR_OK) {
-                LOG_I(TAG, "AutoIP started");
-            } else {
-                LOG_E(TAG, "AutoIP failed: %d", err);
-            }
+            dhcp_start(&network_interfaces[i]);
+            LOG_I(TAG, "DHCP started");
         }
 #endif
     }
 }
 
-#if LWIP_LWIPERF_APP
-static void lwiperf_report(void *arg, enum lwiperf_report_type report_type,
-                           const ip_addr_t* local_addr, u16_t local_port,
-                           const ip_addr_t* remote_addr, u16_t remote_port,
-                           u32_t bytes_transferred, u32_t ms_duration,
-                           u32_t bandwidth_kbitpsec)
-{
-    LWIP_UNUSED_ARG(arg);
-    LWIP_UNUSED_ARG(local_addr);
-    LWIP_UNUSED_ARG(local_port);
+/*===========================================================================*/
+/*                          APPLICATIONS                                      */
+/*===========================================================================*/
 
-    LOG_I(TAG, "IPERF: type=%d, remote=%s:%d, bytes=%lu, %lukbps",
-          (int)report_type, ipaddr_ntoa(remote_addr), (int)remote_port,
-          bytes_transferred, bandwidth_kbitpsec);
-}
-#endif
-
-static void apps_init(void)
-{
+static void apps_init(void) {
     LOG_I(TAG, "Initializing applications...");
 
-#if LWIP_NETBIOS_APP && LWIP_UDP
-    netbiosns_init();
-#if LWIP_NETIF_HOSTNAME
-    netbiosns_set_name(netif_default->hostname);
-#else
-    netbiosns_set_name("NETBIOSLWIPDEV");
-#endif
-    LOG_I(TAG, "NetBIOS initialized");
-#endif
-
 #if LWIP_HTTPD_APP && LWIP_TCP
-#if LWIP_HTTPD_APP_NETCONN
-    http_server_netconn_init();
-#else
     httpd_init();
-#endif
     LOG_I(TAG, "HTTP server initialized");
 #endif
 
 #if LWIP_TCPECHO_APP
-#if LWIP_NETCONN && LWIP_TCPECHO_APP_NETCONN
-    tcpecho_init();
-#else
     tcpecho_raw_init();
-#endif
     LOG_I(TAG, "TCP Echo initialized");
 #endif
 
 #if LWIP_UDPECHO_APP
-#if LWIP_NETCONN && LWIP_UDPECHO_APP_NETCONN
-    for (int i = 0; i < ETHIF_NUMBER; i++) {
-        udpecho_init(&network_interfaces[i]);
-    }
-#else
     udpecho_raw_init();
-#endif
     LOG_I(TAG, "UDP Echo initialized");
 #endif
 
 #if LWIP_LWIPERF_APP
-    (void)lwiperf_start_tcp_server_default(lwiperf_report, NULL);
+    lwiperf_start_tcp_server_default(NULL, NULL);
     LOG_I(TAG, "IPERF server initialized");
-#endif
-
-#if !NO_SYS
-    for (int i = 0; i < ETHIF_NUMBER; i++) {
-        Coverage_init(&network_interfaces[i]);
-    }
 #endif
 }
 
-static void test_init(void* arg)
-{
-#if NO_SYS
-    LWIP_UNUSED_ARG(arg);
-#else
+/*===========================================================================*/
+/*                          MAIN TASK                                         */
+/*===========================================================================*/
+
+static void test_init(void* arg) {
+#if !NO_SYS
     sys_sem_t* init_sem = (sys_sem_t*)arg;
-    LWIP_ASSERT("init_sem != NULL", init_sem != NULL);
+#else
+    (void)arg;
 #endif
 
-    start_time = OsIf_GetMilliseconds();
-    start_time = start_time / (double)1000;
-
+    start_time = OsIf_GetMilliseconds() / 1000;
     LOG_I(TAG, "test_init started");
 
     interface_init();
@@ -660,7 +517,6 @@ static void test_init(void* arg)
     LOG_I(TAG, "GMAC SetControllerMode: %d", ret);
 
     apps_init();
-
     LOG_I(TAG, "test_init complete");
 
 #if !NO_SYS
@@ -668,46 +524,35 @@ static void test_init(void* arg)
 #endif
 }
 
-static void mainLoopTask(void* pvParameters)
-{
+static void mainLoopTask(void* pvParameters) {
     (void)pvParameters;
-
     LOG_I(TAG, "mainLoopTask started");
 
 #if !NO_SYS
     err_t err;
     sys_sem_t init_sem;
-
     err = sys_sem_new(&init_sem, 0);
-    LWIP_ASSERT("failed to create init_sem", err == (err_t)ERR_OK);
-    LWIP_UNUSED_ARG(err);
+    LWIP_ASSERT("failed to create init_sem", err == ERR_OK);
+    (void)err;
 
     LOG_I(TAG, "Initializing TCP/IP stack...");
     tcpip_init(test_init, (void*)&init_sem);
-
-    (void)sys_sem_wait(&init_sem);
+    sys_sem_wait(&init_sem);
     sys_sem_free(&init_sem);
-
-#if (LWIP_SOCKET || LWIP_NETCONN) && LWIP_NETCONN_SEM_PER_THREAD
-    netconn_thread_init();
-#endif
 #else
     sys_init();
     lwip_init();
     test_init(NULL);
 #endif
 
-#if LWIP_INIT_COMPLETE_CALLBACK
-    tcpip_init_complete_callback();
-#endif
-
     LOG_I(TAG, "Entering main loop...");
-    /* Debug GMAC ngay sau khi start */
+
     delay_ms(1000);
     debug_gmac_status();
-    debug_lan9646_mib();
+    debug_lan9646_all_ports_mib();
     debug_lan9646_detail();
     debug_rgmii_clocks();
+
     uint32_t last_print = 0;
 
     while (1) {
@@ -717,64 +562,50 @@ static void mainLoopTask(void* pvParameters)
         sys_msleep(5000);
 #endif
 
-#if defined(USING_RTD)
-        uint32 time_now = OsIf_GetMilliseconds() / 1000;
-#else
-        uint32_t time_now = OSIF_GetMilliseconds() / 1000;
-#endif
+        uint32_t time_now = OsIf_GetMilliseconds() / 1000;
 
         if (time_now - last_print >= 10) {
             last_print = time_now;
             LOG_I(TAG, "--- Stats at %lu sec ---", (unsigned long)time_now);
             LOG_I(TAG, "IP: %s", ip4addr_ntoa(netif_ip4_addr(&network_interfaces[0])));
-#if LWIP_STATS
-            LOG_I(TAG, "Link RX: %u, TX: %u", lwip_stats.link.recv, lwip_stats.link.xmit);
-#endif
-            /* Debug GMAC định kỳ */
-         	debug_gmac_status();
-         	debug_lan9646_mib();
+            debug_gmac_status();
+            debug_lan9646_all_ports_mib();
         }
 
         if (time_now - start_time >= tests_timeout) {
-            LOG_W(TAG, "Test timeout, shutting down...");
-            for (int i = 0; i < ETHIF_NUMBER; i++) {
-                ETHIF_SHUTDOWN(&network_interfaces[i]);
-            }
-            end_tcpip_execution(NULL);
+            LOG_W(TAG, "Test timeout");
+            break;
         }
     }
 }
 
-void start_example(void)
-{
+static void start_example(void) {
     LOG_I(TAG, "");
     LOG_I(TAG, "========================================");
-    LOG_I(TAG, "  lwIP + LAN9646 + GMAC Starting...");
+    LOG_I(TAG, "  lwIP + LAN9646 + GMAC (100Mbps)");
     LOG_I(TAG, "========================================");
 
 #if defined(USING_OS_FREERTOS)
-    BaseType_t ret = xTaskCreate(mainLoopTask, "mainloop", 512U, NULL,
-                                  DEFAULT_THREAD_PRIO, NULL);
-    LWIP_ASSERT("failed to create mainloop", ret == pdPASS);
-
+    xTaskCreate(mainLoopTask, "mainloop", 512U, NULL, tskIDLE_PRIORITY + 1, NULL);
     LOG_I(TAG, "Starting FreeRTOS scheduler...");
     vTaskStartScheduler();
-
     for (;;) {}
 #else
     mainLoopTask(NULL);
 #endif
 }
 
-void device_init(void)
-{
+/*===========================================================================*/
+/*                          DEVICE INIT                                       */
+/*===========================================================================*/
+
+static void device_init(void) {
     OsIf_Init(NULL_PTR);
     Port_Init(NULL_PTR);
 
     Mcu_Init(NULL_PTR);
     Mcu_InitClock(McuClockSettingConfig_0);
-
-    while (Mcu_GetPllStatus() != MCU_PLL_LOCKED){};
+    while (Mcu_GetPllStatus() != MCU_PLL_LOCKED) {}
     Mcu_DistributePllClock();
     Mcu_SetMode(McuModeSettingConf_0);
 
@@ -790,35 +621,16 @@ void device_init(void)
     Uart_Init(NULL_PTR);
     log_init();
 
-    /* === Check clock setup === */
     debug_gmac_clocks();
 
     LOG_I(TAG, "Setting DCM for RGMII...");
-
-    uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
-    dcmrwf3 |= (1U << 0);  /* RX_CLK_MUX_BYPASS */
-    dcmrwf3 |= (1U << 3);  /* TX_CLK_OUT_EN */
-    IP_DCM_GPR->DCMRWF3 = dcmrwf3;
-
-    uint32_t dcmrwf1 = IP_DCM_GPR->DCMRWF1;
-    dcmrwf1 = (dcmrwf1 & ~0x7U) | 2U;
-    IP_DCM_GPR->DCMRWF1 = dcmrwf1;
+    configure_gmac_rgmii_delay();  // <-- GỌI Ở ĐÂY
 
     lan9646_init_device();
+    configure_gmac_tx_clock_100m();
 
     Eth_Init(NULL_PTR);
-
-    LOG_I(TAG, "Fixing MAC registers...");
-
-    uint32_t ext_cfg = IP_GMAC_0->MAC_EXT_CONFIGURATION;
-    ext_cfg |= (1U << 12);
-    IP_GMAC_0->MAC_EXT_CONFIGURATION = ext_cfg;
-
-    uint32_t mac_cfg = IP_GMAC_0->MAC_CONFIGURATION;
-    mac_cfg &= ~(1U << 13);
-    mac_cfg |= (1U << 15);
-    mac_cfg |= (1U << 11);
-    IP_GMAC_0->MAC_CONFIGURATION = mac_cfg;
+    configure_gmac_100m();
 
     debug_rgmii_clocks();
 
@@ -828,44 +640,39 @@ void device_init(void)
           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
 
+/*===========================================================================*/
+/*                          FREERTOS HOOKS                                    */
+/*===========================================================================*/
+
 #if defined(USING_OS_FREERTOS)
-void vAssertCalled(uint32_t ulLine, const char * const pcFileName)
-{
+void vAssertCalled(uint32_t ulLine, const char* const pcFileName) {
     LOG_E(TAG, "ASSERT! Line %lu, file %s", ulLine, pcFileName);
     taskENTER_CRITICAL();
-    {
-        while (1) {}
-    }
+    while (1) {}
     taskEXIT_CRITICAL();
 }
 
-void vApplicationMallocFailedHook(void)
-{
+void vApplicationMallocFailedHook(void) {
     LOG_E(TAG, "Malloc failed!");
     vAssertCalled(__LINE__, __FILE__);
 }
 
-void vApplicationStackOverflowHook(TaskHandle_t pxTask, char *pcTaskName)
-{
+void vApplicationStackOverflowHook(TaskHandle_t pxTask, char* pcTaskName) {
     (void)pxTask;
     LOG_E(TAG, "Stack overflow: %s", pcTaskName);
     vAssertCalled(__LINE__, __FILE__);
 }
 
-void vMainConfigureTimerForRunTimeStats(void)
-{
-}
-
-uint32_t ulMainGetRunTimeCounterValue(void)
-{
-    return 0UL;
-}
+void vMainConfigureTimerForRunTimeStats(void) {}
+uint32_t ulMainGetRunTimeCounterValue(void) { return 0UL; }
 #endif
 
-int main(void)
-{
+/*===========================================================================*/
+/*                          MAIN                                              */
+/*===========================================================================*/
+
+int main(void) {
     device_init();
     start_example();
     return 0;
 }
-
