@@ -197,7 +197,7 @@ const Gpt_Ipw_HwInstanceConfigType Gpt_Ipw_HwInstanceConfig_PB[1U] =
 /** 
  * @brief   Gpt channels IP related configuration array
  */
-const Gpt_Ipw_HwChannelConfigType Gpt_Ipw_ChannelConfig_PB[1U] =
+const Gpt_Ipw_HwChannelConfigType Gpt_Ipw_ChannelConfig_PB[2U] =
 {
 
     /** @brief GptChannelConfiguration_0 */
@@ -211,6 +211,22 @@ const Gpt_Ipw_HwChannelConfigType Gpt_Ipw_ChannelConfig_PB[1U] =
         /** @brief IP channel pointer */
         {
             &PIT_0_ChannelConfig_PB[0U],
+            NULL_PTR,
+            NULL_PTR,
+            NULL_PTR
+        }
+    }
+    /** @brief GptChannelConfiguration_1 */,
+    {
+        /** @brief IP type  */
+        GPT_PIT_MODULE,
+        /** @brief IP instance */
+        0U,
+        /** @brief IP channel */
+        1U,
+        /** @brief IP channel pointer */
+        {
+            &PIT_0_ChannelConfig_PB[1U],
             NULL_PTR,
             NULL_PTR,
             NULL_PTR

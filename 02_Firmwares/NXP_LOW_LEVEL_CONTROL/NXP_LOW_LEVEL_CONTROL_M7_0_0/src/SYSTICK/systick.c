@@ -19,10 +19,6 @@ void SysTick_DelayMs(uint32 ms) {
     while ((g_sysTick - start) < ms);
 }
 
-void OsIf_Millisecond(void) {
-    g_sysTick++;
-}
-
 void SysTick_Custom_Handler(void) {
     g_sysTick++;
 }

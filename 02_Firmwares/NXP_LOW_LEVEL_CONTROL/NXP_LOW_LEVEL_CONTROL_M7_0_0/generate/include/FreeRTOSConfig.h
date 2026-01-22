@@ -90,8 +90,8 @@ PRIORITY THAN THIS! (higher priorities are lower numeric values. */
 #define configCPU_3 (0<<3)
 #define RUNNING_CPUS_MASK (configCPU_3 | configCPU_2 | configCPU_1 | configCPU_0) 
 
-#define configUSE_CORE_AFFINITY                     1
-#define configRUN_MULTIPLE_PRIORITIES               1
+#define configUSE_CORE_AFFINITY                     0
+#define configRUN_MULTIPLE_PRIORITIES               0
 #define configUSE_PASSIVE_IDLE_HOOK                 0
 #define configTICK_CORE                             0
 #define configTIMER_SERVICE_TASK_CORE_AFFINITY      0

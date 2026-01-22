@@ -115,7 +115,7 @@ const Pit_Ip_InstanceConfigType PIT_0_InitConfig_PB =
     /** @brief PIT Debug Mode */
     (boolean)(FALSE) /* Enable/Disable Freeze Bit */
 };
-const Pit_Ip_ChannelConfigType PIT_0_ChannelConfig_PB[1U] =
+const Pit_Ip_ChannelConfigType PIT_0_ChannelConfig_PB[2U] =
 {
     /** @brief PitChannel_0 */ 
     {
@@ -127,6 +127,20 @@ const Pit_Ip_ChannelConfigType PIT_0_ChannelConfig_PB[1U] =
         &Gpt_ProcessCommonInterrupt,
         /** @brief PIT callbackparam */
         (uint8)0U,
+        /** @brief PIT channel mode */
+        PIT_IP_CH_MODE_CONTINUOUS
+    }
+	,
+    /** @brief PitChannel_1 */ 
+    {
+        /** @brief PIT Channel Id */
+        1U,
+        /** @brief PIT Enable Interrupt */
+        (boolean)(TRUE),
+        /** @brief PIT callback name */
+        &Gpt_ProcessCommonInterrupt,
+        /** @brief PIT callbackparam */
+        (uint8)1U,
         /** @brief PIT channel mode */
         PIT_IP_CH_MODE_CONTINUOUS
     }

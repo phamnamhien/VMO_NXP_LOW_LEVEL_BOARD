@@ -11,7 +11,7 @@
 #include "OsIf.h"
 #include "Gpt.h"
 #include "Platform.h"
-//#include "Eth_43_GMAC.h"
+#include "Eth_43_GMAC.h"
 //#include "EthIf.h"
 
 #include "lan9646.h"
@@ -240,8 +240,6 @@ static void eth_send_test_frame(void) {
 /*===========================================================================*/
 /*                          MAIN                                             */
 /*===========================================================================*/
-#include "S32K388_MC_ME.h"
-#include "S32K388_LPUART.h"
 int main(void) {
     uint16_t chip_id;
     uint8_t revision;
@@ -336,7 +334,7 @@ int main(void) {
     /*========== Eth_43_GMAC Init ==========*/
     LOG_I(TAG, "");
     LOG_I(TAG, "Initializing Eth_43_GMAC...");
-    // Eth_43_GMAC_Init(NULL_PTR);
+	Eth_43_GMAC_Init(NULL_PTR);
     LOG_I(TAG, "  Eth_43_GMAC_Init OK");
 
     /* Set controller to ACTIVE mode */

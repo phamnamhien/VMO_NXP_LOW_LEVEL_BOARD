@@ -1,0 +1,3 @@
+Layer Pairs Export File for PCB: C:\Users\kienlt44\Desktop\Project VinMotion\VinMotion\VinMotion\Low_level_NXP 3\Low_level_NXP\Low_level_NXP\Low_Level_ECU.pcbdoc
+LayersSetName=Top_Bot_Thru_Holes|DrillFile=low_level_ecu-roundholes.txt|DrillLayers=gtl,g1,g2,g3,g4,gbl
+LayersSetName=Top_Bot_Slot_Holes|DrillFile=low_level_ecu-slotholes.txt|DrillLayers=gtl,g1,g2,g3,g4,gbl

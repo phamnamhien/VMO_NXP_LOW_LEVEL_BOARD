@@ -1,0 +1,7 @@
+DRC Rules Export File for PCB: C:\Users\kienlt44\Desktop\Project VinMotion\VinMotion\VinMotion\Low_level_NXP 3\Low_level_NXP\Low_level_NXP\Low_Level_ECU.pcbdoc
+RuleKind=Clearance|RuleName=Clearance_1|Scope=Board|Minimum=3.00
+RuleKind=Width|RuleName=Width_MCU|Scope=Board|Minimum=3.00
+RuleKind=SolderMaskExpansion|RuleName=SolderMaskExpansion|Scope=Board|Minimum=4.00
+RuleKind=Width|RuleName=Width|Scope=Board|Minimum=3.00
+RuleKind=Clearance|RuleName=Clearance|Scope=Board|Minimum=6.00
+RuleKind=ShortCircuit|RuleName=ShortCircuit|Scope=Board|Allowed=0

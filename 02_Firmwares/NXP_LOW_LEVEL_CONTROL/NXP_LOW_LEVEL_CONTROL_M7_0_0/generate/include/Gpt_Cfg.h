@@ -206,12 +206,13 @@ extern "C"{
 * @details      Symbolic names of channels.
 */
 #define GptConf_GptChannelConfiguration_GptChannelConfiguration_0 (0U)
+#define GptConf_GptChannelConfiguration_GptChannelConfiguration_1 (1U)
 /*================================================================================================*/
 /**
 * @brief       GPT_HW_CHANNEL_NUM
 * @details     The maximum number of HW channels. This is used to allocate memory space for channel runtime info.
 */
-#define GPT_HW_CHANNEL_NUM (1U)
+#define GPT_HW_CHANNEL_NUM (2U)
 /*================================================================================================*/
 /**
 * @brief        GPT_MAX_PARTITIONS_CFG.
@@ -229,7 +230,7 @@ extern "C"{
 * @brief        GPT_NUM_CONFIG.
 * @details      Number of ChannelConfiguration
 */
-#define GPT_NUM_CONFIG (1U)
+#define GPT_NUM_CONFIG (2U)
 /*================================================================================================*/
 /**
 *   @brief      GPT_HW_PREDEFTIMER_NUM

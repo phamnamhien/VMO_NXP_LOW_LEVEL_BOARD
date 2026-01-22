@@ -1,0 +1,47 @@
+------------------------------------------------------------------------------------------
+Gerber File Extension Report For: Low_Level_ECU.GBR   10/10/2025  2:11:00 PM
+------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------
+Layer Extension     Layer Description                      
+------------------------------------------------------------------------------------------
+.GTO                Top Overlay                             
+.GTP                Top Paste                               
+.GTS                Top Solder                              
+.GTL                Top Layer                               
+.G1                 Int1 (GND)                              
+.G2                 Int2 (Sign)                             
+.G3                 Int3 (Sign)                             
+.G4                 Int4 (PWR)                              
+.GBL                Bottom Layer                            
+.GBS                Bottom Solder                           
+.GBP                Bottom Paste                            
+.GBO                Bottom Overlay                          
+.GM1                Mechanical 1                            
+.GM5                Mechanical 5                            
+.GM6                Top 3D Body                             
+.GM7                Top Assembly                            
+.GM8                Bottom Assembly                         
+.GM9                Top Component Center                    
+.GM12               Bottom Component Center                 
+.GM13               Mechanical 13                           
+.GM14               Bottom 3D Body                          
+.GM15               Mechanical 15                           
+.GM19               Top Component Outline                   
+.GM20               Bottom Component Outline                
+.GM21               Top Courtyard                           
+.GM22               Bottom Courtyard                        
+.GKO                Keep-Out Layer                          
+.GPT                Top Pad Master                          
+.GPB                Bottom Pad Master                       
+.4                  Dielectric 5                            
+.1                  Dielectric 4                            
+.GML                Multi-Layer                             
+.6                  Dielectric 8                            
+.5                  Dielectric 6                            
+.2                  Dielectric 1                            
+.3                  Dielectric 3                            
+.GD1                Drill Drawing                           
+.GG1                Drill Guide                             
+------------------------------------------------------------------------------------------

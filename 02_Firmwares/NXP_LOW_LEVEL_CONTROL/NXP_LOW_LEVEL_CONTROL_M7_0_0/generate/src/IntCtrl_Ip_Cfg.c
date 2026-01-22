@@ -68,12 +68,15 @@ extern "C" {
 #include "Platform_MemMap.h"
 /* List of configurations for interrupts  */
 static const IntCtrl_Ip_IrqConfigType aIrqConfiguration[] = {
-    {PIT0_IRQn, (boolean)TRUE, 15U, &PIT_0_ISR},
+    {PIT0_IRQn, (boolean)TRUE, 9U, &PIT_0_ISR},
     {LPUART4_IRQn, (boolean)TRUE, 5U, &LPUART_UART_IP_4_IRQHandler},
+    {GMAC0_CH0_TX_IRQn, (boolean)TRUE, 7U, &GMAC0_CH0_TX_IRQHandler},
+    {GMAC0_CH0_RX_IRQn, (boolean)TRUE, 8U, &GMAC0_CH0_RX_IRQHandler},
+    {GMAC0_Common_IRQn, (boolean)TRUE, 6U, &GMAC0_Common_IRQHandler},
 };
 /* Configuration structure for interrupt controller */
 const IntCtrl_Ip_CtrlConfigType intCtrlConfig = {
-    2U,
+    5U,
     aIrqConfiguration
 };
 #define PLATFORM_STOP_SEC_CONFIG_DATA_UNSPECIFIED

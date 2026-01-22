@@ -11,7 +11,7 @@
     <booleanAttribute key="com.pemicro.debug.gdbjtag.pne.PE.BUSERR" value="true"/>
     <booleanAttribute key="com.pemicro.debug.gdbjtag.pne.PE.CHKERR" value="true"/>
     <booleanAttribute key="com.pemicro.debug.gdbjtag.pne.PE.CORERESET" value="true"/>
-    <stringAttribute key="com.pemicro.debug.gdbjtag.pne.PE.DEVICE_NAME" value="NXP_S32K3xx_S32K388LS"/>
+    <stringAttribute key="com.pemicro.debug.gdbjtag.pne.PE.DEVICE_NAME" value="NXP_S32K3xx_S32K388-SECUREDEBUG"/>
     <stringAttribute key="com.pemicro.debug.gdbjtag.pne.PE.GDB_OPTIONS" value=""/>
     <booleanAttribute key="com.pemicro.debug.gdbjtag.pne.PE.HARDERR" value="true"/>
     <intAttribute key="com.pemicro.debug.gdbjtag.pne.PE.HARDWARE_INTERFACE" value="0"/>

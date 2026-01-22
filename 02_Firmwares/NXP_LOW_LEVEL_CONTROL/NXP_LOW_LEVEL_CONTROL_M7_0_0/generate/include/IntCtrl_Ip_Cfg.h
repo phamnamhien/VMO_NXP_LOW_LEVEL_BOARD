@@ -74,6 +74,9 @@ extern const IntCtrl_Ip_CtrlConfigType intCtrlConfig;
  */
 extern void PIT_0_ISR(void);
 extern void LPUART_UART_IP_4_IRQHandler(void);
+extern void GMAC0_CH0_TX_IRQHandler(void);
+extern void GMAC0_CH0_RX_IRQHandler(void);
+extern void GMAC0_Common_IRQHandler(void);
 #define PLATFORM_STOP_SEC_CONFIG_DATA_UNSPECIFIED
 #include "Platform_MemMap.h"
 
