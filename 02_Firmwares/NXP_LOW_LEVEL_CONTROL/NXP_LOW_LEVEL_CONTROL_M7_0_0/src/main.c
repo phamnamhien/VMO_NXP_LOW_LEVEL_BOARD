@@ -192,22 +192,14 @@ static void configure_gmac_mac(void) {
 /*===========================================================================*/
 
 static void device_init(void) {
-    LOG_I(TAG, "");
-    LOG_I(TAG, "================================================================");
-    LOG_I(TAG, "          RGMII HARDWARE DIAGNOSTIC - S32K388 + LAN9646");
-    LOG_I(TAG, "================================================================");
-    LOG_I(TAG, "");
-
-    /* Step 1: MCU Init */
-    LOG_I(TAG, "[Step 1] MCU Init...");
+    /* Step 1: MCU Init (no logging yet - UART not ready) */
     Mcu_Init(&Mcu_PreCompileConfig);
     Mcu_InitClock(McuClockSettingConfig_0);
     while (MCU_PLL_LOCKED != Mcu_GetPllStatus()) {}
     Mcu_DistributePllClock();
     Mcu_SetMode(McuModeSettingConf_0);
 
-    /* Step 2: Platform & Port */
-    LOG_I(TAG, "[Step 2] Platform & Port Init...");
+    /* Step 2: Platform & Port (no logging yet) */
     OsIf_Init(NULL);
     Platform_Init(NULL);
     Port_Init(&Port_Config);
@@ -216,6 +208,18 @@ static void device_init(void) {
 
     /* Initialize SysTick for delay functions */
     SysTick_Init();
+
+    /* Initialize UART - NOW we can use LOG_* */
+    log_init();
+
+    /* Print banner */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "          RGMII HARDWARE DIAGNOSTIC - S32K388 + LAN9646");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "");
+    LOG_I(TAG, "[Step 1] MCU Init... Done");
+    LOG_I(TAG, "[Step 2] Platform & Port Init... Done");
 
     /* Step 3: Configure S32K388 RGMII */
     LOG_I(TAG, "[Step 3] Configure S32K388 RGMII...");
