@@ -277,13 +277,13 @@ static void debug_gmac_rx_input_mux(void) {
      * SIUL2_0 base: 0x40290000
      * IMCR base offset: 0x0A40 (from Siul2_Port_Ip.h)
      *
-     * GMAC0 RGMII RX IMCR indexes (from Port_PBcfg.c):
-     * - IMCR 448: GMAC0_RGMII_RXD0 (Pin 101)
-     * - IMCR 449: GMAC0_RGMII_RXD1 (Pin 102)
-     * - IMCR 450: GMAC0_RGMII_RXD2 (Pin 106)
-     * - IMCR 451: GMAC0_RGMII_RXCTL (Pin 66)
-     * - IMCR 452: GMAC0_RGMII_RX_CLK (Pin 108) - CRITICAL!
-     * - IMCR 453: GMAC0_RGMII_RXD3 (Pin 103)
+     * GMAC0 RGMII RX IMCR indexes (from Port_PBcfg.c and pin config):
+     * - IMCR 292: RXCTL  (MSCR 80 / PTC16)
+     * - IMCR 294: RXD0   (MSCR 78 / PTC14)
+     * - IMCR 295: RXD1   (MSCR 79 / PTC15)
+     * - IMCR 300: RX_CLK (MSCR 54 / PTB22) - CRITICAL!
+     * - IMCR 301: RXD2   (MSCR 55 / PTB23)
+     * - IMCR 302: RXD3   (MSCR 56 / PTB24)
      */
     LOG_I(TAG, "");
     LOG_I(TAG, "=== GMAC0 RX Input Mux Debug ===");
@@ -291,14 +291,14 @@ static void debug_gmac_rx_input_mux(void) {
     /* SIUL2_0 IMCR base address: 0x40290000 + 0x0A40 */
     volatile uint32_t *siul2_imcr = (volatile uint32_t *)(0x40290000UL + 0x0A40UL);
 
-    /* Print GMAC0 RGMII RX IMCRs */
+    /* Print GMAC0 RGMII RX IMCRs with correct indexes */
     LOG_I(TAG, "SIUL2_0 IMCR registers (GMAC0 RGMII RX):");
-    LOG_I(TAG, "  IMCR[448] (RXD0)   = 0x%02lX", (unsigned long)(siul2_imcr[448] & 0x0F));
-    LOG_I(TAG, "  IMCR[449] (RXD1)   = 0x%02lX", (unsigned long)(siul2_imcr[449] & 0x0F));
-    LOG_I(TAG, "  IMCR[450] (RXD2)   = 0x%02lX", (unsigned long)(siul2_imcr[450] & 0x0F));
-    LOG_I(TAG, "  IMCR[451] (RXCTL)  = 0x%02lX", (unsigned long)(siul2_imcr[451] & 0x0F));
-    LOG_I(TAG, "  IMCR[452] (RX_CLK) = 0x%02lX <-- CRITICAL", (unsigned long)(siul2_imcr[452] & 0x0F));
-    LOG_I(TAG, "  IMCR[453] (RXD3)   = 0x%02lX", (unsigned long)(siul2_imcr[453] & 0x0F));
+    LOG_I(TAG, "  IMCR[292] (RXCTL/PTC16)  = 0x%02lX", (unsigned long)(siul2_imcr[292] & 0x0F));
+    LOG_I(TAG, "  IMCR[294] (RXD0/PTC14)   = 0x%02lX", (unsigned long)(siul2_imcr[294] & 0x0F));
+    LOG_I(TAG, "  IMCR[295] (RXD1/PTC15)   = 0x%02lX", (unsigned long)(siul2_imcr[295] & 0x0F));
+    LOG_I(TAG, "  IMCR[300] (RX_CLK/PTB22) = 0x%02lX <-- CRITICAL", (unsigned long)(siul2_imcr[300] & 0x0F));
+    LOG_I(TAG, "  IMCR[301] (RXD2/PTB23)   = 0x%02lX", (unsigned long)(siul2_imcr[301] & 0x0F));
+    LOG_I(TAG, "  IMCR[302] (RXD3/PTB24)   = 0x%02lX", (unsigned long)(siul2_imcr[302] & 0x0F));
 
     /* Also check MC_CGM MUX_7 for RX_CLK (should be bypassed for RGMII) */
     LOG_I(TAG, "");
