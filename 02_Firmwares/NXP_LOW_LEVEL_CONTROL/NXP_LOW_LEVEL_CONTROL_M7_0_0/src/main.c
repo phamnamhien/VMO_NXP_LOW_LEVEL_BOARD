@@ -86,15 +86,13 @@ static lan9646r_t i2c_mem_read_cb(uint8_t dev_addr, uint16_t mem_addr,
 /*===========================================================================*/
 
 static void delay_ms(uint32_t ms) {
-    /* Simple busy-wait delay using loop counter */
-    /* Calibrated for ~160MHz core clock */
-    volatile uint32_t count;
-    while (ms > 0) {
-        count = 40000U;  /* Approx 1ms at 160MHz */
-        while (count > 0) {
-            count--;
-        }
-        ms--;
+    /* Use OsIf system timer for accurate delay */
+    uint32_t target_us = ms * 1000U;
+    uint32_t target_ticks = OsIf_MicrosToTicks(target_us, OSIF_COUNTER_SYSTEM);
+    uint32_t start = OsIf_GetCounter(OSIF_COUNTER_SYSTEM);
+
+    while (OsIf_GetElapsed(&start, OSIF_COUNTER_SYSTEM) < target_ticks) {
+        /* Wait */
     }
 }
 
@@ -480,12 +478,11 @@ static void device_init(void) {
 
     Platform_Init(NULL_PTR);
 
-#ifndef USING_OS_FREERTOS
+    /* Initialize GPT for OsIf system timer */
     Gpt_Init(NULL_PTR);
     Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 40000000U);
     Gpt_EnableNotification(GptConf_GptChannelConfiguration_GptChannelConfiguration_0);
-    OsIf_SetTimerFrequency(160000000U, OSIF_USE_SYSTEM_TIMER);
-#endif
+    OsIf_SetTimerFrequency(160000000U, OSIF_COUNTER_SYSTEM);
 
     Uart_Init(NULL_PTR);
     log_init();
