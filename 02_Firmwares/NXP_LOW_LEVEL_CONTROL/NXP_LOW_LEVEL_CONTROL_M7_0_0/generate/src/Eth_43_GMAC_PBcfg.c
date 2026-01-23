@@ -212,7 +212,7 @@ static const Eth_43_GMAC_ClockCfgType Eth_43_GMAC_aClockConfigPB[1U] =
 {
 	/* The configuration structure for Eth_43_GMAC_aClockConfigPB_[0U] - IP_0 */
 	{
-		(uint32)250000000U, /* Frequency of the application interface (in Hz) */
+		(uint32)50000000U, /* Frequency of the application interface (in Hz) */
 		(uint8)0U,		 /* Default value for SSINC register. */
 		(uint8)0U,		 /* Default value for SNSINC register. */
 		(float64)1.0		 /* Multiply ratio for computation of new value for TSAR register. */

@@ -727,10 +727,10 @@
                   <clock_output id="FXOSCOUT.outFreq" value="16 MHz" locked="false" accuracy=""/>
                   <clock_output id="GMAC0_MII_RGMII_RX.outFreq" value="125 MHz" locked="false" accuracy=""/>
                   <clock_output id="GMAC0_RX_CLK.outFreq" value="48 MHz" locked="true" accuracy="0.001"/>
-                  <clock_output id="GMAC0_TX_CLK.outFreq" value="250 MHz" locked="false" accuracy=""/>
+                  <clock_output id="GMAC0_TX_CLK.outFreq" value="50 MHz" locked="false" accuracy=""/>
                   <clock_output id="GMAC1_RX_CLK.outFreq" value="48 MHz" locked="false" accuracy=""/>
                   <clock_output id="GMAC1_TX_CLK.outFreq" value="48 MHz" locked="false" accuracy=""/>
-                  <clock_output id="GMAC_TS_CLK.outFreq" value="250 MHz" locked="false" accuracy=""/>
+                  <clock_output id="GMAC_TS_CLK.outFreq" value="50 MHz" locked="false" accuracy=""/>
                   <clock_output id="HSE_CLK.outFreq" value="160 MHz" locked="false" accuracy=""/>
                   <clock_output id="INTM_CLK.outFreq" value="40 MHz" locked="false" accuracy=""/>
                   <clock_output id="LBIST_CLK.outFreq" value="40 MHz" locked="false" accuracy=""/>
@@ -841,9 +841,9 @@
                   <setting id="MODULE_CLOCKS.MC_CGM_AUX3_DIV0.scale" value="2" locked="true"/>
                   <setting id="MODULE_CLOCKS.MC_CGM_AUX4_DIV0.scale" value="2" locked="true"/>
                   <setting id="MODULE_CLOCKS.MC_CGM_AUX7_DIV0.scale" value="1" locked="true"/>
-                  <setting id="MODULE_CLOCKS.MC_CGM_AUX8_DIV0.scale" value="1" locked="true"/>
+                  <setting id="MODULE_CLOCKS.MC_CGM_AUX8_DIV0.scale" value="5" locked="true"/>
                   <setting id="MODULE_CLOCKS.MC_CGM_AUX8_MUX.sel" value="PLLAUX_PHI0" locked="false"/>
-                  <setting id="MODULE_CLOCKS.MC_CGM_AUX9_DIV0.scale" value="1" locked="true"/>
+                  <setting id="MODULE_CLOCKS.MC_CGM_AUX9_DIV0.scale" value="5" locked="true"/>
                   <setting id="MODULE_CLOCKS.MC_CGM_AUX9_MUX.sel" value="PLLAUX_PHI0" locked="false"/>
                   <setting id="PHI0.scale" value="3" locked="true"/>
                   <setting id="PHI1.scale" value="3" locked="true"/>
@@ -3544,10 +3544,10 @@
                            <setting name="EthDevErrorDetect" value="false"/>
                            <setting name="EthGetDropCountApi" value="false"/>
                            <setting name="EthGetEtherStatsApi" value="false"/>
-                           <setting name="EthGetCounterValuesApi" value="false"/>
-                           <setting name="EthGetRxStatsApi" value="false"/>
-                           <setting name="EthGetTxStatsApi" value="false"/>
-                           <setting name="EthGetTxErrorCounterValuesApi" value="false"/>
+                           <setting name="EthGetCounterValuesApi" value="true"/>
+                           <setting name="EthGetRxStatsApi" value="true"/>
+                           <setting name="EthGetTxStatsApi" value="true"/>
+                           <setting name="EthGetTxErrorCounterValuesApi" value="true"/>
                            <setting name="EthSendMultiBufferFrameApi" value="true"/>
                            <setting name="EthGlobalTimeSupport" value="false"/>
                            <setting name="EthVersionInfoApi" value="false"/>
@@ -3599,7 +3599,7 @@
                                     <setting name="0" value="REDUCED"/>
                                  </array>
                                  <array name="EthCtrlMacLayerSpeed">
-                                    <setting name="0" value="ETH_MAC_LAYER_SPEED_1G"/>
+                                    <setting name="0" value="ETH_MAC_LAYER_SPEED_100M"/>
                                  </array>
                                  <array name="EthCtrlPhyAddress">
                                     <setting name="0" value="10:11:22:77:77:77"/>
