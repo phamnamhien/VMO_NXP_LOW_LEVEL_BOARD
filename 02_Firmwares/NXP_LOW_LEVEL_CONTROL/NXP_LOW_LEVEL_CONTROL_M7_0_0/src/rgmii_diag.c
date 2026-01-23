@@ -6,6 +6,7 @@
 #include "rgmii_diag.h"
 #include "log.h"
 #include "Gmac_Ip.h"
+#include "S32K388.h"
 
 #define TAG "RGMII_DIAG"
 
