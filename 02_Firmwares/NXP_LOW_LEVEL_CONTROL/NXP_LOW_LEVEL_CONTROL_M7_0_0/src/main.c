@@ -25,6 +25,7 @@
 #include "log_debug.h"
 #include "rgmii_diag.h"
 #include "rgmii_config_debug.h"
+#include "systick.h"
 
 /* External config symbols from generated PBcfg files */
 extern const Mcu_ConfigType Mcu_PreCompileConfig;
@@ -88,12 +89,8 @@ static lan9646r_t i2c_mem_read_cb(uint8_t dev_addr, uint16_t mem_addr,
 /*===========================================================================*/
 
 static void delay_ms(uint32_t ms) {
-    /* Simple delay using OsIf counter */
-    uint32_t start = OsIf_GetCounter(OSIF_COUNTER_SYSTEM);
-    uint32_t ticks = OsIf_MicrosToTicks(ms * 1000U, OSIF_COUNTER_SYSTEM);
-    while ((OsIf_GetCounter(OSIF_COUNTER_SYSTEM) - start) < ticks) {
-        /* Wait */
-    }
+    /* Use SysTick module for delay */
+    SysTick_DelayMs(ms);
 }
 
 /*===========================================================================*/
@@ -217,6 +214,9 @@ static void device_init(void) {
     Port_Init(&Port_Config);
     Gpt_Init(&Gpt_Config);
     Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 0xFFFFFFFFU);
+
+    /* Initialize SysTick for delay functions */
+    SysTick_Init();
 
     /* Step 3: Configure S32K388 RGMII */
     LOG_I(TAG, "[Step 3] Configure S32K388 RGMII...");
