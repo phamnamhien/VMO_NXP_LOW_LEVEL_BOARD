@@ -49,10 +49,7 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
 
     len += snprintf(buffer + len, sizeof(buffer) - len, "\r\n");
 
-    uint32 bytesTransferred = 0;
-    Std_ReturnType ret = Uart_AsyncSend(LOG_UART_CHANNEL, (const uint8*)buffer, len);
-    if (ret == E_OK) {
-        while (Uart_GetStatus(LOG_UART_CHANNEL, &bytesTransferred, UART_SEND) == UART_STATUS_OPERATION_ONGOING && timeout-- > 0);
-    }
+    /* Use synchronous send (blocking) for reliable debug output */
+    Uart_SyncSend(LOG_UART_CHANNEL, (const uint8*)buffer, (uint32)len, timeout);
 }
 
