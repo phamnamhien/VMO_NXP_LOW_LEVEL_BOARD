@@ -11,7 +11,7 @@ static uint32 log_start_time = 0;
 
 void log_init(void) {
     /* Note: Uart_Init(NULL_PTR) must be called in main.c BEFORE calling log_init() */
-    log_start_time = OsIf_GetCounter(OSIF_COUNTER_SYSTEM);
+    log_start_time = OsIf_GetCounter(OSIF_COUNTER_DUMMY);
     is_initialized = 1;
 }
 
@@ -35,11 +35,10 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         default: return;
     }
 
-    /* Get elapsed time in microseconds since log_init */
-    uint32 elapsed_us = OsIf_GetElapsed(&log_start_time, OSIF_COUNTER_SYSTEM);
-    uint32 elapsed_ms = elapsed_us / 1000U;
-    uint32 sec = elapsed_ms / 1000U;
-    uint32 ms = elapsed_ms % 1000U;
+    /* Get elapsed ticks since log_init (dummy counter - just incrementing value) */
+    uint32 elapsed = OsIf_GetElapsed(&log_start_time, OSIF_COUNTER_DUMMY);
+    uint32 sec = elapsed / 1000000U;
+    uint32 ms = (elapsed / 1000U) % 1000U;
 
     int len = snprintf(buffer, sizeof(buffer), "[%lu.%03lu] %s (%s): ",
                       sec, ms, level_str, tag);

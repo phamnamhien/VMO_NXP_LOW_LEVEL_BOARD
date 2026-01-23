@@ -86,8 +86,16 @@ static lan9646r_t i2c_mem_read_cb(uint8_t dev_addr, uint16_t mem_addr,
 /*===========================================================================*/
 
 static void delay_ms(uint32_t ms) {
-    /* Use OsIf for delay (microseconds) */
-    OsIf_Delay((uint32)ms * 1000U);
+    /* Simple busy-wait delay using loop counter */
+    /* Calibrated for ~160MHz core clock */
+    volatile uint32_t count;
+    while (ms > 0) {
+        count = 40000U;  /* Approx 1ms at 160MHz */
+        while (count > 0) {
+            count--;
+        }
+        ms--;
+    }
 }
 
 /*===========================================================================*/
