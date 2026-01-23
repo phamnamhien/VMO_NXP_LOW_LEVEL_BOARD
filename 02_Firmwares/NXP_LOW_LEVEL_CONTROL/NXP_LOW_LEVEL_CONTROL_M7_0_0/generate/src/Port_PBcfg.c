@@ -402,7 +402,7 @@ static const Port_Siul2_PinConfigType Port_aUsedPinConfigs[PORT_MAX_CONFIGURED_P
     { (uint16)29, (uint32)0x00280008, (uint8)PORT_SIUL2_0_U8, (uint8)1, PORT_PIN_INOUT, (boolean)FALSE, (boolean)FALSE, (boolean)TRUE, (boolean)TRUE, 454 },
     { (uint16)32, (uint32)0x00080000, (uint8)PORT_SIUL2_0_U8, (uint8)1, PORT_PIN_IN, (boolean)FALSE, (boolean)FALSE, (boolean)TRUE, (boolean)TRUE, 187 },
     { (uint16)33, (uint32)0x00200002, (uint8)PORT_SIUL2_0_U8, (uint8)1, PORT_PIN_OUT, (boolean)FALSE, (boolean)FALSE, (boolean)TRUE, (boolean)FALSE, 65535 },
-    { (uint16)34, (uint32)0x00200000, (uint8)PORT_SIUL2_0_U8, (uint8)1, PORT_PIN_OUT, (boolean)TRUE, (boolean)TRUE, (boolean)TRUE, (boolean)FALSE, 65535 },
+    { (uint16)34, (uint32)0x00202800, (uint8)PORT_SIUL2_0_U8, (uint8)1, PORT_PIN_OUT, (boolean)TRUE, (boolean)TRUE, (boolean)TRUE, (boolean)FALSE, 65535 },
     { (uint16)35, (uint32)0x00200008, (uint8)PORT_SIUL2_0_U8, (uint8)1, PORT_PIN_OUT, (boolean)FALSE, (boolean)FALSE, (boolean)TRUE, (boolean)FALSE, 65535 },
     { (uint16)36, (uint32)0x00080000, (uint8)PORT_SIUL2_0_U8, (uint8)1, PORT_PIN_IN, (boolean)FALSE, (boolean)FALSE, (boolean)TRUE, (boolean)TRUE, 345 },
     { (uint16)41, (uint32)0x00080000, (uint8)PORT_SIUL2_0_U8, (uint8)1, PORT_PIN_IN, (boolean)FALSE, (boolean)FALSE, (boolean)TRUE, (boolean)TRUE, 196 },
