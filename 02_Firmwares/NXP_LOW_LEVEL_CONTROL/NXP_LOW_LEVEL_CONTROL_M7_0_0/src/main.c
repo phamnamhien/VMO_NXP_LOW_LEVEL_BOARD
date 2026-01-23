@@ -302,10 +302,18 @@ static void debug_gmac_rx_input_mux(void) {
 
 static void configure_s32k388_rgmii(void) {
     /*
-     * S32K388 GMAC0 RGMII Clock Configuration
+     * S32K388 GMAC0 RGMII Configuration
      *
-     * Clock sources for RGMII 1Gbps:
+     * === DCMRWF1: Interface Mode Selection ===
+     * S32K388 uses DIFFERENT MAC_CONF_SEL values than other S32K3:
+     *   MAC_CONF_SEL [1:0]:
+     *     0 = MII
+     *     1 = RGMII (with MAC_TX_RMII_CLK_LPBCK_EN=1) ← S32K388 specific!
+     *     2 = RMII
      *
+     *   MAC_TX_RMII_CLK_LPBCK_EN [6]: Must be 1 for RGMII on S32K388
+     *
+     * === DCMRWF3: Clock Configuration ===
      *   TX Path (S32K388 → LAN9646):
      *   ┌─────────────┐                      ┌─────────────┐
      *   │  S32K388    │  TX_CLK (125MHz)     │  LAN9646    │
@@ -327,8 +335,33 @@ static void configure_s32k388_rgmii(void) {
      *
      * Reference: https://community.nxp.com/t5/S32K/S32K388-GMAC-with-RGMII/m-p/1999697
      */
-    LOG_I(TAG, "Configuring S32K388 RGMII clock settings...");
+    LOG_I(TAG, "Configuring S32K388 RGMII settings...");
 
+    /*
+     * Step 1: Set DCMRWF1 for RGMII interface mode
+     * S32K388 RGMII requires: MAC_CONF_SEL=1 + MAC_TX_RMII_CLK_LPBCK_EN=1
+     */
+    uint32_t dcmrwf1 = IP_DCM_GPR->DCMRWF1;
+    LOG_I(TAG, "  DCMRWF1 before: 0x%08lX (MAC_CONF_SEL=%lu)",
+          (unsigned long)dcmrwf1, (unsigned long)(dcmrwf1 & 0x03U));
+
+    /* Clear MAC_CONF_SEL bits [1:0] and set to 1 (RGMII) */
+    dcmrwf1 = (dcmrwf1 & ~0x03U) | 0x01U;
+
+    /* Set MAC_TX_RMII_CLK_LPBCK_EN bit [6] = 1 (required for S32K388 RGMII) */
+    dcmrwf1 |= (1U << 6);
+
+    IP_DCM_GPR->DCMRWF1 = dcmrwf1;
+
+    /* Read back and verify */
+    dcmrwf1 = IP_DCM_GPR->DCMRWF1;
+    LOG_I(TAG, "  DCMRWF1 after:  0x%08lX (MAC_CONF_SEL=%lu) -> %s",
+          (unsigned long)dcmrwf1, (unsigned long)(dcmrwf1 & 0x03U),
+          ((dcmrwf1 & 0x03U) == 1) ? "RGMII" : "ERROR!");
+
+    /*
+     * Step 2: Set DCMRWF3 for clock configuration
+     */
     uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
     LOG_I(TAG, "  DCMRWF3 before: 0x%08lX", (unsigned long)dcmrwf3);
 
@@ -512,28 +545,29 @@ static void debug_readback_config(void) {
     LOG_I(TAG, "--- VERIFICATION SUMMARY ---");
     uint8_t all_ok = 1;
 
-    /* Check RGMII mode */
-    if ((dcmrwf1 & 0x03U) != 2) {
-        LOG_E(TAG, "  [FAIL] S32K388 not in RGMII mode!");
+    /* Check RGMII mode - S32K388 uses MAC_CONF_SEL = 1 for RGMII (not 2!) */
+    if ((dcmrwf1 & 0x03U) != 1) {
+        LOG_E(TAG, "  [FAIL] S32K388 not in RGMII mode! (MAC_CONF_SEL=%lu, expected 1)",
+              (unsigned long)(dcmrwf1 & 0x03U));
         all_ok = 0;
     } else {
-        LOG_I(TAG, "  [OK] S32K388 RGMII mode");
+        LOG_I(TAG, "  [OK] S32K388 RGMII mode (MAC_CONF_SEL=1)");
     }
 
-    /* Check RX_CLK bypass */
-    if ((dcmrwf3 & 1) == 0) {
-        LOG_E(TAG, "  [FAIL] RX_CLK bypass NOT enabled!");
+    /* Check RX_CLK bypass - bit 13 */
+    if (((dcmrwf3 >> 13) & 1) == 0) {
+        LOG_E(TAG, "  [FAIL] RX_CLK bypass NOT enabled! (DCMRWF3[13]=0)");
         all_ok = 0;
     } else {
-        LOG_I(TAG, "  [OK] RX_CLK bypass enabled");
+        LOG_I(TAG, "  [OK] RX_CLK bypass enabled (DCMRWF3[13]=1)");
     }
 
-    /* Check TX_CLK output */
-    if (((dcmrwf3 >> 3) & 1) == 0) {
-        LOG_E(TAG, "  [FAIL] TX_CLK output NOT enabled!");
+    /* Check TX_CLK output - bit 11 */
+    if (((dcmrwf3 >> 11) & 1) == 0) {
+        LOG_E(TAG, "  [FAIL] TX_CLK output NOT enabled! (DCMRWF3[11]=0)");
         all_ok = 0;
     } else {
-        LOG_I(TAG, "  [OK] TX_CLK output enabled");
+        LOG_I(TAG, "  [OK] TX_CLK output enabled (DCMRWF3[11]=1)");
     }
 
     /* Check speed match */
