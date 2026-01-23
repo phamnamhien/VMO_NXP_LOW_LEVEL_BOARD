@@ -605,7 +605,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 18U
     {
         GMAC_TS_CLK,                    /* name */
-        4U,                              /* value - 500MHz/4 = 125MHz for timestamping */
+        1U,                              /* value */
         {
             0U,
         }
@@ -615,7 +615,7 @@ static const Clock_Ip_DividerConfigType Clock_Ip_DividerConfigurations_0[CLOCK_I
     #if CLOCK_IP_CONFIGURED_DIVIDERS_0_NO > 19U
     {
         GMAC0_TX_CLK,                    /* name */
-        4U,                              /* value - 500MHz/4 = 125MHz for 1Gbps RGMII */
+        1U,                              /* value */
         {
             0U,
         }
