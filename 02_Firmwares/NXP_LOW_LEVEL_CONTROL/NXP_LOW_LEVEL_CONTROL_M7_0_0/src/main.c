@@ -275,7 +275,7 @@ static void debug_gmac_rx_input_mux(void) {
     /*
      * Debug SIUL2 Input Mux Configuration for GMAC0 RX signals
      * SIUL2_0 base: 0x40290000
-     * IMCR base offset: 0x0240
+     * IMCR base offset: 0x0A40 (from Siul2_Port_Ip.h)
      *
      * GMAC0 RGMII RX IMCR indexes (from Port_PBcfg.c):
      * - IMCR 448: GMAC0_RGMII_RXD0 (Pin 101)
@@ -288,8 +288,8 @@ static void debug_gmac_rx_input_mux(void) {
     LOG_I(TAG, "");
     LOG_I(TAG, "=== GMAC0 RX Input Mux Debug ===");
 
-    /* SIUL2_0 IMCR base address */
-    volatile uint32_t *siul2_imcr = (volatile uint32_t *)(0x40290000UL + 0x0240UL);
+    /* SIUL2_0 IMCR base address: 0x40290000 + 0x0A40 */
+    volatile uint32_t *siul2_imcr = (volatile uint32_t *)(0x40290000UL + 0x0A40UL);
 
     /* Print GMAC0 RGMII RX IMCRs */
     LOG_I(TAG, "SIUL2_0 IMCR registers (GMAC0 RGMII RX):");
