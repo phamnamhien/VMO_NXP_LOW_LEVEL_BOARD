@@ -500,30 +500,30 @@ static void device_init(void) {
     LOG_I(TAG, "[Step 1] MCU Init... Done");
     LOG_I(TAG, "[Step 2] Platform & Port Init... Done");
 
-    /* Step 3: Configure S32K388 RGMII */
-    LOG_I(TAG, "[Step 3] Configure S32K388 RGMII...");
-    configure_s32k388_rgmii();
-
-    /* Step 4: Init LAN9646 */
-    LOG_I(TAG, "[Step 4] Init LAN9646...");
+    /* Step 3: Init LAN9646 */
+    LOG_I(TAG, "[Step 3] Init LAN9646...");
     if (init_lan9646() != lan9646OK) {
         LOG_E(TAG, "FATAL: LAN9646 init failed!");
         while (1) {}
     }
 
-    /* Step 5: Init Ethernet (AUTOSAR)
+    /* Step 4: Init Ethernet (AUTOSAR)
      * NOTE: Clock configuration is handled by S32 Config Tool (Mcu_InitClock)
      */
-    LOG_I(TAG, "[Step 5] Init Ethernet...");
+    LOG_I(TAG, "[Step 4] Init Ethernet...");
     Eth_43_GMAC_Init(&Eth_43_GMAC_xPredefinedConfig);
 
-    /* Step 6: Configure GMAC MAC */
-    LOG_I(TAG, "[Step 6] Configure GMAC MAC...");
+    /* Step 5: Configure GMAC MAC */
+    LOG_I(TAG, "[Step 5] Configure GMAC MAC...");
     configure_gmac_mac();
 
-    /* Step 7: Set controller active */
-    LOG_I(TAG, "[Step 7] Activate Ethernet controller...");
+    /* Step 6: Set controller active */
+    LOG_I(TAG, "[Step 6] Activate Ethernet controller...");
     Eth_43_GMAC_SetControllerMode(ETH_CTRL_IDX, ETH_MODE_ACTIVE);
+
+    /* Step 7: Configure S32K388 RGMII (AFTER Eth init to avoid being overwritten) */
+    LOG_I(TAG, "[Step 7] Configure S32K388 RGMII bypass...");
+    configure_s32k388_rgmii();
 
     /* Step 8: Debug readback - verify all configurations */
     LOG_I(TAG, "[Step 8] Verifying configurations...");
