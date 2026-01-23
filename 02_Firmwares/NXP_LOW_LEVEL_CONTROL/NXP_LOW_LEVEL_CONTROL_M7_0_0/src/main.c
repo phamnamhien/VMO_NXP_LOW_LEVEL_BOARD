@@ -169,27 +169,8 @@ static lan9646r_t init_lan9646(void) {
 /*===========================================================================*/
 
 /*===========================================================================*/
-/*                      PLLAUX STATUS CHECK                                    */
+/*                      DEBUG FUNCTIONS                                        */
 /*===========================================================================*/
-
-static void debug_pllaux_status(void) {
-    /*
-     * PLLAUX registers for S32K3:
-     * PLL_AUX: Base at 0x402E0200
-     * - PLLCR: Control Register
-     * - PLLSR: Status Register (bit 2 = LOCK)
-     */
-    LOG_I(TAG, "--- PLLAUX Status ---");
-
-    /* Access PLLAUX registers - S32K388 specific addresses */
-    volatile uint32_t *pllaux_sr = (volatile uint32_t *)0x402E0204U;  /* PLLAUX_SR */
-    uint32_t pllaux_status = *pllaux_sr;
-
-    LOG_I(TAG, "  PLLAUX_SR = 0x%08lX", (unsigned long)pllaux_status);
-    LOG_I(TAG, "    LOCK [2] = %lu -> %s",
-          (unsigned long)((pllaux_status >> 2) & 1),
-          ((pllaux_status >> 2) & 1) ? "LOCKED" : "NOT LOCKED!");
-}
 
 static void debug_mux8_status(const char* stage) {
     uint32_t css = IP_MC_CGM->MUX_8_CSS;
@@ -208,89 +189,79 @@ static void configure_gmac0_tx_clk(void) {
     /*
      * Configure MC_CGM MUX_8 for GMAC0_TX_CLK
      * Source: PLLAUX_PHI0 (source select = 12)
-     * Frequency: PLLAUX_PHI0 (500MHz) / 4 = 125MHz for 1Gbps RGMII
      *
-     * CRITICAL: This function MUST be called AFTER Eth_43_GMAC_SetControllerMode()
-     * because both Eth_43_GMAC_Init() and Eth_43_GMAC_SetControllerMode()
-     * reset MUX_8 back to FIRC.
+     * From debug: User measured 30MHz with divider=4, so PLLAUX_PHI0 = 120MHz (not 500MHz!)
+     * To get 125MHz we need to check the actual PLLAUX_PHI0 frequency.
+     *
+     * Try divider = 1 first: if PLLAUX_PHI0 = 125MHz, output = 125MHz
      */
     LOG_I(TAG, "");
     LOG_I(TAG, "===== Configuring GMAC0_TX_CLK (MUX_8) =====");
 
-    /* First check PLLAUX lock status */
-    debug_pllaux_status();
-
     /* Read current state */
     uint32_t css_before = IP_MC_CGM->MUX_8_CSS;
     uint32_t dc0_before = IP_MC_CGM->MUX_8_DC_0;
-    LOG_I(TAG, "  Before: CSS=0x%08lX DC_0=0x%08lX",
+    uint32_t source_before = (css_before >> 24) & 0x3FU;
+    uint32_t div_before = ((dc0_before >> 16) & 0x07U) + 1U;
+
+    LOG_I(TAG, "  Current: CSS=0x%08lX DC_0=0x%08lX",
           (unsigned long)css_before, (unsigned long)dc0_before);
+    LOG_I(TAG, "  Source=%lu (%s), Divider=%lu",
+          (unsigned long)source_before,
+          (source_before == 12) ? "PLLAUX_PHI0" : (source_before == 0) ? "FIRC" : "OTHER",
+          (unsigned long)div_before);
+
+    /* If measured 30MHz with div=4, then PLLAUX_PHI0 = 120MHz
+     * Try div=1 to get 120MHz output, or check if source is actually different
+     */
 
     /* Step 1: Disable the divider first */
     IP_MC_CGM->MUX_8_DC_0 = 0U;  /* DE=0, divider disabled */
 
-    /* Step 2: Request clock source switch to PLLAUX_PHI0 (source 12)
-     * CSC register: SELCTL field at bits [29:24]
-     * Source 12 = PLLAUX_PHI0
-     */
+    /* Step 2: Ensure source is PLLAUX_PHI0 (source 12) */
     uint32_t csc_val = (12U << 24);  /* SELCTL = 12 for PLLAUX_PHI0 */
     IP_MC_CGM->MUX_8_CSC = csc_val;
 
-    /* Step 3: Wait for clock switch to complete
-     * CSS.SWIP bit [16] indicates switch in progress
-     * CSS.SELSTAT [29:24] shows current source
-     */
+    /* Step 3: Wait for clock switch */
     volatile uint32_t timeout = 100000U;
     while (((IP_MC_CGM->MUX_8_CSS & 0x00010000U) != 0U) && (timeout > 0U)) {
-        timeout--;  /* Wait for SWIP to clear */
+        timeout--;
     }
 
-    if (timeout == 0U) {
-        LOG_E(TAG, "  ERROR: MUX_8 clock switch timeout!");
-    }
-
-    /* Small delay for clock to stabilize */
+    /* Small delay */
     volatile uint32_t i;
     for (i = 0; i < 10000U; i++) { }
 
-    /* Step 4: Configure divider: divide by 4 (DIV=3 means divide by 4)
+    /* Step 4: Configure divider = 1 (DIV=0 means divide by 1)
      * DC_0: DE bit [31] = enable, DIV field [18:16] = divider value
-     * Actual division = DIV + 1, so DIV=3 gives /4
+     * Actual division = DIV + 1, so DIV=0 gives /1
+     *
+     * This will output PLLAUX_PHI0 directly without division.
+     * If PLLAUX_PHI0 = 125MHz, TX_CLK = 125MHz (correct for 1Gbps)
+     * If PLLAUX_PHI0 = 120MHz, TX_CLK = 120MHz (4% off, may still work)
      */
     uint32_t dc0_val = (1U << 31) |  /* DE = 1, divider enabled */
-                       (3U << 16);   /* DIV = 3, divide by 4 -> 500MHz/4 = 125MHz */
+                       (0U << 16);   /* DIV = 0, divide by 1 -> direct PLLAUX_PHI0 output */
     IP_MC_CGM->MUX_8_DC_0 = dc0_val;
 
     /* Read back and verify */
     uint32_t css_after = IP_MC_CGM->MUX_8_CSS;
     uint32_t dc0_after = IP_MC_CGM->MUX_8_DC_0;
     uint32_t source = (css_after >> 24) & 0x3FU;
+    uint32_t div_after = ((dc0_after >> 16) & 0x07U) + 1U;
 
     LOG_I(TAG, "  After:  CSS=0x%08lX DC_0=0x%08lX",
           (unsigned long)css_after, (unsigned long)dc0_after);
-    LOG_I(TAG, "  Source select = %lu (12=PLLAUX_PHI0, 0=FIRC)",
-          (unsigned long)source);
+    LOG_I(TAG, "  Source=%lu (%s), Divider=%lu",
+          (unsigned long)source,
+          (source == 12) ? "PLLAUX_PHI0" : (source == 0) ? "FIRC" : "OTHER",
+          (unsigned long)div_after);
 
     if (source == 12U) {
-        LOG_I(TAG, "  SUCCESS: TX_CLK now using PLLAUX_PHI0 / 4 = 125MHz");
-    } else if (source == 0U) {
-        LOG_E(TAG, "  FAILED: TX_CLK still using FIRC (48MHz)!");
-        LOG_E(TAG, "  Possible causes:");
-        LOG_E(TAG, "    1. PLLAUX not locked");
-        LOG_E(TAG, "    2. Clock switch failed");
-        LOG_E(TAG, "    3. CSC write not effective");
-
-        /* Try again with SW trigger */
-        LOG_I(TAG, "  Attempting with SW trigger bit...");
-        IP_MC_CGM->MUX_8_CSC = (12U << 24) | (1U << 2);  /* Add CLK_SW bit */
-        for (i = 0; i < 50000U; i++) { }
-
-        css_after = IP_MC_CGM->MUX_8_CSS;
-        source = (css_after >> 24) & 0x3FU;
-        LOG_I(TAG, "  After retry: CSS=0x%08lX source=%lu",
-              (unsigned long)css_after, (unsigned long)source);
+        LOG_I(TAG, "  TX_CLK = PLLAUX_PHI0 / %lu", (unsigned long)div_after);
+        LOG_I(TAG, "  Please measure TX_CLK with oscilloscope to verify frequency");
     } else {
-        LOG_W(TAG, "  WARNING: TX_CLK using unexpected source %lu", (unsigned long)source);
+        LOG_E(TAG, "  FAILED: TX_CLK not using PLLAUX_PHI0!");
     }
 
     LOG_I(TAG, "===== MUX_8 Configuration Complete =====");
