@@ -26,7 +26,6 @@
 #include "log_debug.h"
 #include "rgmii_diag.h"
 #include "rgmii_config_debug.h"
-#include "OsIf_rtd_port.h"
 
 /* External config symbols from generated PBcfg files */
 extern const Eth_43_GMAC_ConfigType Eth_43_GMAC_xPredefinedConfig;
@@ -87,8 +86,19 @@ static lan9646r_t i2c_mem_read_cb(uint8_t dev_addr, uint16_t mem_addr,
 /*===========================================================================*/
 
 static void delay_ms(uint32_t ms) {
-    /* Use OsIf_TimeDelay from OsIf_rtd_port (uses GPT/PIT callback) */
-    OsIf_TimeDelay(ms);
+    /*
+     * Simple busy-wait delay - cannot use OsIf functions because
+     * USING_OS_FREERTOS is defined but scheduler is not running.
+     * Calibrated for ~160MHz core clock.
+     */
+    volatile uint32_t count;
+    while (ms > 0) {
+        count = 40000U;  /* Approx 1ms at 160MHz */
+        while (count > 0) {
+            count--;
+        }
+        ms--;
+    }
 }
 
 /*===========================================================================*/
