@@ -144,11 +144,14 @@ static lan9646r_t init_lan9646(void) {
     /*
      * XMII_CTRL1 [0x6301]:
      *   Bit 6: Speed 1000 (0=1Gbps, 1=10/100Mbps)
-     *   Bit 4: RX internal delay (1=ON)
-     *   Bit 3: TX internal delay (0=OFF)
-     * Value: 0x10 = 1Gbps mode, RX delay ON, TX delay OFF
+     *   Bit 4: RX internal delay (1=ON) - adds delay to RX path (GMAC TX -> LAN9646 RX)
+     *   Bit 3: TX internal delay (1=ON) - adds delay to TX path (LAN9646 TX -> GMAC RX)
+     *
+     * For RGMII, ~2ns delay is needed on each path.
+     * Since GMAC RX is not receiving packets, enable TX delay to fix RX path.
+     * Value: 0x18 = 1Gbps mode, RX delay ON, TX delay ON
      */
-    lan9646_write_reg8(&g_lan9646, 0x6301, 0x10);
+    lan9646_write_reg8(&g_lan9646, 0x6301, 0x18);
 
     /* Enable switch */
     lan9646_write_reg8(&g_lan9646, 0x0300, 0x01);
