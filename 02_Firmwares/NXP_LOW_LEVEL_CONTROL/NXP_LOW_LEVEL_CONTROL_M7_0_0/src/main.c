@@ -131,30 +131,56 @@ static lan9646r_t init_lan9646(void) {
     lan9646_get_chip_id(&g_lan9646, &chip_id, &revision);
     LOG_I(TAG, "Chip: 0x%04X Rev:%d", chip_id, revision);
 
-    /* Configure Port 6 for RGMII 1Gbps with RX delay */
+    /*
+     * Configure Port 6 for RGMII 1Gbps
+     *
+     * RGMII Clock/Data Flow:
+     *   S32K388 (MAC)              LAN9646 (PHY Port 6)
+     *       |                            |
+     *       |-- TXD, TX_CTL, TX_CLK ---->|  S32K388 TX → LAN9646 RX
+     *       |                            |
+     *       |<-- RXD, RX_CTL, RX_CLK ---|  LAN9646 TX → S32K388 RX
+     *
+     * RGMII requires ~1.5-2ns clock skew. S32K388 GMAC has NO internal delay,
+     * so LAN9646 must provide the delay on BOTH paths.
+     */
     LOG_I(TAG, "Configuring Port 6 for RGMII 1Gbps...");
 
     /*
      * XMII_CTRL0 [0x6300]:
-     *   Bit 6: Duplex (1=Full)
-     *   Bit 5: TX Flow Ctrl (1=Enable)
-     *   Bit 4: Speed 100 (0 for 1G mode)
-     *   Bit 3: RX Flow Ctrl (1=Enable)
-     * Value: 0x68 = Full duplex, flow control, 1Gbps
+     *   Bit 6: Duplex        (1=Full duplex)
+     *   Bit 5: TX Flow Ctrl  (1=Enable)
+     *   Bit 4: Speed 100     (0=1Gbps mode, 1=100Mbps mode)
+     *   Bit 3: RX Flow Ctrl  (1=Enable)
+     * Value: 0x68 = Full duplex, flow control enabled, 1Gbps mode
      */
     lan9646_write_reg8(&g_lan9646, 0x6300, 0x68);
 
     /*
      * XMII_CTRL1 [0x6301]:
-     *   Bit 6: Speed 1000 (0=1Gbps, 1=10/100Mbps)
-     *   Bit 4: RX internal delay (1=ON) - adds delay to RX path (GMAC TX -> LAN9646 RX)
-     *   Bit 3: TX internal delay (1=ON) - adds delay to TX path (LAN9646 TX -> GMAC RX)
+     *   Bit 6: Speed 1000    (0=1Gbps, 1=10/100Mbps select)
+     *   Bit 4: RX ID Enable  - Add ~1.5ns delay to TX_CLK INPUT (from S32K388)
+     *                          Helps LAN9646 sample TXD/TX_CTL correctly
+     *   Bit 3: TX ID Enable  - Add ~1.5ns delay to RX_CLK OUTPUT (to S32K388)
+     *                          Helps S32K388 sample RXD/RX_CTL correctly
      *
-     * For RGMII, ~2ns delay is needed on each path.
-     * Since GMAC RX is not receiving packets, enable TX delay to fix RX path.
-     * Value: 0x18 = 1Gbps mode, RX delay ON, TX delay ON
+     * Value: 0x18 = 1Gbps mode + RX ID + TX ID (both delays enabled)
+     *
+     * NOTE: "TX ID" delays the clock that LAN9646 TRANSMITS (RX_CLK to S32K388)
+     *       "RX ID" delays the clock that LAN9646 RECEIVES (TX_CLK from S32K388)
      */
     lan9646_write_reg8(&g_lan9646, 0x6301, 0x18);
+
+    /* Verify XMII configuration */
+    uint8_t xmii_ctrl0, xmii_ctrl1;
+    lan9646_read_reg8(&g_lan9646, 0x6300, &xmii_ctrl0);
+    lan9646_read_reg8(&g_lan9646, 0x6301, &xmii_ctrl1);
+    LOG_I(TAG, "  XMII_CTRL0=0x%02X XMII_CTRL1=0x%02X", xmii_ctrl0, xmii_ctrl1);
+    LOG_I(TAG, "    Duplex: %s, Speed: %s",
+          (xmii_ctrl0 & 0x40) ? "Full" : "Half",
+          (xmii_ctrl1 & 0x40) ? "10/100M" : "1Gbps");
+    LOG_I(TAG, "    TX ID (RX_CLK delay): %s", (xmii_ctrl1 & 0x08) ? "ON (+1.5ns)" : "OFF");
+    LOG_I(TAG, "    RX ID (TX_CLK delay): %s", (xmii_ctrl1 & 0x10) ? "ON (+1.5ns)" : "OFF");
 
     /* Enable switch */
     lan9646_write_reg8(&g_lan9646, 0x0300, 0x01);
@@ -256,10 +282,19 @@ static void debug_gmac_rx_input_mux(void) {
 }
 
 /*
- * DCMRWF3 bit definitions for GMAC0 clock control:
- *   Bit 13: MAC_RX_CLK_MUX_BYPASS - Bypass MUX_7 for RX_CLK from external PHY
- *   Bit 12: MAC_TX_CLK_MUX_BYPASS - Bypass MUX_8 for TX_CLK
- *   Bit 11: MAC_TX_CLK_OUT_EN     - Enable TX_CLK output to PHY
+ * DCMRWF3 bit definitions for GMAC0 clock control (S32K388):
+ *
+ *   Bit 13: MAC_RX_CLK_MUX_BYPASS
+ *           0 = RX_CLK from MUX_7 (internal PLL)
+ *           1 = RX_CLK from external pin (PHY provides clock) ← REQUIRED for RGMII
+ *
+ *   Bit 12: MAC_TX_CLK_MUX_BYPASS
+ *           0 = TX_CLK from MUX_8 (internal PLL, 125MHz) ← REQUIRED for RGMII
+ *           1 = TX_CLK from external source (not used in RGMII)
+ *
+ *   Bit 11: MAC_TX_CLK_OUT_EN
+ *           0 = TX_CLK output disabled
+ *           1 = TX_CLK output enabled to PHY ← REQUIRED for RGMII
  */
 #define DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT   (13U)
 #define DCMRWF3_MAC_TX_CLK_MUX_BYPASS_BIT   (12U)
@@ -267,37 +302,59 @@ static void debug_gmac_rx_input_mux(void) {
 
 static void configure_s32k388_rgmii(void) {
     /*
-     * RGMII Clock Configuration for S32K388 + LAN9646:
-     * - All clocks are configured via S32 Config Tool (MCU_Cfg.c)
-     * - Manual settings needed per NXP engineer recommendation:
-     *   1. RX_CLK MUX_7 bypass - clock comes from LAN9646 (125MHz RGMII)
-     *   2. TX_CLK_OUT_EN - enable TX_CLK output to LAN9646
+     * S32K388 GMAC0 RGMII Clock Configuration
      *
-     * Reference:
-     * https://community.nxp.com/t5/S32K/S32K388-GMAC-with-RGMII/m-p/1999697
+     * Clock sources for RGMII 1Gbps:
+     *
+     *   TX Path (S32K388 → LAN9646):
+     *   ┌─────────────┐                      ┌─────────────┐
+     *   │  S32K388    │  TX_CLK (125MHz)     │  LAN9646    │
+     *   │  GMAC0      │ ───────────────────> │  Port 6     │
+     *   │             │  TXD[3:0], TX_CTL    │             │
+     *   │  PLL→MUX_8  │ ───────────────────> │             │
+     *   └─────────────┘                      └─────────────┘
+     *   TX_CLK_MUX_BYPASS = 0 (use MUX_8 from PLL)
+     *   TX_CLK_OUT_EN = 1 (enable output)
+     *
+     *   RX Path (LAN9646 → S32K388):
+     *   ┌─────────────┐                      ┌─────────────┐
+     *   │  S32K388    │  RX_CLK (125MHz)     │  LAN9646    │
+     *   │  GMAC0      │ <─────────────────── │  Port 6     │
+     *   │             │  RXD[3:0], RX_CTL    │             │
+     *   │  BYPASS MUX7│ <─────────────────── │             │
+     *   └─────────────┘                      └─────────────┘
+     *   RX_CLK_MUX_BYPASS = 1 (bypass MUX_7, use external clock from PHY)
+     *
+     * Reference: https://community.nxp.com/t5/S32K/S32K388-GMAC-with-RGMII/m-p/1999697
      */
     LOG_I(TAG, "Configuring S32K388 RGMII clock settings...");
 
     uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
     LOG_I(TAG, "  DCMRWF3 before: 0x%08lX", (unsigned long)dcmrwf3);
 
-    /* Set RX_CLK_MUX_BYPASS (bit 13) - Bypass MUX_7 for GMAC0_RX_CLK from LAN9646 */
+    /* RX_CLK_MUX_BYPASS = 1: Bypass MUX_7, receive RX_CLK from LAN9646 */
     dcmrwf3 |= (1U << DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT);
 
-    /* Set TX_CLK_OUT_EN (bit 11) - Enable TX_CLK output to LAN9646 */
+    /* TX_CLK_MUX_BYPASS = 0: Use MUX_8 (PLL) for TX_CLK - already 0 by default */
+    /* dcmrwf3 &= ~(1U << DCMRWF3_MAC_TX_CLK_MUX_BYPASS_BIT); */
+
+    /* TX_CLK_OUT_EN = 1: Enable TX_CLK output to LAN9646 */
     dcmrwf3 |= (1U << DCMRWF3_MAC_TX_CLK_OUT_EN_BIT);
 
     IP_DCM_GPR->DCMRWF3 = dcmrwf3;
 
     /* Read back and verify */
     dcmrwf3 = IP_DCM_GPR->DCMRWF3;
-    LOG_I(TAG, "  DCMRWF3 after:  0x%08lX", (unsigned long)dcmrwf3);
-    LOG_I(TAG, "    RX_CLK_MUX_BYPASS [bit 13] = %lu",
-          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT) & 1U));
-    LOG_I(TAG, "    TX_CLK_MUX_BYPASS [bit 12] = %lu",
-          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_MUX_BYPASS_BIT) & 1U));
-    LOG_I(TAG, "    TX_CLK_OUT_EN     [bit 11] = %lu",
-          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_OUT_EN_BIT) & 1U));
+    LOG_I(TAG, "  DCMRWF3 after:  0x%08lX (expected: 0x2800)", (unsigned long)dcmrwf3);
+    LOG_I(TAG, "    RX_CLK_MUX_BYPASS [13] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT) & 1U),
+          ((dcmrwf3 >> DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT) & 1U) ? "BYPASS (from LAN9646)" : "MUX_7 (ERROR!)");
+    LOG_I(TAG, "    TX_CLK_MUX_BYPASS [12] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_MUX_BYPASS_BIT) & 1U),
+          ((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_MUX_BYPASS_BIT) & 1U) ? "BYPASS (unexpected)" : "MUX_8 (PLL)");
+    LOG_I(TAG, "    TX_CLK_OUT_EN     [11] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_OUT_EN_BIT) & 1U),
+          ((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_OUT_EN_BIT) & 1U) ? "ENABLED" : "DISABLED (ERROR!)");
 
     /* Debug: Check RX input mux configuration */
     debug_gmac_rx_input_mux();
