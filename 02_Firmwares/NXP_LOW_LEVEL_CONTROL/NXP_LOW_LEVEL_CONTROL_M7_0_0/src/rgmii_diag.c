@@ -164,12 +164,10 @@ rgmii_test_result_t rgmii_diag_test_clocks(void) {
     LOG_I(TAG, "#              TEST 1: CLOCK VERIFICATION                      #");
     LOG_I(TAG, "################################################################");
 
-    /* Check S32K388 GMAC TX clock source */
-    /* MC_CGM base address: 0x402D8000, MUX_8 offset: 0x380 */
-    volatile uint32_t* mc_cgm = (volatile uint32_t*)0x402D8000UL;
-    uint32_t csc = *(mc_cgm + (0x380/4));
-    uint32_t css = *(mc_cgm + (0x384/4));
-    uint32_t dc0 = *(mc_cgm + (0x388/4));
+    /* Check S32K388 GMAC TX clock source - use SDK register definitions */
+    uint32_t csc = IP_MC_CGM->MUX_8_CSC;
+    uint32_t css = IP_MC_CGM->MUX_8_CSS;
+    uint32_t dc0 = IP_MC_CGM->MUX_8_DC_0;
 
     LOG_I(TAG, "S32K388 GMAC0_TX_CLK (MUX_8):");
     LOG_I(TAG, "  CSC=0x%08lX CSS=0x%08lX DC_0=0x%08lX",

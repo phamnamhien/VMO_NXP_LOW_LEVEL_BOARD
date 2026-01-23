@@ -165,13 +165,10 @@ void rgmii_debug_read_s32k388_config(s32k388_gmac_config_t* config) {
     config->dcmrwf1 = IP_DCM_GPR->DCMRWF1;
     config->dcmrwf3 = IP_DCM_GPR->DCMRWF3;
 
-    /* MC_CGM Clock Mux 8 - Read via direct memory access */
-    /* MC_CGM base address for S32K388: 0x402D8000 */
-    /* MUX_8 offset: 0x380 (CSC), 0x384 (CSS), 0x388 (DC_0) */
-    volatile uint32_t* mc_cgm_base = (volatile uint32_t*)0x402D8000UL;
-    config->mux8_csc = *(mc_cgm_base + (0x380/4));
-    config->mux8_css = *(mc_cgm_base + (0x384/4));
-    config->mux8_dc0 = *(mc_cgm_base + (0x388/4));
+    /* MC_CGM Clock Mux 8 - Use SDK register definitions */
+    config->mux8_csc = IP_MC_CGM->MUX_8_CSC;
+    config->mux8_css = IP_MC_CGM->MUX_8_CSS;
+    config->mux8_dc0 = IP_MC_CGM->MUX_8_DC_0;
 
     /* GMAC MAC Registers */
     config->mac_configuration = IP_GMAC_0->MAC_CONFIGURATION;
