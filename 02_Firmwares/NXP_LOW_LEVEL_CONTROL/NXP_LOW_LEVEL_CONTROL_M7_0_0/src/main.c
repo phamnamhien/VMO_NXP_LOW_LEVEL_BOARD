@@ -192,14 +192,7 @@ static void configure_gmac_mac(void) {
 /*===========================================================================*/
 
 static void device_init(void) {
-    LOG_I(TAG, "");
-    LOG_I(TAG, "================================================================");
-    LOG_I(TAG, "          RGMII HARDWARE DIAGNOSTIC - S32K388 + LAN9646");
-    LOG_I(TAG, "================================================================");
-    LOG_I(TAG, "");
-
-    /* Step 1: MCU Init */
-    LOG_I(TAG, "[Step 1] MCU Init...");
+    /* Step 1: MCU Init (no logging available yet) */
     Mcu_Init(&Mcu_PreCompileConfig);
     Mcu_InitClock(McuClockSettingConfig_0);
     while (MCU_PLL_LOCKED != Mcu_GetPllStatus()) {}
@@ -207,13 +200,24 @@ static void device_init(void) {
     Mcu_SetMode(McuModeSettingConf_0);
 
     /* Step 2: Platform & Port */
-    LOG_I(TAG, "[Step 2] Platform & Port Init...");
     OsIf_Init(NULL);
     Platform_Init(NULL);
     /* Note: GMAC IRQ handlers are installed by Eth_43_GMAC driver */
     Port_Init(&Port_Config);
     Gpt_Init(&Gpt_Config);
     Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 0xFFFFFFFFU);
+
+    /* Initialize UART for debug logging - NOW we can use LOG_* macros */
+    log_init();
+
+    /* Print banner */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "          RGMII HARDWARE DIAGNOSTIC - S32K388 + LAN9646");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "");
+    LOG_I(TAG, "[Step 1] MCU Init... Done");
+    LOG_I(TAG, "[Step 2] Platform & Port Init... Done");
 
     /* Initialize SysTick for delay functions */
     SysTick_Init();
