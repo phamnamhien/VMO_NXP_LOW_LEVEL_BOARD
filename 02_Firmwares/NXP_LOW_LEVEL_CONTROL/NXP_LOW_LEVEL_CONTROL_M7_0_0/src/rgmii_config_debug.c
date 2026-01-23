@@ -424,15 +424,29 @@ void rgmii_debug_dump_s32k388(void) {
     /* Calculate expected TX clock */
     const char* clk_src_name;
     uint32_t base_freq = 0;
+    /*
+     * S32K388 MUX_8 clock source selector values (from Clock_Ip_apfFreqTableClkSrc):
+     *   0  = FIRC (48MHz)
+     *   1  = SIRC (32kHz)
+     *   2  = FXOSC (16-40MHz, board dependent)
+     *   8  = PLL_PHI0 (CORE_PLL)
+     *   9  = PLL_PHI1 (CORE_PLL)
+     *   12 = PLLAUX_PHI0 (typically 125MHz for RGMII 1Gbps)
+     *   13 = PLLAUX_PHI1
+     *   14 = PLLAUX_PHI2
+     *   18 = GMAC0_RX_CLK_EXT
+     *   19 = GMAC0_TX_CLK_EXT
+     *   20 = GMAC0_REF_CLK
+     */
     switch (clk_src) {
         case 0:  clk_src_name = "FIRC (48MHz)"; base_freq = 48000000; break;
-        case 2:  clk_src_name = "SIRC (32kHz)"; base_freq = 32000; break;
-        case 4:  clk_src_name = "FXOSC (8-40MHz)"; base_freq = 40000000; break;
-        case 8:  clk_src_name = "CORE_PLL_PHI0"; base_freq = 160000000; break;
-        case 9:  clk_src_name = "CORE_PLL_DFS0"; base_freq = 400000000; break;
-        case 12: clk_src_name = "PERIPH_PLL_PHI0"; base_freq = 160000000; break;
-        case 13: clk_src_name = "PERIPH_PLL_PHI1"; base_freq = 125000000; break;
-        case 14: clk_src_name = "PERIPH_PLL_PHI2"; base_freq = 250000000; break;
+        case 1:  clk_src_name = "SIRC (32kHz)"; base_freq = 32000; break;
+        case 2:  clk_src_name = "FXOSC"; base_freq = 40000000; break;
+        case 8:  clk_src_name = "PLL_PHI0 (CORE_PLL)"; base_freq = 160000000; break;
+        case 9:  clk_src_name = "PLL_PHI1 (CORE_PLL)"; base_freq = 80000000; break;
+        case 12: clk_src_name = "PLLAUX_PHI0"; base_freq = 125000000; break;  /* Typical for RGMII */
+        case 13: clk_src_name = "PLLAUX_PHI1"; base_freq = 125000000; break;
+        case 14: clk_src_name = "PLLAUX_PHI2"; base_freq = 250000000; break;
         case 18: clk_src_name = "GMAC0_RX_CLK_EXT"; base_freq = 0; break;
         case 19: clk_src_name = "GMAC0_TX_CLK_EXT"; base_freq = 0; break;
         case 20: clk_src_name = "GMAC0_REF_CLK"; base_freq = 50000000; break;
