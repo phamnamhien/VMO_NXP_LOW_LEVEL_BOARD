@@ -260,8 +260,8 @@ static void configure_s32k388_rgmii(void) {
           (unsigned long)IP_DCM_GPR->DCMRWF1,
           (unsigned long)IP_DCM_GPR->DCMRWF3);
 
-    /* Configure GMAC0_TX_CLK to use PLLAUX_PHI0 / 4 = 125MHz */
-    configure_gmac0_tx_clk();
+    /* NOTE: configure_gmac0_tx_clk() is called AFTER Eth_43_GMAC_Init()
+     * because Eth_43_GMAC_Init() resets MUX_8 to default (FIRC) */
 }
 
 static void configure_gmac_mac(void) {
@@ -504,16 +504,23 @@ static void device_init(void) {
     LOG_I(TAG, "[Step 5] Init Ethernet...");
     Eth_43_GMAC_Init(&Eth_43_GMAC_xPredefinedConfig);
 
-    /* Step 6: Configure GMAC MAC */
-    LOG_I(TAG, "[Step 6] Configure GMAC MAC...");
+    /* Step 6: Configure GMAC0_TX_CLK after Eth_43_GMAC_Init
+     * IMPORTANT: Eth_43_GMAC_Init() resets MUX_8 to FIRC.
+     * We must reconfigure MUX_8 to PLLAUX_PHI0 after it.
+     */
+    LOG_I(TAG, "[Step 6] Configure GMAC0_TX_CLK (after Eth init)...");
+    configure_gmac0_tx_clk();
+
+    /* Step 7: Configure GMAC MAC */
+    LOG_I(TAG, "[Step 7] Configure GMAC MAC...");
     configure_gmac_mac();
 
-    /* Step 7: Set controller active */
-    LOG_I(TAG, "[Step 7] Activate Ethernet controller...");
+    /* Step 8: Set controller active */
+    LOG_I(TAG, "[Step 8] Activate Ethernet controller...");
     Eth_43_GMAC_SetControllerMode(ETH_CTRL_IDX, ETH_MODE_ACTIVE);
 
-    /* Step 8: Debug readback - verify all configurations */
-    LOG_I(TAG, "[Step 8] Verifying configurations...");
+    /* Step 9: Debug readback - verify all configurations */
+    LOG_I(TAG, "[Step 9] Verifying configurations...");
     debug_readback_config();
 
     LOG_I(TAG, "");
