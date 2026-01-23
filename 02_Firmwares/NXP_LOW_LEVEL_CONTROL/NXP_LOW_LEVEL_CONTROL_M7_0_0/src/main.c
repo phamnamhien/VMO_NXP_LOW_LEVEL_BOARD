@@ -26,6 +26,7 @@
 #include "log_debug.h"
 #include "rgmii_diag.h"
 #include "rgmii_config_debug.h"
+#include "OsIf_rtd_port.h"
 
 /* External config symbols from generated PBcfg files */
 extern const Eth_43_GMAC_ConfigType Eth_43_GMAC_xPredefinedConfig;
@@ -86,16 +87,8 @@ static lan9646r_t i2c_mem_read_cb(uint8_t dev_addr, uint16_t mem_addr,
 /*===========================================================================*/
 
 static void delay_ms(uint32_t ms) {
-    /* Simple busy-wait delay using loop counter */
-    /* Calibrated for ~160MHz core clock */
-    volatile uint32_t count;
-    while (ms > 0) {
-        count = 40000U;  /* Approx 1ms at 160MHz */
-        while (count > 0) {
-            count--;
-        }
-        ms--;
-    }
+    /* Use OsIf_TimeDelay from OsIf_rtd_port (uses GPT/PIT callback) */
+    OsIf_TimeDelay(ms);
 }
 
 /*===========================================================================*/
@@ -480,13 +473,10 @@ static void device_init(void) {
 
     Platform_Init(NULL_PTR);
 
-#if (OSIF_USE_SYSTEM_TIMER == STD_ON)
-    /* Initialize GPT for OsIf system timer (optional - requires proper S32 Config Tool setup) */
+    /* Initialize GPT for OsIf_Millisecond callback (PIT0 CH0) */
     Gpt_Init(NULL_PTR);
-    Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 40000000U);
+    Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 40000U);  /* 1ms @ 40MHz */
     Gpt_EnableNotification(GptConf_GptChannelConfiguration_GptChannelConfiguration_0);
-    OsIf_SetTimerFrequency(160000000U, OSIF_COUNTER_SYSTEM);
-#endif
 
     Uart_Init(NULL_PTR);
     log_init();

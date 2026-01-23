@@ -3,15 +3,14 @@
  */
 #include "log_debug.h"
 #include "OsIf.h"
+#include "OsIf_rtd_port.h"
 #include "string.h"
 
 static log_level_t current_level = LOG_LEVEL_INFO;
 static uint8_t is_initialized = 0;
-static uint32 log_start_time = 0;
 
 void log_init(void) {
-    /* Note: Uart_Init(NULL_PTR) must be called BEFORE log_init() */
-    log_start_time = OsIf_GetCounter(OSIF_COUNTER_DUMMY);
+    /* Note: Uart_Init(NULL_PTR) and Gpt_Init() must be called BEFORE log_init() */
     is_initialized = 1;
 }
 
@@ -35,10 +34,10 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         default: return;
     }
 
-    /* Get elapsed ticks since log_init (dummy counter) */
-    uint32 elapsed = OsIf_GetElapsed(&log_start_time, OSIF_COUNTER_DUMMY);
-    uint32 sec = elapsed / 1000000U;
-    uint32 ms = (elapsed / 1000U) % 1000U;
+    /* Get milliseconds from GPT/PIT timer */
+    uint32 total_ms = OsIf_GetMilliseconds();
+    uint32 sec = total_ms / 1000U;
+    uint32 ms = total_ms % 1000U;
 
     int len = snprintf(buffer, sizeof(buffer), "[%lu.%03lu] %s (%s): ",
                       sec, ms, level_str, tag);
