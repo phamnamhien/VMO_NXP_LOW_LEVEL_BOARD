@@ -10,8 +10,8 @@ static uint8_t is_initialized = 0;
 static uint32 log_start_time = 0;
 
 void log_init(void) {
-    /* Note: Uart_Init(NULL_PTR) and Gpt_Init() must be called BEFORE log_init() */
-    log_start_time = OsIf_GetCounter(OSIF_COUNTER_SYSTEM);
+    /* Note: Uart_Init(NULL_PTR) must be called BEFORE log_init() */
+    log_start_time = OsIf_GetCounter(OSIF_COUNTER_DUMMY);
     is_initialized = 1;
 }
 
@@ -35,8 +35,8 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         default: return;
     }
 
-    /* Get elapsed ticks since log_init (system timer via GPT) */
-    uint32 elapsed = OsIf_GetElapsed(&log_start_time, OSIF_COUNTER_SYSTEM);
+    /* Get elapsed ticks since log_init (dummy counter) */
+    uint32 elapsed = OsIf_GetElapsed(&log_start_time, OSIF_COUNTER_DUMMY);
     uint32 sec = elapsed / 1000000U;
     uint32 ms = (elapsed / 1000U) % 1000U;
 
