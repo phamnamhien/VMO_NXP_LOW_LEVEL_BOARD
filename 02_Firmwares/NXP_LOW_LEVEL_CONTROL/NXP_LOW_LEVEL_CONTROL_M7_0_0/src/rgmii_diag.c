@@ -189,8 +189,8 @@ rgmii_test_result_t rgmii_diag_test_clocks(void) {
     LOG_I(TAG, "  DCMRWF1=0x%08lX (MAC mode=%lu)",
           (unsigned long)dcmrwf1, (unsigned long)(dcmrwf1 & 0x03));
     LOG_I(TAG, "  DCMRWF3=0x%08lX", (unsigned long)dcmrwf3);
-    LOG_I(TAG, "    TX_CLK_OUT_EN=%d RX_CLK_BYPASS=%d",
-          (dcmrwf3 >> 3) & 1, dcmrwf3 & 1);
+    LOG_I(TAG, "    RX_CLK_MUX_BYPASS[13]=%d TX_CLK_MUX_BYPASS[12]=%d TX_CLK_OUT_EN[11]=%d",
+          (dcmrwf3 >> 13) & 1, (dcmrwf3 >> 12) & 1, (dcmrwf3 >> 11) & 1);
 
     /* Check LAN9646 Port 6 status */
     uint8_t ctrl0, ctrl1, status;

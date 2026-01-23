@@ -255,23 +255,49 @@ static void debug_gmac_rx_input_mux(void) {
     LOG_I(TAG, "");
 }
 
+/*
+ * DCMRWF3 bit definitions for GMAC0 clock control:
+ *   Bit 13: MAC_RX_CLK_MUX_BYPASS - Bypass MUX_7 for RX_CLK from external PHY
+ *   Bit 12: MAC_TX_CLK_MUX_BYPASS - Bypass MUX_8 for TX_CLK
+ *   Bit 11: MAC_TX_CLK_OUT_EN     - Enable TX_CLK output to PHY
+ */
+#define DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT   (13U)
+#define DCMRWF3_MAC_TX_CLK_MUX_BYPASS_BIT   (12U)
+#define DCMRWF3_MAC_TX_CLK_OUT_EN_BIT       (11U)
+
 static void configure_s32k388_rgmii(void) {
     /*
-     * RGMII Clock Configuration:
+     * RGMII Clock Configuration for S32K388 + LAN9646:
      * - All clocks are configured via S32 Config Tool (MCU_Cfg.c)
-     * - Only manual setting needed: GMAC RX_CLK MUX_7 bypass
+     * - Manual settings needed per NXP engineer recommendation:
+     *   1. RX_CLK MUX_7 bypass - clock comes from LAN9646 (125MHz RGMII)
+     *   2. TX_CLK_OUT_EN - enable TX_CLK output to LAN9646
      *
-     * Per NXP engineer recommendation:
+     * Reference:
      * https://community.nxp.com/t5/S32K/S32K388-GMAC-with-RGMII/m-p/1999697
      */
-    LOG_I(TAG, "Configuring S32K388 RGMII RX_CLK bypass (MUX_7)...");
+    LOG_I(TAG, "Configuring S32K388 RGMII clock settings...");
 
-    /* Bypass MUX_7 for GMAC0_RX_CLK - clock comes from external pin (LAN9646) */
-    IP_DCM_GPR->DCMRWF3 |= DCM_GPR_DCMRWF3_MAC_RX_CLK_MUX_BYPASS(1u);
+    uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
+    LOG_I(TAG, "  DCMRWF3 before: 0x%08lX", (unsigned long)dcmrwf3);
 
-    LOG_I(TAG, "  DCMRWF3=0x%08lX (RX_CLK_BYPASS=%lu)",
-          (unsigned long)IP_DCM_GPR->DCMRWF3,
-          (unsigned long)(IP_DCM_GPR->DCMRWF3 & DCM_GPR_DCMRWF3_MAC_RX_CLK_MUX_BYPASS_MASK));
+    /* Set RX_CLK_MUX_BYPASS (bit 13) - Bypass MUX_7 for GMAC0_RX_CLK from LAN9646 */
+    dcmrwf3 |= (1U << DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT);
+
+    /* Set TX_CLK_OUT_EN (bit 11) - Enable TX_CLK output to LAN9646 */
+    dcmrwf3 |= (1U << DCMRWF3_MAC_TX_CLK_OUT_EN_BIT);
+
+    IP_DCM_GPR->DCMRWF3 = dcmrwf3;
+
+    /* Read back and verify */
+    dcmrwf3 = IP_DCM_GPR->DCMRWF3;
+    LOG_I(TAG, "  DCMRWF3 after:  0x%08lX", (unsigned long)dcmrwf3);
+    LOG_I(TAG, "    RX_CLK_MUX_BYPASS [bit 13] = %lu",
+          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT) & 1U));
+    LOG_I(TAG, "    TX_CLK_MUX_BYPASS [bit 12] = %lu",
+          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_MUX_BYPASS_BIT) & 1U));
+    LOG_I(TAG, "    TX_CLK_OUT_EN     [bit 11] = %lu",
+          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_OUT_EN_BIT) & 1U));
 
     /* Debug: Check RX input mux configuration */
     debug_gmac_rx_input_mux();
@@ -329,12 +355,15 @@ static void debug_readback_config(void) {
           ((dcmrwf1 & 0x03U) == 2) ? "RGMII" : "OTHER");
 
     LOG_I(TAG, "    DCMRWF3 = 0x%08lX", (unsigned long)dcmrwf3);
-    LOG_I(TAG, "      TX_CLK_OUT_EN [3]     = %lu -> %s",
-          (unsigned long)((dcmrwf3 >> 3) & 1),
-          ((dcmrwf3 >> 3) & 1) ? "ENABLED" : "DISABLED");
-    LOG_I(TAG, "      RX_CLK_MUX_BYPASS [0] = %lu -> %s",
-          (unsigned long)(dcmrwf3 & 1),
-          (dcmrwf3 & 1) ? "BYPASS (from LAN9646)" : "MUX7");
+    LOG_I(TAG, "      RX_CLK_MUX_BYPASS [13] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> 13) & 1),
+          ((dcmrwf3 >> 13) & 1) ? "BYPASS (from LAN9646)" : "MUX7");
+    LOG_I(TAG, "      TX_CLK_MUX_BYPASS [12] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> 12) & 1),
+          ((dcmrwf3 >> 12) & 1) ? "BYPASS" : "MUX8");
+    LOG_I(TAG, "      TX_CLK_OUT_EN     [11] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> 11) & 1),
+          ((dcmrwf3 >> 11) & 1) ? "ENABLED" : "DISABLED");
 
     LOG_I(TAG, "  MAC_CONFIGURATION = 0x%08lX", (unsigned long)mac_cfg);
     LOG_I(TAG, "    PS  [15] = %lu", (unsigned long)((mac_cfg >> 15) & 1));

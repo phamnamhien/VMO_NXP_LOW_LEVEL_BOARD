@@ -221,9 +221,13 @@ void rgmii_debug_read_s32k388_config(s32k388_gmac_config_t* config) {
     /* Interface mode from DCM_GPR */
     config->interface_mode = config->dcmrwf1 & 0x03;
 
-    /* Clock settings */
-    config->tx_clk_out_enable = (config->dcmrwf3 >> 3) & 1;
-    config->rx_clk_bypass = config->dcmrwf3 & 1;
+    /* Clock settings - correct bit positions for DCMRWF3:
+     * Bit 13: MAC_RX_CLK_MUX_BYPASS
+     * Bit 12: MAC_TX_CLK_MUX_BYPASS
+     * Bit 11: MAC_TX_CLK_OUT_EN
+     */
+    config->rx_clk_bypass = (config->dcmrwf3 >> 13) & 1;
+    config->tx_clk_out_enable = (config->dcmrwf3 >> 11) & 1;
 }
 
 /*===========================================================================*/
@@ -393,10 +397,12 @@ void rgmii_debug_dump_s32k388(void) {
           rgmii_debug_interface_str(cfg.dcmrwf1 & 0x03));
     LOG_I(TAG, "");
     LOG_I(TAG, "  DCMRWF3 = 0x%08lX", (unsigned long)cfg.dcmrwf3);
-    LOG_I(TAG, "    GMAC_TX_CLK_OUT_EN [3]     = %d -> TX clock output: %s",
-          (cfg.dcmrwf3 >> 3) & 1, cfg.tx_clk_out_enable ? "ENABLED" : "DISABLED");
-    LOG_I(TAG, "    GMAC_RX_CLK_MUX_BYPASS [0] = %d -> RX clock bypass: %s",
-          cfg.dcmrwf3 & 1, cfg.rx_clk_bypass ? "ENABLED (MUX7 bypass)" : "DISABLED");
+    LOG_I(TAG, "    GMAC_RX_CLK_MUX_BYPASS [13] = %d -> RX clock: %s",
+          (cfg.dcmrwf3 >> 13) & 1, cfg.rx_clk_bypass ? "BYPASS (from PHY)" : "MUX7");
+    LOG_I(TAG, "    GMAC_TX_CLK_MUX_BYPASS [12] = %d -> TX clock: %s",
+          (cfg.dcmrwf3 >> 12) & 1, ((cfg.dcmrwf3 >> 12) & 1) ? "BYPASS" : "MUX8");
+    LOG_I(TAG, "    GMAC_TX_CLK_OUT_EN     [11] = %d -> TX clock output: %s",
+          (cfg.dcmrwf3 >> 11) & 1, cfg.tx_clk_out_enable ? "ENABLED" : "DISABLED");
 
     /* MC_CGM Clock Section */
     LOG_I(TAG, "");
@@ -1201,12 +1207,12 @@ void rgmii_debug_dump_clocks(void) {
     /* DCM_GPR */
     LOG_I(TAG, "");
     LOG_I(TAG, "--- DCM_GPR Clock Control ---");
-    LOG_I(TAG, "  TX_CLK_OUT_EN (DCMRWF3[3]) = %d", cfg.tx_clk_out_enable);
-    LOG_I(TAG, "    -> S32K388 outputs TX_CLK to LAN9646: %s",
-          cfg.tx_clk_out_enable ? "YES" : "NO");
-    LOG_I(TAG, "  RX_CLK_BYPASS (DCMRWF3[0]) = %d", cfg.rx_clk_bypass);
+    LOG_I(TAG, "  RX_CLK_MUX_BYPASS (DCMRWF3[13]) = %d", cfg.rx_clk_bypass);
     LOG_I(TAG, "    -> RX_CLK bypasses MUX7 (from LAN9646): %s",
           cfg.rx_clk_bypass ? "YES (REQUIRED!)" : "NO (CHECK!)");
+    LOG_I(TAG, "  TX_CLK_OUT_EN (DCMRWF3[11]) = %d", cfg.tx_clk_out_enable);
+    LOG_I(TAG, "    -> S32K388 outputs TX_CLK to LAN9646: %s",
+          cfg.tx_clk_out_enable ? "YES" : "NO");
 }
 
 bool rgmii_debug_verify_tx_clock(void) {
