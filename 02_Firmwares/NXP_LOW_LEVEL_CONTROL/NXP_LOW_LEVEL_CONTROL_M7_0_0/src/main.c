@@ -168,6 +168,75 @@ static lan9646r_t init_lan9646(void) {
 /*                          S32K388 GMAC INIT                                 */
 /*===========================================================================*/
 
+static void configure_gmac0_tx_clk(void) {
+    /*
+     * Configure MC_CGM MUX_8 for GMAC0_TX_CLK
+     * Source: PLLAUX_PHI0 (source select = 12)
+     * Frequency: PLLAUX_PHI0 (500MHz) / 4 = 125MHz for 1Gbps RGMII
+     *
+     * The NXP Clock_Ip driver configured PLLAUX_PHI0 as source in the config,
+     * but at runtime it still shows FIRC. We manually switch here.
+     */
+    LOG_I(TAG, "Configuring GMAC0_TX_CLK manually...");
+
+    /* Read current state */
+    uint32_t css_before = IP_MC_CGM->MUX_8_CSS;
+    uint32_t dc0_before = IP_MC_CGM->MUX_8_DC_0;
+    LOG_I(TAG, "  Before: CSS=0x%08lX DC_0=0x%08lX",
+          (unsigned long)css_before, (unsigned long)dc0_before);
+
+    /* Step 1: Disable the divider first */
+    IP_MC_CGM->MUX_8_DC_0 = 0U;  /* DE=0, divider disabled */
+
+    /* Step 2: Request clock source switch to PLLAUX_PHI0 (source 12)
+     * CSC register: SELCTL field at bits [26:24] for 3-bit selector
+     * For S32K3, it may be wider field. Let's use bits [29:24] to be safe.
+     * Source 12 = PLLAUX_PHI0
+     */
+    uint32_t csc_val = (12U << 24);  /* SELCTL = 12 for PLLAUX_PHI0 */
+    IP_MC_CGM->MUX_8_CSC = csc_val;
+
+    /* Step 3: Wait for clock switch to complete
+     * CSS.SWIP bit indicates switch in progress
+     * CSS.SELSTAT shows current source
+     */
+    volatile uint32_t timeout = 100000U;
+    while (((IP_MC_CGM->MUX_8_CSS & 0x00010000U) != 0U) && (timeout > 0U)) {
+        timeout--;  /* Wait for SWIP to clear */
+    }
+
+    /* Small delay for clock to stabilize */
+    volatile uint32_t i;
+    for (i = 0; i < 10000U; i++) { }
+
+    /* Step 4: Configure divider: divide by 4 (DIV=3 means divide by 4)
+     * DC_0: DE bit [31] = enable, DIV field [18:16] or similar = divider value
+     * Actual division = DIV + 1, so DIV=3 gives /4
+     */
+    uint32_t dc0_val = (1U << 31) |  /* DE = 1, divider enabled */
+                       (3U << 16);   /* DIV = 3, divide by 4 -> 500MHz/4 = 125MHz */
+    IP_MC_CGM->MUX_8_DC_0 = dc0_val;
+
+    /* Read back and verify */
+    uint32_t css_after = IP_MC_CGM->MUX_8_CSS;
+    uint32_t dc0_after = IP_MC_CGM->MUX_8_DC_0;
+    uint32_t source = (css_after >> 24) & 0x3FU;
+
+    LOG_I(TAG, "  After:  CSS=0x%08lX DC_0=0x%08lX",
+          (unsigned long)css_after, (unsigned long)dc0_after);
+    LOG_I(TAG, "  Source select = %lu (12=PLLAUX_PHI0, 0=FIRC)",
+          (unsigned long)source);
+
+    if (source == 12U) {
+        LOG_I(TAG, "  SUCCESS: TX_CLK now using PLLAUX_PHI0 / 4 = 125MHz");
+    } else if (source == 0U) {
+        LOG_W(TAG, "  WARNING: TX_CLK still using FIRC (48MHz)!");
+        LOG_W(TAG, "  Check if PLLAUX is enabled and locked");
+    } else {
+        LOG_W(TAG, "  WARNING: TX_CLK using unexpected source %lu", (unsigned long)source);
+    }
+}
+
 static void configure_s32k388_rgmii(void) {
     LOG_I(TAG, "Configuring S32K388 for RGMII 1Gbps...");
 
@@ -190,6 +259,9 @@ static void configure_s32k388_rgmii(void) {
     LOG_I(TAG, "  DCMRWF1=0x%08lX DCMRWF3=0x%08lX",
           (unsigned long)IP_DCM_GPR->DCMRWF1,
           (unsigned long)IP_DCM_GPR->DCMRWF3);
+
+    /* Configure GMAC0_TX_CLK to use PLLAUX_PHI0 / 4 = 125MHz */
+    configure_gmac0_tx_clk();
 }
 
 static void configure_gmac_mac(void) {
