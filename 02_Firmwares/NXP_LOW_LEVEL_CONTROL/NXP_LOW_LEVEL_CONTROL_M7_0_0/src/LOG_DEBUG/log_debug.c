@@ -2,14 +2,16 @@
  * log_debug.c
  */
 #include "log_debug.h"
-#include "systick.h"
+#include "OsIf.h"
 #include "string.h"
 
 static log_level_t current_level = LOG_LEVEL_INFO;
 static uint8_t is_initialized = 0;
+static uint32 log_start_time = 0;
 
 void log_init(void) {
     /* Note: Uart_Init(NULL_PTR) must be called in main.c BEFORE calling log_init() */
+    log_start_time = OsIf_GetCounter(OSIF_COUNTER_SYSTEM);
     is_initialized = 1;
 }
 
@@ -33,9 +35,11 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         default: return;
     }
 
-    uint32 tick = SysTick_GetTick();
-    uint32 sec = tick / 1000;
-    uint32 ms = tick % 1000;
+    /* Get elapsed time in microseconds since log_init */
+    uint32 elapsed_us = OsIf_GetElapsed(&log_start_time, OSIF_COUNTER_SYSTEM);
+    uint32 elapsed_ms = elapsed_us / 1000U;
+    uint32 sec = elapsed_ms / 1000U;
+    uint32 ms = elapsed_ms % 1000U;
 
     int len = snprintf(buffer, sizeof(buffer), "[%lu.%03lu] %s (%s): ",
                       sec, ms, level_str, tag);

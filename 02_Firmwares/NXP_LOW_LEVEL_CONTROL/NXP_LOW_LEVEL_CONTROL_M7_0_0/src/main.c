@@ -26,12 +26,8 @@
 #include "log_debug.h"
 #include "rgmii_diag.h"
 #include "rgmii_config_debug.h"
-#include "systick.h"
 
 /* External config symbols from generated PBcfg files */
-extern const Mcu_ConfigType Mcu_PreCompileConfig;
-extern const Port_ConfigType Port_Config;
-extern const Gpt_ConfigType Gpt_Config;
 extern const Eth_43_GMAC_ConfigType Eth_43_GMAC_xPredefinedConfig;
 
 #define TAG "MAIN"
@@ -90,8 +86,8 @@ static lan9646r_t i2c_mem_read_cb(uint8_t dev_addr, uint16_t mem_addr,
 /*===========================================================================*/
 
 static void delay_ms(uint32_t ms) {
-    /* Use SysTick module for delay */
-    SysTick_DelayMs(ms);
+    /* Use OsIf for delay (microseconds) */
+    OsIf_Delay((uint32)ms * 1000U);
 }
 
 /*===========================================================================*/
@@ -193,27 +189,26 @@ static void configure_gmac_mac(void) {
 /*===========================================================================*/
 
 static void device_init(void) {
-    /* Step 1: MCU Init (no logging yet - UART not ready) */
-    Mcu_Init(&Mcu_PreCompileConfig);
+    /* Initialize in correct order (matching working pattern) */
+    OsIf_Init(NULL_PTR);
+    Port_Init(NULL_PTR);
+
+    Mcu_Init(NULL_PTR);
     Mcu_InitClock(McuClockSettingConfig_0);
-    while (MCU_PLL_LOCKED != Mcu_GetPllStatus()) {}
+    while (Mcu_GetPllStatus() != MCU_PLL_LOCKED) {}
     Mcu_DistributePllClock();
     Mcu_SetMode(McuModeSettingConf_0);
 
-    /* Step 2: Platform & Port (no logging yet) */
-    OsIf_Init(NULL);
-    Platform_Init(NULL);
-    Port_Init(&Port_Config);
-    Gpt_Init(&Gpt_Config);
-    Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 0xFFFFFFFFU);
+    Platform_Init(NULL_PTR);
 
-    /* Initialize SysTick for delay functions */
-    SysTick_Init();
+#ifndef USING_OS_FREERTOS
+    Gpt_Init(NULL_PTR);
+    Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 40000000U);
+    Gpt_EnableNotification(GptConf_GptChannelConfiguration_GptChannelConfiguration_0);
+    OsIf_SetTimerFrequency(160000000U, OSIF_USE_SYSTEM_TIMER);
+#endif
 
-    /* Initialize UART - must be called before log_init() */
     Uart_Init(NULL_PTR);
-
-    /* Initialize logging */
     log_init();
 
     /* Print banner */
