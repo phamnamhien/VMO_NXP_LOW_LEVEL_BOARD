@@ -475,7 +475,8 @@ void rgmii_diag_timing_sweep(void) {
         "RX delay only (+1.3ns)",
         "Both TX+RX delay"
     };
-    const uint8_t delay_configs[] = {0x40, 0x48, 0x50, 0x58};
+    /* 1Gbps mode: bit6=0, bit4=RX_delay, bit3=TX_delay */
+    const uint8_t delay_configs[] = {0x00, 0x08, 0x10, 0x18};
 
     LOG_I(TAG, "Option | Config | LAN RX | LAN CRC | GMAC RX | GMAC CRC | Status");
     LOG_I(TAG, "-------+--------+--------+---------+---------+----------+--------");
