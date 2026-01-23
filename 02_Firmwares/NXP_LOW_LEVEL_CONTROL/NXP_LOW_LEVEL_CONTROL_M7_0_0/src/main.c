@@ -175,102 +175,6 @@ static lan9646r_t init_lan9646(void) {
 /*                      DEBUG FUNCTIONS                                        */
 /*===========================================================================*/
 
-static void debug_mux8_status(const char* stage) {
-    uint32_t css = IP_MC_CGM->MUX_8_CSS;
-    uint32_t dc0 = IP_MC_CGM->MUX_8_DC_0;
-    uint32_t source = (css >> 24) & 0x3FU;
-
-    LOG_I(TAG, "[MUX_8 @ %s] CSS=0x%08lX DC_0=0x%08lX source=%lu(%s)",
-          stage,
-          (unsigned long)css,
-          (unsigned long)dc0,
-          (unsigned long)source,
-          (source == 12) ? "PLLAUX" : (source == 0) ? "FIRC" : "OTHER");
-}
-
-static void configure_gmac0_tx_clk(void) {
-    /*
-     * Configure MC_CGM MUX_8 for GMAC0_TX_CLK
-     * Source: PLLAUX_PHI0 (source select = 12)
-     *
-     * From debug: User measured 30MHz with divider=4, so PLLAUX_PHI0 = 120MHz (not 500MHz!)
-     * To get 125MHz we need to check the actual PLLAUX_PHI0 frequency.
-     *
-     * Try divider = 1 first: if PLLAUX_PHI0 = 125MHz, output = 125MHz
-     */
-    LOG_I(TAG, "");
-    LOG_I(TAG, "===== Configuring GMAC0_TX_CLK (MUX_8) =====");
-
-    /* Read current state */
-    uint32_t css_before = IP_MC_CGM->MUX_8_CSS;
-    uint32_t dc0_before = IP_MC_CGM->MUX_8_DC_0;
-    uint32_t source_before = (css_before >> 24) & 0x3FU;
-    uint32_t div_before = ((dc0_before >> 16) & 0x07U) + 1U;
-
-    LOG_I(TAG, "  Current: CSS=0x%08lX DC_0=0x%08lX",
-          (unsigned long)css_before, (unsigned long)dc0_before);
-    LOG_I(TAG, "  Source=%lu (%s), Divider=%lu",
-          (unsigned long)source_before,
-          (source_before == 12) ? "PLLAUX_PHI0" : (source_before == 0) ? "FIRC" : "OTHER",
-          (unsigned long)div_before);
-
-    /* If measured 30MHz with div=4, then PLLAUX_PHI0 = 120MHz
-     * Try div=1 to get 120MHz output, or check if source is actually different
-     */
-
-    /* Step 1: Disable the divider first */
-    IP_MC_CGM->MUX_8_DC_0 = 0U;  /* DE=0, divider disabled */
-
-    /* Step 2: Ensure source is PLLAUX_PHI0 (source 12) */
-    uint32_t csc_val = (12U << 24);  /* SELCTL = 12 for PLLAUX_PHI0 */
-    IP_MC_CGM->MUX_8_CSC = csc_val;
-
-    /* Step 3: Wait for clock switch */
-    volatile uint32_t timeout = 100000U;
-    while (((IP_MC_CGM->MUX_8_CSS & 0x00010000U) != 0U) && (timeout > 0U)) {
-        timeout--;
-    }
-
-    /* Small delay */
-    volatile uint32_t i;
-    for (i = 0; i < 10000U; i++) { }
-
-    /* Step 4: Configure divider = 1 (DIV=0 means divide by 1)
-     * DC_0: DE bit [31] = enable, DIV field [18:16] = divider value
-     * Actual division = DIV + 1, so DIV=0 gives /1
-     *
-     * This will output PLLAUX_PHI0 directly without division.
-     * If PLLAUX_PHI0 = 125MHz, TX_CLK = 125MHz (correct for 1Gbps)
-     * If PLLAUX_PHI0 = 120MHz, TX_CLK = 120MHz (4% off, may still work)
-     */
-    uint32_t dc0_val = (1U << 31) |  /* DE = 1, divider enabled */
-                       (0U << 16);   /* DIV = 0, divide by 1 -> direct PLLAUX_PHI0 output */
-    IP_MC_CGM->MUX_8_DC_0 = dc0_val;
-
-    /* Read back and verify */
-    uint32_t css_after = IP_MC_CGM->MUX_8_CSS;
-    uint32_t dc0_after = IP_MC_CGM->MUX_8_DC_0;
-    uint32_t source = (css_after >> 24) & 0x3FU;
-    uint32_t div_after = ((dc0_after >> 16) & 0x07U) + 1U;
-
-    LOG_I(TAG, "  After:  CSS=0x%08lX DC_0=0x%08lX",
-          (unsigned long)css_after, (unsigned long)dc0_after);
-    LOG_I(TAG, "  Source=%lu (%s), Divider=%lu",
-          (unsigned long)source,
-          (source == 12) ? "PLLAUX_PHI0" : (source == 0) ? "FIRC" : "OTHER",
-          (unsigned long)div_after);
-
-    if (source == 12U) {
-        LOG_I(TAG, "  TX_CLK = PLLAUX_PHI0 / %lu", (unsigned long)div_after);
-        LOG_I(TAG, "  Please measure TX_CLK with oscilloscope to verify frequency");
-    } else {
-        LOG_E(TAG, "  FAILED: TX_CLK not using PLLAUX_PHI0!");
-    }
-
-    LOG_I(TAG, "===== MUX_8 Configuration Complete =====");
-    LOG_I(TAG, "");
-}
-
 static void debug_gmac_rx_input_mux(void) {
     /*
      * Debug SIUL2 Input Mux Configuration for GMAC0 RX signals
@@ -349,53 +253,25 @@ static void debug_gmac_rx_input_mux(void) {
 }
 
 static void configure_s32k388_rgmii(void) {
-    LOG_I(TAG, "Configuring S32K388 for RGMII 1Gbps...");
-
     /*
-     * DCM_GPR DCMRWF1 Configuration:
-     *   MAC_CONF_SEL [6:5] = Interface selection
-     *     0 = MII
-     *     1 = RGMII  <-- We need this!
-     *     2 = RMII
-     *   MAC_INTF_MODE [1:0] = Legacy interface mode (also set to RGMII)
-     *   MAC_TX_RMII_CLK_LPBCK_EN [4] = TX clock loopback (may be needed for RGMII RX)
+     * RGMII Clock Configuration:
+     * - All clocks are configured via S32 Config Tool (MCU_Cfg.c)
+     * - Only manual setting needed: GMAC RX_CLK MUX_7 bypass
+     *
+     * Per NXP engineer recommendation:
+     * https://community.nxp.com/t5/S32K/S32K388-GMAC-with-RGMII/m-p/1999697
      */
-    uint32_t dcmrwf1 = IP_DCM_GPR->DCMRWF1;
+    LOG_I(TAG, "Configuring S32K388 RGMII RX_CLK bypass (MUX_7)...");
 
-    /* Clear MAC_CONF_SEL and MAC_INTF_MODE fields */
-    dcmrwf1 &= ~((0x03U << 5) | 0x03U);  /* Clear bits [6:5] and [1:0] */
+    /* Bypass MUX_7 for GMAC0_RX_CLK - clock comes from external pin (LAN9646) */
+    IP_DCM_GPR->DCMRWF3 |= DCM_GPR_DCMRWF3_MAC_RX_CLK_MUX_BYPASS(1u);
 
-    /* Set RGMII mode in both fields + enable TX clock loopback */
-    dcmrwf1 |= (1U << 5);   /* MAC_CONF_SEL = 1 (RGMII) */
-    dcmrwf1 |= 0x02U;       /* MAC_INTF_MODE = 2 (RGMII) - legacy field */
-    dcmrwf1 |= (1U << 4);   /* MAC_TX_RMII_CLK_LPBCK_EN = 1 - CRITICAL for RGMII RX! */
-
-    IP_DCM_GPR->DCMRWF1 = dcmrwf1;
-
-    /*
-     * DCM_GPR DCMRWF3:
-     *   Bit 3: GMAC_TX_CLK_OUT_EN - Enable TX clock output to LAN9646
-     *   Bit 0: GMAC_RX_CLK_MUX_BYPASS - Bypass MUX_7, RX_CLK from input pin
-     */
-    uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
-    dcmrwf3 |= (1U << 3);  /* GMAC_TX_CLK_OUT_EN */
-    dcmrwf3 |= (1U << 0);  /* GMAC_RX_CLK_MUX_BYPASS - CRITICAL for RGMII! */
-    IP_DCM_GPR->DCMRWF3 = dcmrwf3;
-
-    LOG_I(TAG, "  DCMRWF1=0x%08lX (MAC_CONF_SEL=%lu, LPBCK_EN=%lu)",
-          (unsigned long)IP_DCM_GPR->DCMRWF1,
-          (unsigned long)((IP_DCM_GPR->DCMRWF1 >> 5) & 0x03),
-          (unsigned long)((IP_DCM_GPR->DCMRWF1 >> 4) & 0x01));
-    LOG_I(TAG, "  DCMRWF3=0x%08lX (TX_CLK_OUT=%lu, RX_CLK_BYPASS=%lu)",
+    LOG_I(TAG, "  DCMRWF3=0x%08lX (RX_CLK_BYPASS=%lu)",
           (unsigned long)IP_DCM_GPR->DCMRWF3,
-          (unsigned long)((IP_DCM_GPR->DCMRWF3 >> 3) & 0x01),
-          (unsigned long)(IP_DCM_GPR->DCMRWF3 & 0x01));
+          (unsigned long)(IP_DCM_GPR->DCMRWF3 & DCM_GPR_DCMRWF3_MAC_RX_CLK_MUX_BYPASS_MASK));
 
     /* Debug: Check RX input mux configuration */
     debug_gmac_rx_input_mux();
-
-    /* NOTE: configure_gmac0_tx_clk() is called AFTER Eth_43_GMAC_Init()
-     * because Eth_43_GMAC_Init() resets MUX_8 to default (FIRC) */
 }
 
 static void configure_gmac_mac(void) {
@@ -634,43 +510,22 @@ static void device_init(void) {
         while (1) {}
     }
 
-    /* Debug: Check MUX_8 BEFORE Eth init */
-    debug_mux8_status("Before Eth_Init");
-
     /* Step 5: Init Ethernet (AUTOSAR)
-     * WARNING: This resets MUX_8 to FIRC!
+     * NOTE: Clock configuration is handled by S32 Config Tool (Mcu_InitClock)
      */
     LOG_I(TAG, "[Step 5] Init Ethernet...");
     Eth_43_GMAC_Init(&Eth_43_GMAC_xPredefinedConfig);
-
-    /* Debug: Check MUX_8 AFTER Eth init */
-    debug_mux8_status("After Eth_Init");
 
     /* Step 6: Configure GMAC MAC */
     LOG_I(TAG, "[Step 6] Configure GMAC MAC...");
     configure_gmac_mac();
 
-    /* Step 7: Set controller active
-     * WARNING: This may also reset MUX_8!
-     */
+    /* Step 7: Set controller active */
     LOG_I(TAG, "[Step 7] Activate Ethernet controller...");
     Eth_43_GMAC_SetControllerMode(ETH_CTRL_IDX, ETH_MODE_ACTIVE);
 
-    /* Debug: Check MUX_8 AFTER SetControllerMode */
-    debug_mux8_status("After SetControllerMode");
-
-    /* Step 8: Configure GMAC0_TX_CLK LAST
-     * CRITICAL: Both Eth_43_GMAC_Init() and Eth_43_GMAC_SetControllerMode()
-     * reset MUX_8 to FIRC. We MUST configure TX_CLK AFTER both!
-     */
-    LOG_I(TAG, "[Step 8] Configure GMAC0_TX_CLK (AFTER all Eth calls)...");
-    configure_gmac0_tx_clk();
-
-    /* Debug: Final MUX_8 check */
-    debug_mux8_status("After TX_CLK config");
-
-    /* Step 9: Debug readback - verify all configurations */
-    LOG_I(TAG, "[Step 9] Verifying configurations...");
+    /* Step 8: Debug readback - verify all configurations */
+    LOG_I(TAG, "[Step 8] Verifying configurations...");
     debug_readback_config();
 
     LOG_I(TAG, "");
