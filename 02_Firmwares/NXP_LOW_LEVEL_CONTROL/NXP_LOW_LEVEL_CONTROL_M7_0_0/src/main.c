@@ -271,6 +271,66 @@ static void configure_gmac0_tx_clk(void) {
     LOG_I(TAG, "");
 }
 
+static void debug_gmac_rx_input_mux(void) {
+    /*
+     * Debug SIUL2 Input Mux Configuration for GMAC0 RX signals
+     * SIUL2_0 base: 0x40290000
+     * IMCR base offset: 0x0240
+     *
+     * For S32K388, GMAC0 RX signals IMCR indexes (from Reference Manual):
+     * - GMAC0_RMII_MII_RX_CLK: IMCR index varies by pin
+     * - Need to check which pins are actually used
+     */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "=== GMAC0 RX Input Mux Debug ===");
+
+    /* SIUL2_0 IMCR base address */
+    volatile uint32_t *siul2_imcr = (volatile uint32_t *)(0x40290000UL + 0x0240UL);
+
+    /* Read some relevant IMCR registers for GMAC0
+     * IMCR indexes for GMAC0 (approximate, need to verify with RM):
+     * - GMAC0_MII_RMII_RX_CLK: around index 96-100
+     * - GMAC0_RGMII_RX_CLK: around index 101-105
+     */
+
+    /* Print a range of IMCRs that might be GMAC0 related */
+    LOG_I(TAG, "SIUL2_0 IMCR registers (GMAC0 RX related):");
+
+    /* IMCR indexes for GMAC0 RX signals - check Reference Manual for exact values */
+    /* These are approximate - S32K388 specific */
+    const uint32_t gmac_imcr_start = 92;  /* Approximate start for GMAC */
+    const uint32_t gmac_imcr_end = 110;   /* Approximate end */
+
+    for (uint32_t i = gmac_imcr_start; i <= gmac_imcr_end; i++) {
+        uint32_t imcr_val = siul2_imcr[i];
+        if (imcr_val != 0) {  /* Only print non-zero values */
+            LOG_I(TAG, "  IMCR[%lu] = 0x%02lX", (unsigned long)i, (unsigned long)(imcr_val & 0x0F));
+        }
+    }
+
+    /* Also check MC_CGM MUX_7 for RX_CLK (even though bypassed) */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "MC_CGM MUX_7 (GMAC0_RX_CLK - should be bypassed):");
+    LOG_I(TAG, "  MUX_7_CSC = 0x%08lX", (unsigned long)IP_MC_CGM->MUX_7_CSC);
+    LOG_I(TAG, "  MUX_7_CSS = 0x%08lX", (unsigned long)IP_MC_CGM->MUX_7_CSS);
+    LOG_I(TAG, "  MUX_7_DC_0 = 0x%08lX", (unsigned long)IP_MC_CGM->MUX_7_DC_0);
+
+    /* Check GMAC PHY interface status */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "GMAC0 PHY Interface Status:");
+    LOG_I(TAG, "  MAC_PHYIF_CONTROL_STATUS = 0x%08lX",
+          (unsigned long)IP_GMAC_0->MAC_PHYIF_CONTROL_STATUS);
+
+    uint32_t phyif = IP_GMAC_0->MAC_PHYIF_CONTROL_STATUS;
+    LOG_I(TAG, "    TC [0]   = %lu (TX config)", (unsigned long)(phyif & 1));
+    LOG_I(TAG, "    LUD [1]  = %lu (Link Up/Down)", (unsigned long)((phyif >> 1) & 1));
+    LOG_I(TAG, "    LNKSTS [19] = %lu (Link Status)", (unsigned long)((phyif >> 19) & 1));
+    LOG_I(TAG, "    LNKSPEED [18:17] = %lu", (unsigned long)((phyif >> 17) & 3));
+
+    LOG_I(TAG, "=================================");
+    LOG_I(TAG, "");
+}
+
 static void configure_s32k388_rgmii(void) {
     LOG_I(TAG, "Configuring S32K388 for RGMII 1Gbps...");
 
@@ -293,6 +353,9 @@ static void configure_s32k388_rgmii(void) {
     LOG_I(TAG, "  DCMRWF1=0x%08lX DCMRWF3=0x%08lX",
           (unsigned long)IP_DCM_GPR->DCMRWF1,
           (unsigned long)IP_DCM_GPR->DCMRWF3);
+
+    /* Debug: Check RX input mux configuration */
+    debug_gmac_rx_input_mux();
 
     /* NOTE: configure_gmac0_tx_clk() is called AFTER Eth_43_GMAC_Init()
      * because Eth_43_GMAC_Init() resets MUX_8 to default (FIRC) */
