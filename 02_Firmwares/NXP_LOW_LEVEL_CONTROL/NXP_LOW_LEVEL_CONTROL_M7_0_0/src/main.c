@@ -334,10 +334,25 @@ static void debug_gmac_rx_input_mux(void) {
 static void configure_s32k388_rgmii(void) {
     LOG_I(TAG, "Configuring S32K388 for RGMII 1Gbps...");
 
-    /* DCM_GPR: Set RGMII mode */
+    /*
+     * DCM_GPR DCMRWF1 Configuration:
+     *   MAC_CONF_SEL [6:5] = Interface selection
+     *     0 = MII
+     *     1 = RGMII  <-- We need this!
+     *     2 = RMII
+     *   MAC_INTF_MODE [1:0] = Legacy interface mode (also set to RGMII)
+     *   MAC_TX_RMII_CLK_LPBCK_EN [4] = TX clock loopback (may be needed for RGMII RX)
+     */
     uint32_t dcmrwf1 = IP_DCM_GPR->DCMRWF1;
-    dcmrwf1 &= ~0x03U;
-    dcmrwf1 |= 0x02U;  /* RGMII mode */
+
+    /* Clear MAC_CONF_SEL and MAC_INTF_MODE fields */
+    dcmrwf1 &= ~((0x03U << 5) | 0x03U);  /* Clear bits [6:5] and [1:0] */
+
+    /* Set RGMII mode in both fields + enable TX clock loopback */
+    dcmrwf1 |= (1U << 5);   /* MAC_CONF_SEL = 1 (RGMII) */
+    dcmrwf1 |= 0x02U;       /* MAC_INTF_MODE = 2 (RGMII) - legacy field */
+    dcmrwf1 |= (1U << 4);   /* MAC_TX_RMII_CLK_LPBCK_EN = 1 - CRITICAL for RGMII RX! */
+
     IP_DCM_GPR->DCMRWF1 = dcmrwf1;
 
     /*
@@ -350,9 +365,14 @@ static void configure_s32k388_rgmii(void) {
     dcmrwf3 |= (1U << 0);  /* GMAC_RX_CLK_MUX_BYPASS - CRITICAL for RGMII! */
     IP_DCM_GPR->DCMRWF3 = dcmrwf3;
 
-    LOG_I(TAG, "  DCMRWF1=0x%08lX DCMRWF3=0x%08lX",
+    LOG_I(TAG, "  DCMRWF1=0x%08lX (MAC_CONF_SEL=%lu, LPBCK_EN=%lu)",
           (unsigned long)IP_DCM_GPR->DCMRWF1,
-          (unsigned long)IP_DCM_GPR->DCMRWF3);
+          (unsigned long)((IP_DCM_GPR->DCMRWF1 >> 5) & 0x03),
+          (unsigned long)((IP_DCM_GPR->DCMRWF1 >> 4) & 0x01));
+    LOG_I(TAG, "  DCMRWF3=0x%08lX (TX_CLK_OUT=%lu, RX_CLK_BYPASS=%lu)",
+          (unsigned long)IP_DCM_GPR->DCMRWF3,
+          (unsigned long)((IP_DCM_GPR->DCMRWF3 >> 3) & 0x01),
+          (unsigned long)(IP_DCM_GPR->DCMRWF3 & 0x01));
 
     /* Debug: Check RX input mux configuration */
     debug_gmac_rx_input_mux();
