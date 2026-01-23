@@ -405,11 +405,23 @@ static void debug_readback_config(void) {
     uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
     uint32_t mac_cfg = IP_GMAC_0->MAC_CONFIGURATION;
 
+    /*
+     * S32K388 DCMRWF1 MAC_CONF_SEL values (different from other S32K3 variants!):
+     *   0 = MII
+     *   1 = RGMII (with MAC_TX_RMII_CLK_LPBCK_EN)
+     *   2 = RMII
+     */
     LOG_I(TAG, "  DCM_GPR:");
     LOG_I(TAG, "    DCMRWF1 = 0x%08lX", (unsigned long)dcmrwf1);
-    LOG_I(TAG, "      GMAC_INTF_MODE [1:0] = %lu -> %s",
-          (unsigned long)(dcmrwf1 & 0x03U),
-          ((dcmrwf1 & 0x03U) == 2) ? "RGMII" : "OTHER");
+    uint8_t mac_conf_sel = dcmrwf1 & 0x03U;
+    const char* intf_mode_str;
+    switch (mac_conf_sel) {
+        case 0: intf_mode_str = "MII"; break;
+        case 1: intf_mode_str = "RGMII"; break;  /* S32K388 specific! */
+        case 2: intf_mode_str = "RMII"; break;
+        default: intf_mode_str = "RESERVED"; break;
+    }
+    LOG_I(TAG, "      MAC_CONF_SEL [1:0] = %u -> %s", mac_conf_sel, intf_mode_str);
 
     LOG_I(TAG, "    DCMRWF3 = 0x%08lX", (unsigned long)dcmrwf3);
     LOG_I(TAG, "      RX_CLK_MUX_BYPASS [13] = %lu -> %s",

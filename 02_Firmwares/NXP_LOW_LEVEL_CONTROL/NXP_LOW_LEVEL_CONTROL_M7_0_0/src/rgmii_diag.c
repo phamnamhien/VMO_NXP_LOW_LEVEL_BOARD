@@ -210,14 +210,18 @@ rgmii_test_result_t rgmii_diag_test_clocks(void) {
           (ctrl1 & 0x08) ? "+1.3ns" : "None",
           (ctrl1 & 0x10) ? "+1.3ns" : "None");
 
-    /* Basic validation */
-    if ((dcmrwf1 & 0x03) != 2) {
-        LOG_E(TAG, "ERROR: S32K388 not in RGMII mode!");
+    /* Basic validation
+     * S32K388 specific: MAC_CONF_SEL = 1 for RGMII (not 2!)
+     * TX_CLK_OUT_EN is at bit 11 (0x0800), not bit 3
+     */
+    uint8_t mac_conf_sel = dcmrwf1 & 0x03;
+    if (mac_conf_sel != 1) {
+        LOG_E(TAG, "ERROR: S32K388 not in RGMII mode! MAC_CONF_SEL=%d (expected 1)", mac_conf_sel);
         return RGMII_TEST_FAIL_TX_CLK;
     }
 
-    if (!(dcmrwf3 & 0x08)) {
-        LOG_E(TAG, "ERROR: TX_CLK output not enabled!");
+    if (!(dcmrwf3 & (1U << 11))) {  /* TX_CLK_OUT_EN at bit 11 */
+        LOG_E(TAG, "ERROR: TX_CLK output not enabled! (DCMRWF3[11]=0)");
         return RGMII_TEST_FAIL_TX_CLK;
     }
 

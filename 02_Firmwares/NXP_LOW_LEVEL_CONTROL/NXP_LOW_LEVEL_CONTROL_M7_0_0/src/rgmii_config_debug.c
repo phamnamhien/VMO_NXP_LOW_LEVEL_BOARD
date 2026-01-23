@@ -134,10 +134,11 @@ const char* rgmii_debug_duplex_str(rgmii_duplex_t duplex) {
 }
 
 const char* rgmii_debug_interface_str(uint8_t mode) {
+    /* S32K388 MAC_CONF_SEL values (different from other S32K3 variants!) */
     switch (mode) {
         case 0: return "MII";
-        case 1: return "RMII";
-        case 2: return "RGMII";
+        case 1: return "RGMII";   /* S32K388 specific: 1 = RGMII (not RMII!) */
+        case 2: return "RMII";
         default: return "Unknown";
     }
 }
@@ -337,11 +338,12 @@ bool rgmii_debug_validate(rgmii_config_snapshot_t* snapshot) {
                  rgmii_debug_duplex_str(snapshot->lan9646.duplex));
     }
 
-    /* Check interface mode (must be RGMII = 2) */
-    snapshot->interface_valid = (snapshot->s32k388.interface_mode == 2);
+    /* Check interface mode (S32K388: MAC_CONF_SEL = 1 for RGMII!) */
+    snapshot->interface_valid = (snapshot->s32k388.interface_mode == 1);
     if (!snapshot->interface_valid) {
         snprintf(rec + strlen(rec), sizeof(snapshot->recommendations) - strlen(rec),
-                 "- S32K388 not in RGMII mode! Current: %s\n",
+                 "- S32K388 not in RGMII mode! MAC_CONF_SEL=%d (expected 1). Current: %s\n",
+                 snapshot->s32k388.interface_mode,
                  rgmii_debug_interface_str(snapshot->s32k388.interface_mode));
     }
 
@@ -351,11 +353,11 @@ bool rgmii_debug_validate(rgmii_config_snapshot_t* snapshot) {
     if (!snapshot->clocks_valid) {
         if (!snapshot->s32k388.tx_clk_out_enable) {
             snprintf(rec + strlen(rec), sizeof(snapshot->recommendations) - strlen(rec),
-                     "- TX_CLK output not enabled (DCMRWF3.bit3)\n");
+                     "- TX_CLK output not enabled (DCMRWF3[11])\n");
         }
         if (!snapshot->s32k388.rx_clk_bypass) {
             snprintf(rec + strlen(rec), sizeof(snapshot->recommendations) - strlen(rec),
-                     "- RX_CLK bypass not enabled (DCMRWF3.bit0)\n");
+                     "- RX_CLK bypass not enabled (DCMRWF3[13])\n");
         }
     }
 
@@ -1222,9 +1224,9 @@ bool rgmii_debug_verify_tx_clock(void) {
     bool ok = cfg.tx_clk_out_enable;
 
     if (!ok) {
-        LOG_E(TAG, "TX_CLK output NOT enabled! Set DCMRWF3[3]=1");
+        LOG_E(TAG, "TX_CLK output NOT enabled! Set DCMRWF3[11]=1 (TX_CLK_OUT_EN)");
     } else {
-        LOG_I(TAG, "TX_CLK output enabled: OK");
+        LOG_I(TAG, "TX_CLK output enabled (DCMRWF3[11]=1): OK");
     }
 
     return ok;
@@ -1237,10 +1239,10 @@ bool rgmii_debug_verify_rx_clock_bypass(void) {
     bool ok = cfg.rx_clk_bypass;
 
     if (!ok) {
-        LOG_W(TAG, "RX_CLK bypass NOT enabled. This may be needed for your board.");
-        LOG_W(TAG, "If RX doesn't work, try: IP_DCM_GPR->DCMRWF3 |= 0x01;");
+        LOG_W(TAG, "RX_CLK bypass NOT enabled. This is REQUIRED for RGMII!");
+        LOG_W(TAG, "Fix: IP_DCM_GPR->DCMRWF3 |= (1U << 13);  /* bit 13 = RX_CLK_MUX_BYPASS */");
     } else {
-        LOG_I(TAG, "RX_CLK bypass enabled (MUX7 bypassed): OK");
+        LOG_I(TAG, "RX_CLK bypass enabled (DCMRWF3[13]=1, MUX7 bypassed): OK");
     }
 
     return ok;
@@ -1357,10 +1359,12 @@ void rgmii_debug_print_troubleshooting(void) {
     LOG_I(TAG, "Based on current configuration:");
     LOG_I(TAG, "");
 
-    /* Check interface mode */
-    if (snapshot.s32k388.interface_mode != 2) {
-        LOG_E(TAG, "1. S32K388 is NOT in RGMII mode!");
-        LOG_E(TAG, "   Fix: IP_DCM_GPR->DCMRWF1 = (IP_DCM_GPR->DCMRWF1 & ~0x03) | 0x02;");
+    /* Check interface mode (S32K388: MAC_CONF_SEL = 1 for RGMII!) */
+    if (snapshot.s32k388.interface_mode != 1) {
+        LOG_E(TAG, "1. S32K388 is NOT in RGMII mode! (MAC_CONF_SEL=%d, expected 1)",
+              snapshot.s32k388.interface_mode);
+        LOG_E(TAG, "   Note: S32K388 uses MAC_CONF_SEL=1 for RGMII (different from other S32K3!)");
+        LOG_E(TAG, "   Fix: IP_DCM_GPR->DCMRWF1 = (IP_DCM_GPR->DCMRWF1 & ~0x03) | 0x01;");
         LOG_I(TAG, "");
     }
 
@@ -1368,15 +1372,15 @@ void rgmii_debug_print_troubleshooting(void) {
     if (!snapshot.s32k388.tx_clk_out_enable) {
         LOG_E(TAG, "2. TX_CLK output is DISABLED!");
         LOG_E(TAG, "   The S32K388 must output TX_CLK to drive the LAN9646.");
-        LOG_E(TAG, "   Fix: IP_DCM_GPR->DCMRWF3 |= (1 << 3);");
+        LOG_E(TAG, "   Fix: IP_DCM_GPR->DCMRWF3 |= (1U << 11);  /* bit 11 = TX_CLK_OUT_EN */");
         LOG_I(TAG, "");
     }
 
     /* Check RX clock bypass */
     if (!snapshot.s32k388.rx_clk_bypass) {
         LOG_W(TAG, "3. RX_CLK bypass is DISABLED");
-        LOG_W(TAG, "   LAN9646 provides RX_CLK which may need to bypass MUX7.");
-        LOG_W(TAG, "   If RX fails, try: IP_DCM_GPR->DCMRWF3 |= 0x01;");
+        LOG_W(TAG, "   LAN9646 provides RX_CLK which needs to bypass MUX7.");
+        LOG_W(TAG, "   Fix: IP_DCM_GPR->DCMRWF3 |= (1U << 13);  /* bit 13 = RX_CLK_MUX_BYPASS */");
         LOG_I(TAG, "");
     }
 
