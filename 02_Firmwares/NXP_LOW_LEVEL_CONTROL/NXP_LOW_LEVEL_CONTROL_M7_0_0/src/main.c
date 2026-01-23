@@ -168,16 +168,57 @@ static lan9646r_t init_lan9646(void) {
 /*                          S32K388 GMAC INIT                                 */
 /*===========================================================================*/
 
+/*===========================================================================*/
+/*                      PLLAUX STATUS CHECK                                    */
+/*===========================================================================*/
+
+static void debug_pllaux_status(void) {
+    /*
+     * PLLAUX registers for S32K3:
+     * PLL_AUX: Base at 0x402E0200
+     * - PLLCR: Control Register
+     * - PLLSR: Status Register (bit 2 = LOCK)
+     */
+    LOG_I(TAG, "--- PLLAUX Status ---");
+
+    /* Access PLLAUX registers - S32K388 specific addresses */
+    volatile uint32_t *pllaux_sr = (volatile uint32_t *)0x402E0204U;  /* PLLAUX_SR */
+    uint32_t pllaux_status = *pllaux_sr;
+
+    LOG_I(TAG, "  PLLAUX_SR = 0x%08lX", (unsigned long)pllaux_status);
+    LOG_I(TAG, "    LOCK [2] = %lu -> %s",
+          (unsigned long)((pllaux_status >> 2) & 1),
+          ((pllaux_status >> 2) & 1) ? "LOCKED" : "NOT LOCKED!");
+}
+
+static void debug_mux8_status(const char* stage) {
+    uint32_t css = IP_MC_CGM->MUX_8_CSS;
+    uint32_t dc0 = IP_MC_CGM->MUX_8_DC_0;
+    uint32_t source = (css >> 24) & 0x3FU;
+
+    LOG_I(TAG, "[MUX_8 @ %s] CSS=0x%08lX DC_0=0x%08lX source=%lu(%s)",
+          stage,
+          (unsigned long)css,
+          (unsigned long)dc0,
+          (unsigned long)source,
+          (source == 12) ? "PLLAUX" : (source == 0) ? "FIRC" : "OTHER");
+}
+
 static void configure_gmac0_tx_clk(void) {
     /*
      * Configure MC_CGM MUX_8 for GMAC0_TX_CLK
      * Source: PLLAUX_PHI0 (source select = 12)
      * Frequency: PLLAUX_PHI0 (500MHz) / 4 = 125MHz for 1Gbps RGMII
      *
-     * The NXP Clock_Ip driver configured PLLAUX_PHI0 as source in the config,
-     * but at runtime it still shows FIRC. We manually switch here.
+     * CRITICAL: This function MUST be called AFTER Eth_43_GMAC_SetControllerMode()
+     * because both Eth_43_GMAC_Init() and Eth_43_GMAC_SetControllerMode()
+     * reset MUX_8 back to FIRC.
      */
-    LOG_I(TAG, "Configuring GMAC0_TX_CLK manually...");
+    LOG_I(TAG, "");
+    LOG_I(TAG, "===== Configuring GMAC0_TX_CLK (MUX_8) =====");
+
+    /* First check PLLAUX lock status */
+    debug_pllaux_status();
 
     /* Read current state */
     uint32_t css_before = IP_MC_CGM->MUX_8_CSS;
@@ -189,20 +230,23 @@ static void configure_gmac0_tx_clk(void) {
     IP_MC_CGM->MUX_8_DC_0 = 0U;  /* DE=0, divider disabled */
 
     /* Step 2: Request clock source switch to PLLAUX_PHI0 (source 12)
-     * CSC register: SELCTL field at bits [26:24] for 3-bit selector
-     * For S32K3, it may be wider field. Let's use bits [29:24] to be safe.
+     * CSC register: SELCTL field at bits [29:24]
      * Source 12 = PLLAUX_PHI0
      */
     uint32_t csc_val = (12U << 24);  /* SELCTL = 12 for PLLAUX_PHI0 */
     IP_MC_CGM->MUX_8_CSC = csc_val;
 
     /* Step 3: Wait for clock switch to complete
-     * CSS.SWIP bit indicates switch in progress
-     * CSS.SELSTAT shows current source
+     * CSS.SWIP bit [16] indicates switch in progress
+     * CSS.SELSTAT [29:24] shows current source
      */
     volatile uint32_t timeout = 100000U;
     while (((IP_MC_CGM->MUX_8_CSS & 0x00010000U) != 0U) && (timeout > 0U)) {
         timeout--;  /* Wait for SWIP to clear */
+    }
+
+    if (timeout == 0U) {
+        LOG_E(TAG, "  ERROR: MUX_8 clock switch timeout!");
     }
 
     /* Small delay for clock to stabilize */
@@ -210,7 +254,7 @@ static void configure_gmac0_tx_clk(void) {
     for (i = 0; i < 10000U; i++) { }
 
     /* Step 4: Configure divider: divide by 4 (DIV=3 means divide by 4)
-     * DC_0: DE bit [31] = enable, DIV field [18:16] or similar = divider value
+     * DC_0: DE bit [31] = enable, DIV field [18:16] = divider value
      * Actual division = DIV + 1, so DIV=3 gives /4
      */
     uint32_t dc0_val = (1U << 31) |  /* DE = 1, divider enabled */
@@ -230,11 +274,27 @@ static void configure_gmac0_tx_clk(void) {
     if (source == 12U) {
         LOG_I(TAG, "  SUCCESS: TX_CLK now using PLLAUX_PHI0 / 4 = 125MHz");
     } else if (source == 0U) {
-        LOG_W(TAG, "  WARNING: TX_CLK still using FIRC (48MHz)!");
-        LOG_W(TAG, "  Check if PLLAUX is enabled and locked");
+        LOG_E(TAG, "  FAILED: TX_CLK still using FIRC (48MHz)!");
+        LOG_E(TAG, "  Possible causes:");
+        LOG_E(TAG, "    1. PLLAUX not locked");
+        LOG_E(TAG, "    2. Clock switch failed");
+        LOG_E(TAG, "    3. CSC write not effective");
+
+        /* Try again with SW trigger */
+        LOG_I(TAG, "  Attempting with SW trigger bit...");
+        IP_MC_CGM->MUX_8_CSC = (12U << 24) | (1U << 2);  /* Add CLK_SW bit */
+        for (i = 0; i < 50000U; i++) { }
+
+        css_after = IP_MC_CGM->MUX_8_CSS;
+        source = (css_after >> 24) & 0x3FU;
+        LOG_I(TAG, "  After retry: CSS=0x%08lX source=%lu",
+              (unsigned long)css_after, (unsigned long)source);
     } else {
         LOG_W(TAG, "  WARNING: TX_CLK using unexpected source %lu", (unsigned long)source);
     }
+
+    LOG_I(TAG, "===== MUX_8 Configuration Complete =====");
+    LOG_I(TAG, "");
 }
 
 static void configure_s32k388_rgmii(void) {
@@ -500,24 +560,40 @@ static void device_init(void) {
         while (1) {}
     }
 
-    /* Step 5: Init Ethernet (AUTOSAR) */
+    /* Debug: Check MUX_8 BEFORE Eth init */
+    debug_mux8_status("Before Eth_Init");
+
+    /* Step 5: Init Ethernet (AUTOSAR)
+     * WARNING: This resets MUX_8 to FIRC!
+     */
     LOG_I(TAG, "[Step 5] Init Ethernet...");
     Eth_43_GMAC_Init(&Eth_43_GMAC_xPredefinedConfig);
 
-    /* Step 6: Configure GMAC0_TX_CLK after Eth_43_GMAC_Init
-     * IMPORTANT: Eth_43_GMAC_Init() resets MUX_8 to FIRC.
-     * We must reconfigure MUX_8 to PLLAUX_PHI0 after it.
-     */
-    LOG_I(TAG, "[Step 6] Configure GMAC0_TX_CLK (after Eth init)...");
-    configure_gmac0_tx_clk();
+    /* Debug: Check MUX_8 AFTER Eth init */
+    debug_mux8_status("After Eth_Init");
 
-    /* Step 7: Configure GMAC MAC */
-    LOG_I(TAG, "[Step 7] Configure GMAC MAC...");
+    /* Step 6: Configure GMAC MAC */
+    LOG_I(TAG, "[Step 6] Configure GMAC MAC...");
     configure_gmac_mac();
 
-    /* Step 8: Set controller active */
-    LOG_I(TAG, "[Step 8] Activate Ethernet controller...");
+    /* Step 7: Set controller active
+     * WARNING: This may also reset MUX_8!
+     */
+    LOG_I(TAG, "[Step 7] Activate Ethernet controller...");
     Eth_43_GMAC_SetControllerMode(ETH_CTRL_IDX, ETH_MODE_ACTIVE);
+
+    /* Debug: Check MUX_8 AFTER SetControllerMode */
+    debug_mux8_status("After SetControllerMode");
+
+    /* Step 8: Configure GMAC0_TX_CLK LAST
+     * CRITICAL: Both Eth_43_GMAC_Init() and Eth_43_GMAC_SetControllerMode()
+     * reset MUX_8 to FIRC. We MUST configure TX_CLK AFTER both!
+     */
+    LOG_I(TAG, "[Step 8] Configure GMAC0_TX_CLK (AFTER all Eth calls)...");
+    configure_gmac0_tx_clk();
+
+    /* Debug: Final MUX_8 check */
+    debug_mux8_status("After TX_CLK config");
 
     /* Step 9: Debug readback - verify all configurations */
     LOG_I(TAG, "[Step 9] Verifying configurations...");
