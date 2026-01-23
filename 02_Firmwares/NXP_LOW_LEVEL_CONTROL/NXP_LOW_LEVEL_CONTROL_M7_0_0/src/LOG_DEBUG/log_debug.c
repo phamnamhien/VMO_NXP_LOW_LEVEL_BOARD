@@ -9,10 +9,8 @@ static log_level_t current_level = LOG_LEVEL_INFO;
 static uint8_t is_initialized = 0;
 
 void log_init(void) {
-    if(!is_initialized) {
-        Uart_Init(NULL_PTR);
-        is_initialized = 1;
-    }
+    /* Note: Uart_Init(NULL_PTR) must be called in main.c BEFORE calling log_init() */
+    is_initialized = 1;
 }
 
 void log_set_level(log_level_t level) {

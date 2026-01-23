@@ -22,6 +22,7 @@
 
 #include "lan9646.h"
 #include "s32k3xx_soft_i2c.h"
+#include "CDD_Uart.h"
 #include "log_debug.h"
 #include "rgmii_diag.h"
 #include "rgmii_config_debug.h"
@@ -209,7 +210,10 @@ static void device_init(void) {
     /* Initialize SysTick for delay functions */
     SysTick_Init();
 
-    /* Initialize UART - NOW we can use LOG_* */
+    /* Initialize UART - must be called before log_init() */
+    Uart_Init(NULL_PTR);
+
+    /* Initialize logging */
     log_init();
 
     /* Print banner */
