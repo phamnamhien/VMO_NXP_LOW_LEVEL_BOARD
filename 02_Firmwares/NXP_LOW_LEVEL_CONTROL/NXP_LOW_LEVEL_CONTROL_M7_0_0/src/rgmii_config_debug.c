@@ -4,11 +4,19 @@
  */
 
 #include "rgmii_config_debug.h"
-#include "log.h"
+#include "log_debug.h"
 #include "S32K388.h"
 #include "Gmac_Ip.h"
 #include <string.h>
 #include <stdio.h>
+
+/* Helper function to send a test packet */
+static Gmac_Ip_StatusType send_test_packet_helper(uint8_t* data, uint16_t len) {
+    Gmac_Ip_BufferType buf;
+    buf.Data = data;
+    buf.Length = len;
+    return Gmac_Ip_SendFrame(0, 0, &buf, NULL);
+}
 
 #define TAG "RGMII_DBG"
 
@@ -157,10 +165,13 @@ void rgmii_debug_read_s32k388_config(s32k388_gmac_config_t* config) {
     config->dcmrwf1 = IP_DCM_GPR->DCMRWF1;
     config->dcmrwf3 = IP_DCM_GPR->DCMRWF3;
 
-    /* MC_CGM Clock Mux 8 */
-    config->mux8_csc = IP_MC_CGM->MUX_8_CSC;
-    config->mux8_css = IP_MC_CGM->MUX_8_CSS;
-    config->mux8_dc0 = IP_MC_CGM->MUX_8_DC_0;
+    /* MC_CGM Clock Mux 8 - Read via direct memory access */
+    /* MC_CGM base address for S32K388: 0x402D8000 */
+    /* MUX_8 offset: 0x380 (CSC), 0x384 (CSS), 0x388 (DC_0) */
+    volatile uint32_t* mc_cgm_base = (volatile uint32_t*)0x402D8000UL;
+    config->mux8_csc = *(mc_cgm_base + (0x380/4));
+    config->mux8_css = *(mc_cgm_base + (0x384/4));
+    config->mux8_dc0 = *(mc_cgm_base + (0x388/4));
 
     /* GMAC MAC Registers */
     config->mac_configuration = IP_GMAC_0->MAC_CONFIGURATION;
@@ -912,9 +923,7 @@ void rgmii_debug_delay_sweep(void) {
         /* Send test packets */
         for (int j = 0; j < 10; j++) {
             g_test_packet[50] = (uint8_t)j;
-            Gmac_Ip_BufferType buf = { .Data = g_test_packet, .Length = sizeof(g_test_packet) };
-            Gmac_Ip_TxInfoType info;
-            Gmac_Ip_SendFrame(0, 0, &buf, NULL, &info);
+            (void)send_test_packet_helper(g_test_packet, sizeof(g_test_packet));
             if (g_delay) g_delay(5);
         }
         if (g_delay) g_delay(50);
@@ -1250,9 +1259,7 @@ uint32_t rgmii_debug_test_tx_path(uint32_t count) {
     uint32_t sent = 0;
     for (uint32_t i = 0; i < count; i++) {
         g_test_packet[50] = (uint8_t)(i & 0xFF);
-        Gmac_Ip_BufferType buf = { .Data = g_test_packet, .Length = sizeof(g_test_packet) };
-        Gmac_Ip_TxInfoType info;
-        if (Gmac_Ip_SendFrame(0, 0, &buf, NULL, &info) == GMAC_STATUS_SUCCESS) {
+        if (send_test_packet_helper(g_test_packet, sizeof(g_test_packet)) == GMAC_STATUS_SUCCESS) {
             sent++;
         }
         if (g_delay) g_delay(2);
@@ -1298,9 +1305,7 @@ uint32_t rgmii_debug_test_loopback(uint32_t count) {
     uint32_t sent = 0;
     for (uint32_t i = 0; i < count; i++) {
         g_test_packet[50] = (uint8_t)(i & 0xFF);
-        Gmac_Ip_BufferType buf = { .Data = g_test_packet, .Length = sizeof(g_test_packet) };
-        Gmac_Ip_TxInfoType info;
-        if (Gmac_Ip_SendFrame(0, 0, &buf, NULL, &info) == GMAC_STATUS_SUCCESS) {
+        if (send_test_packet_helper(g_test_packet, sizeof(g_test_packet)) == GMAC_STATUS_SUCCESS) {
             sent++;
         }
         if (g_delay) g_delay(5);

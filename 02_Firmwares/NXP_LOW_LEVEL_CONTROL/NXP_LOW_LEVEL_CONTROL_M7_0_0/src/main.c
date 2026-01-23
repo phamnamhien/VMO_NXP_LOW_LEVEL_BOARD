@@ -9,18 +9,28 @@
 #include "S32K388.h"
 #include "Mcal.h"
 #include "Mcu.h"
+#include "Mcu_Cfg.h"
 #include "Port.h"
+#include "Port_Cfg.h"
 #include "OsIf.h"
 #include "Platform.h"
 #include "Gpt.h"
+#include "Gpt_Cfg.h"
 #include "Eth_43_GMAC.h"
+#include "Eth_43_GMAC_Cfg.h"
 #include "Gmac_Ip.h"
 
 #include "lan9646.h"
 #include "s32k3xx_soft_i2c.h"
-#include "log.h"
+#include "log_debug.h"
 #include "rgmii_diag.h"
 #include "rgmii_config_debug.h"
+
+/* External config symbols from generated PBcfg files */
+extern const Mcu_ConfigType Mcu_PreCompileConfig;
+extern const Port_ConfigType Port_Config;
+extern const Gpt_ConfigType Gpt_Config;
+extern const Eth_43_GMAC_ConfigType Eth_43_GMAC_xPredefinedConfig;
 
 #define TAG "MAIN"
 
@@ -78,7 +88,12 @@ static lan9646r_t i2c_mem_read_cb(uint8_t dev_addr, uint16_t mem_addr,
 /*===========================================================================*/
 
 static void delay_ms(uint32_t ms) {
-    OsIf_TimeDelay(ms * 1000);  /* OsIf uses microseconds */
+    /* Simple delay using OsIf counter */
+    uint32_t start = OsIf_GetCounter(OSIF_COUNTER_SYSTEM);
+    uint32_t ticks = OsIf_MicrosToTicks(ms * 1000U, OSIF_COUNTER_SYSTEM);
+    while ((OsIf_GetCounter(OSIF_COUNTER_SYSTEM) - start) < ticks) {
+        /* Wait */
+    }
 }
 
 /*===========================================================================*/
@@ -89,12 +104,15 @@ static lan9646r_t init_lan9646(void) {
     LOG_I(TAG, "Initializing LAN9646...");
 
     lan9646_cfg_t cfg = {
+        .if_type = LAN9646_IF_I2C,
         .i2c_addr = 0x5F,
-        .init = i2c_init_cb,
-        .write = i2c_write_cb,
-        .read = i2c_read_cb,
-        .mem_write = i2c_mem_write_cb,
-        .mem_read = i2c_mem_read_cb,
+        .ops.i2c = {
+            .init_fn = i2c_init_cb,
+            .write_fn = i2c_write_cb,
+            .read_fn = i2c_read_cb,
+            .mem_write_fn = i2c_mem_write_cb,
+            .mem_read_fn = i2c_mem_read_cb,
+        },
     };
 
     if (lan9646_init(&g_lan9646, &cfg) != lan9646OK) {
@@ -185,19 +203,17 @@ static void device_init(void) {
 
     /* Step 1: MCU Init */
     LOG_I(TAG, "[Step 1] MCU Init...");
-    Mcu_Init(&Mcu_Config);
+    Mcu_Init(&Mcu_PreCompileConfig);
     Mcu_InitClock(McuClockSettingConfig_0);
     while (MCU_PLL_LOCKED != Mcu_GetPllStatus()) {}
     Mcu_DistributePllClock();
-    Mcu_SetMode(McuModeSettingConf_Run);
+    Mcu_SetMode(McuModeSettingConf_0);
 
     /* Step 2: Platform & Port */
     LOG_I(TAG, "[Step 2] Platform & Port Init...");
     OsIf_Init(NULL);
     Platform_Init(NULL);
-    Platform_InstallIrqHandler(GMAC0_TX_CH0_CH1_IRQn, GMAC_0_TX_IRQHandler, NULL);
-    Platform_InstallIrqHandler(GMAC0_RX_CH0_CH1_IRQn, GMAC_0_RX_IRQHandler, NULL);
-    Platform_InstallIrqHandler(GMAC0_SAFETY_IRQn, GMAC_0_SAFETY_IRQHandler, NULL);
+    /* Note: GMAC IRQ handlers are installed by Eth_43_GMAC driver */
     Port_Init(&Port_Config);
     Gpt_Init(&Gpt_Config);
     Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 0xFFFFFFFFU);
@@ -215,7 +231,7 @@ static void device_init(void) {
 
     /* Step 5: Init Ethernet (AUTOSAR) */
     LOG_I(TAG, "[Step 5] Init Ethernet...");
-    Eth_43_GMAC_Init(&Eth_43_GMAC_Config);
+    Eth_43_GMAC_Init(&Eth_43_GMAC_xPredefinedConfig);
 
     /* Step 6: Configure GMAC MAC */
     LOG_I(TAG, "[Step 6] Configure GMAC MAC...");
