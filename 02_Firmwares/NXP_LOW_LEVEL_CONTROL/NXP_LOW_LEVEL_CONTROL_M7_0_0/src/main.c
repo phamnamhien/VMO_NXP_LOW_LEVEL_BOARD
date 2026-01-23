@@ -20,6 +20,7 @@
 #include "s32k3xx_soft_i2c.h"
 #include "log.h"
 #include "rgmii_diag.h"
+#include "rgmii_config_debug.h"
 
 #define TAG "MAIN"
 
@@ -240,29 +241,74 @@ int main(void) {
     /* Small delay for hardware to stabilize */
     delay_ms(100);
 
-    /* Initialize diagnostic module */
+    /* Initialize diagnostic modules */
     rgmii_diag_init(&g_lan9646, delay_ms);
+    rgmii_debug_init(&g_lan9646, delay_ms);
 
-    /* Run full diagnostic suite */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  SELECT DEBUG MODE:");
+    LOG_I(TAG, "  1. Quick Summary (rgmii_debug_quick_summary)");
+    LOG_I(TAG, "  2. Full Configuration Dump (rgmii_debug_dump_all)");
+    LOG_I(TAG, "  3. Full Diagnostic with Tests (rgmii_debug_full_diagnostic)");
+    LOG_I(TAG, "  4. Original RGMII Diagnostic (rgmii_diag_run_all)");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "");
+
+    /* --- Run Quick Summary first for overview --- */
+    LOG_I(TAG, "Running Quick Summary...");
+    rgmii_debug_quick_summary();
+
+    /* --- Run Full Configuration Dump --- */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "Running Full Configuration Dump...");
+    delay_ms(100);
+    rgmii_debug_dump_all();
+
+    /* --- Run Full Diagnostic with Tests --- */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "Running Full Diagnostic with Tests...");
+    delay_ms(100);
+    rgmii_debug_full_diagnostic();
+
+    /* --- Also run original diagnostic for comparison --- */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "Running Original RGMII Diagnostic...");
+    delay_ms(100);
     rgmii_test_result_t result = rgmii_diag_run_all();
 
     LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "                    FINAL SUMMARY");
     LOG_I(TAG, "================================================================");
     if (result == RGMII_TEST_PASS) {
         LOG_I(TAG, "  RGMII DIAGNOSTIC: ALL TESTS PASSED!");
         LOG_I(TAG, "  Hardware is working correctly.");
     } else {
-        LOG_E(TAG, "  RGMII DIAGNOSTIC: FAILED!");
+        LOG_E(TAG, "  RGMII DIAGNOSTIC: ISSUES DETECTED");
         LOG_E(TAG, "  Result: %s", rgmii_diag_result_str(result));
-        LOG_E(TAG, "  Check the timing sweep results above for best config.");
+        LOG_E(TAG, "");
+        LOG_E(TAG, "  Recommended Actions:");
+        LOG_E(TAG, "  1. Check the configuration dump above");
+        LOG_E(TAG, "  2. Review the timing sweep results");
+        LOG_E(TAG, "  3. See troubleshooting guide above");
     }
     LOG_I(TAG, "================================================================");
     LOG_I(TAG, "");
 
-    /* Infinite loop - can add periodic monitoring here */
+    /* Infinite loop with periodic status */
+    uint32_t loop_count = 0;
     while (1) {
         delay_ms(5000);
-        LOG_I(TAG, "System running... (diagnostic complete)");
+        loop_count++;
+
+        LOG_I(TAG, "[%lu] System running...", (unsigned long)loop_count);
+
+        /* Every 60 seconds, print quick summary */
+        if (loop_count % 12 == 0) {
+            LOG_I(TAG, "--- Periodic Status Check ---");
+            rgmii_debug_quick_summary();
+        }
     }
 
     return 0;
