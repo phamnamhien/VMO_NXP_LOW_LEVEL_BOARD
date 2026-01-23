@@ -1,16 +1,23 @@
 /*
  * log_debug.c
+ *
+ *  Created on: Jan 6, 2026
+ *      Author: phamnamhien
  */
 #include "log_debug.h"
+#include "Lpuart_Uart_Ip.h"
 #include "systick.h"
 #include "string.h"
+
+/* External LPUART configuration */
+extern const Lpuart_Uart_Ip_UserConfigType Lpuart_Uart_Ip_xHwConfigPB_0;
 
 static log_level_t current_level = LOG_LEVEL_INFO;
 static uint8_t is_initialized = 0;
 
 void log_init(void) {
     if(!is_initialized) {
-        Uart_Init(NULL_PTR);
+        Lpuart_Uart_Ip_Init(LOG_UART_CHANNEL, &Lpuart_Uart_Ip_xHwConfigPB_0);
         is_initialized = 1;
     }
 }
@@ -24,21 +31,25 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
 
     char buffer[256];
     char* level_str;
+    uint32 remainingBytes = 0;
     uint32 timeout = 0xFFFFFF;
+    Lpuart_Uart_Ip_StatusType status;
 
     switch(level) {
-        case LOG_LEVEL_ERROR:   level_str = "E"; break;
-        case LOG_LEVEL_WARN:    level_str = "W"; break;
-        case LOG_LEVEL_INFO:    level_str = "I"; break;
-        case LOG_LEVEL_DEBUG:   level_str = "D"; break;
+        case LOG_LEVEL_ERROR: level_str = "E"; break;
+        case LOG_LEVEL_WARN:  level_str = "W"; break;
+        case LOG_LEVEL_INFO:  level_str = "I"; break;
+        case LOG_LEVEL_DEBUG: level_str = "D"; break;
         case LOG_LEVEL_VERBOSE: level_str = "V"; break;
         default: return;
     }
 
+    /* Get timestamp */
     uint32 tick = SysTick_GetTick();
     uint32 sec = tick / 1000;
     uint32 ms = tick % 1000;
 
+    /* Format: [timestamp] LEVEL (TAG): message */
     int len = snprintf(buffer, sizeof(buffer), "[%lu.%03lu] %s (%s): ",
                       sec, ms, level_str, tag);
 
@@ -49,7 +60,11 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
 
     len += snprintf(buffer + len, sizeof(buffer) - len, "\r\n");
 
-    /* Use synchronous send (blocking) for reliable debug output */
-    Uart_SyncSend(LOG_UART_CHANNEL, (const uint8*)buffer, (uint32)len, timeout);
+    /* Use low-level LPUART IP driver for async send */
+    status = Lpuart_Uart_Ip_AsyncSend(LOG_UART_CHANNEL, (const uint8*)buffer, len);
+    if (status == LPUART_UART_IP_STATUS_SUCCESS) {
+        do {
+            status = Lpuart_Uart_Ip_GetTransmitStatus(LOG_UART_CHANNEL, &remainingBytes);
+        } while (status == LPUART_UART_IP_STATUS_BUSY && timeout-- > 0);
+    }
 }
-

@@ -26,7 +26,6 @@
 #include "rgmii_diag.h"
 #include "rgmii_config_debug.h"
 #include "systick.h"
-#include "uart_poll.h"  /* Simple polling UART for debug */
 
 /* External config symbols from generated PBcfg files */
 extern const Mcu_ConfigType Mcu_PreCompileConfig;
@@ -203,56 +202,50 @@ static void device_init(void) {
     /* Step 2: Platform & Port */
     OsIf_Init(NULL);
     Platform_Init(NULL);
-    /* Note: GMAC IRQ handlers are installed by Eth_43_GMAC driver */
     Port_Init(&Port_Config);
     Gpt_Init(&Gpt_Config);
     Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 0xFFFFFFFFU);
 
-    /* Initialize simple polling UART for debug - no interrupts needed */
-    uart_poll_init();
-    uart_poll_printf("\n\n");
-    uart_poll_printf("================================================================\n");
-    uart_poll_printf("          RGMII HARDWARE DIAGNOSTIC - S32K388 + LAN9646\n");
-    uart_poll_printf("================================================================\n");
-    uart_poll_printf("[Step 1] MCU Init... Done\n");
-    uart_poll_printf("[Step 2] Platform & Port Init... Done\n");
-
     /* Initialize SysTick for delay functions */
-    uart_poll_printf("[Step 2b] SysTick Init...\n");
     SysTick_Init();
-    uart_poll_printf("[Step 2b] SysTick Init... Done\n");
+
+    /* Initialize UART logging - NOW we can use LOG_* macros */
+    log_init();
+
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "          RGMII HARDWARE DIAGNOSTIC - S32K388 + LAN9646");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "");
+    LOG_I(TAG, "[Step 1] MCU Init... Done");
+    LOG_I(TAG, "[Step 2] Platform & Port Init... Done");
 
     /* Step 3: Configure S32K388 RGMII */
-    uart_poll_printf("[Step 3] Configure S32K388 RGMII...\n");
+    LOG_I(TAG, "[Step 3] Configure S32K388 RGMII...");
     configure_s32k388_rgmii();
-    uart_poll_printf("[Step 3] Configure S32K388 RGMII... Done\n");
 
     /* Step 4: Init LAN9646 */
-    uart_poll_printf("[Step 4] Init LAN9646...\n");
+    LOG_I(TAG, "[Step 4] Init LAN9646...");
     if (init_lan9646() != lan9646OK) {
-        uart_poll_printf("FATAL: LAN9646 init failed!\n");
+        LOG_E(TAG, "FATAL: LAN9646 init failed!");
         while (1) {}
     }
-    uart_poll_printf("[Step 4] Init LAN9646... Done\n");
 
     /* Step 5: Init Ethernet (AUTOSAR) */
-    uart_poll_printf("[Step 5] Init Ethernet...\n");
+    LOG_I(TAG, "[Step 5] Init Ethernet...");
     Eth_43_GMAC_Init(&Eth_43_GMAC_xPredefinedConfig);
-    uart_poll_printf("[Step 5] Init Ethernet... Done\n");
 
     /* Step 6: Configure GMAC MAC */
-    uart_poll_printf("[Step 6] Configure GMAC MAC...\n");
+    LOG_I(TAG, "[Step 6] Configure GMAC MAC...");
     configure_gmac_mac();
-    uart_poll_printf("[Step 6] Configure GMAC MAC... Done\n");
 
     /* Step 7: Set controller active */
-    uart_poll_printf("[Step 7] Activate Ethernet controller...\n");
+    LOG_I(TAG, "[Step 7] Activate Ethernet controller...");
     Eth_43_GMAC_SetControllerMode(ETH_CTRL_IDX, ETH_MODE_ACTIVE);
-    uart_poll_printf("[Step 7] Activate Ethernet controller... Done\n");
 
-    uart_poll_printf("\n");
-    uart_poll_printf("Device initialization complete!\n");
-    uart_poll_printf("\n");
+    LOG_I(TAG, "");
+    LOG_I(TAG, "Device initialization complete!");
+    LOG_I(TAG, "");
 }
 
 /*===========================================================================*/
@@ -264,28 +257,24 @@ int main(void) {
     device_init();
 
     /* Small delay for hardware to stabilize */
-    uart_poll_printf("Waiting 100ms for hardware to stabilize...\n");
     delay_ms(100);
-    uart_poll_printf("Hardware stabilization complete.\n");
 
     /* Initialize diagnostic modules */
-    uart_poll_printf("Initializing diagnostic modules...\n");
     rgmii_diag_init(&g_lan9646, delay_ms);
     rgmii_debug_init(&g_lan9646, delay_ms);
-    uart_poll_printf("Diagnostic modules initialized.\n");
 
-    uart_poll_printf("\n");
-    uart_poll_printf("================================================================\n");
-    uart_poll_printf("  SELECT DEBUG MODE:\n");
-    uart_poll_printf("  1. Quick Summary (rgmii_debug_quick_summary)\n");
-    uart_poll_printf("  2. Full Configuration Dump (rgmii_debug_dump_all)\n");
-    uart_poll_printf("  3. Full Diagnostic with Tests (rgmii_debug_full_diagnostic)\n");
-    uart_poll_printf("  4. Original RGMII Diagnostic (rgmii_diag_run_all)\n");
-    uart_poll_printf("================================================================\n");
-    uart_poll_printf("\n");
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  SELECT DEBUG MODE:");
+    LOG_I(TAG, "  1. Quick Summary (rgmii_debug_quick_summary)");
+    LOG_I(TAG, "  2. Full Configuration Dump (rgmii_debug_dump_all)");
+    LOG_I(TAG, "  3. Full Diagnostic with Tests (rgmii_debug_full_diagnostic)");
+    LOG_I(TAG, "  4. Original RGMII Diagnostic (rgmii_diag_run_all)");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "");
 
     /* --- Run Quick Summary first for overview --- */
-    uart_poll_printf("Running Quick Summary...\n");
+    LOG_I(TAG, "Running Quick Summary...");
     rgmii_debug_quick_summary();
 
     /* --- Run Full Configuration Dump --- */
