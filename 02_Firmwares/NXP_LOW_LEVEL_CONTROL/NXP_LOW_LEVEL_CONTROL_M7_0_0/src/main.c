@@ -28,6 +28,11 @@
 /* External config symbols from generated PBcfg files */
 extern const Eth_43_GMAC_ConfigType Eth_43_GMAC_xPredefinedConfig;
 
+/* GPT notification stub - required by Gpt_PBcfg.c */
+void SysTick_Custom_Handler(void) {
+    /* Not used in baremetal mode */
+}
+
 #define TAG "RGMII"
 
 /*===========================================================================*/
