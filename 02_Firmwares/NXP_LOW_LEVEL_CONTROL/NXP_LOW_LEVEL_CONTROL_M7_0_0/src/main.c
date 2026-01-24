@@ -81,8 +81,12 @@ static const uint8_t g_bcast_ip[4] = {255, 255, 255, 255};
 static lan9646_t g_lan9646;
 static softi2c_t g_i2c;
 
-/* TX buffer */
-static uint8_t g_tx_buffer[1536];
+/* TX buffer - place in non-cacheable section for DMA access */
+#define ETH_43_GMAC_START_SEC_VAR_CLEARED_UNSPECIFIED_NO_CACHEABLE
+#include "Eth_43_GMAC_MemMap.h"
+static uint8_t g_tx_buffer[1536] __attribute__((aligned(8)));
+#define ETH_43_GMAC_STOP_SEC_VAR_CLEARED_UNSPECIFIED_NO_CACHEABLE
+#include "Eth_43_GMAC_MemMap.h"
 
 /* Statistics */
 static uint32_t g_rx_count = 0;
@@ -178,63 +182,44 @@ static uint16_t ip_checksum(const uint8_t* data, uint16_t len) {
 /*                          PACKET SEND FUNCTIONS                             */
 /*===========================================================================*/
 
-/* Check if address is valid RAM (S32K388 SRAM range) */
-static inline int is_valid_ram_addr(const void* addr) {
-    uint32_t a = (uint32_t)addr;
-    /* S32K388 SRAM: 0x20400000 - 0x2047FFFF (512KB) */
-    return (a >= 0x20400000U && a < 0x20480000U);
-}
-
-/* Get TX buffer from driver and send packet */
+/* Send packet using static buffer directly (driver has no internal TX buffers) */
 static Gmac_Ip_StatusType send_packet_data(const uint8_t* data, uint16_t len) {
     Gmac_Ip_BufferType buf;
     Gmac_Ip_StatusType status;
-    uint16_t buff_id;
-    int retries = 10;
+    int retries = 20;
 
-    LOG_D(TAG, "TX: requesting buf len=%u", (unsigned)len);
+    /* Copy data to our DMA-accessible buffer if not already there */
+    if (data != g_tx_buffer) {
+        memcpy(g_tx_buffer, data, len);
+    }
 
-    /* Retry loop - wait for TX buffer to become available */
+    buf.Data = g_tx_buffer;
+    buf.Length = len;
+
+    /* Retry loop in case TX queue is full */
     while (retries > 0) {
-        /* Request buffer from driver's TX ring */
-        buf.Length = len;
-        buf.Data = NULL;
-        status = Gmac_Ip_GetTxBuff(0, 0, &buf, &buff_id);
+        status = Gmac_Ip_SendFrame(0, 0, &buf, NULL);
 
-        if (status == GMAC_STATUS_SUCCESS && buf.Data != NULL && is_valid_ram_addr(buf.Data)) {
-            /* Got valid buffer */
-            break;
+        if (status == GMAC_STATUS_SUCCESS) {
+            g_tx_count++;
+            LOG_D(TAG, "TX: sent %u bytes OK", (unsigned)len);
+            return status;
         }
 
-        /* Buffer not available or invalid - wait and retry */
-        LOG_D(TAG, "TX: retry, status=%d buf=%p", (int)status, (void*)buf.Data);
+        if (status != GMAC_STATUS_TX_QUEUE_FULL) {
+            /* Other error - don't retry */
+            LOG_E(TAG, "TX: SendFrame error %d", (int)status);
+            return status;
+        }
+
+        /* Queue full - wait and retry */
+        LOG_D(TAG, "TX: queue full, retry...");
         delay_ms(1);
         retries--;
     }
 
-    if (retries == 0) {
-        LOG_E(TAG, "TX: No valid buffer after retries!");
-        return GMAC_STATUS_TX_BUFF_BUSY;
-    }
-
-    LOG_D(TAG, "TX: GetTxBuff OK buf=%p", (void*)buf.Data);
-
-    /* Copy data to driver's DMA buffer */
-    memcpy(buf.Data, data, len);
-    buf.Length = len;
-
-    /* Send the frame */
-    status = Gmac_Ip_SendFrame(0, 0, &buf, NULL);
-
-    LOG_D(TAG, "TX: SendFrame status=%d", (int)status);
-
-    if (status == GMAC_STATUS_SUCCESS) {
-        g_tx_count++;
-    } else {
-        LOG_E(TAG, "SendFrame failed: %d", (int)status);
-    }
-
-    return status;
+    LOG_E(TAG, "TX: Failed after retries (queue full)");
+    return GMAC_STATUS_TX_QUEUE_FULL;
 }
 
 /* Send UDP broadcast packet */
