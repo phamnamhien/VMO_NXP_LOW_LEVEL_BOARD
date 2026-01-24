@@ -81,8 +81,7 @@ static const uint8_t g_bcast_ip[4] = {255, 255, 255, 255};
 static lan9646_t g_lan9646;
 static softi2c_t g_i2c;
 
-/* RX buffer */
-static uint8_t g_rx_buffer[1536];
+/* TX buffer */
 static uint8_t g_tx_buffer[1536];
 
 /* Statistics */
@@ -397,25 +396,18 @@ static void process_rx_packet(uint8_t* pkt, uint16_t len) {
 }
 
 static void poll_rx(void) {
+    Gmac_Ip_BufferType buf;
     Gmac_Ip_RxInfoType rx_info;
     Gmac_Ip_StatusType status;
 
-    /* Check for received frames */
-    status = Gmac_Ip_GetRxFrameInfo(0, 0, &rx_info);
+    /* Try to read a frame - driver returns buffer from internal ring */
+    status = Gmac_Ip_ReadFrame(0, 0, &buf, &rx_info);
 
-    if (status == GMAC_STATUS_SUCCESS && rx_info.PktLen > 0) {
-        /* Read the frame */
-        Gmac_Ip_BufferType buf;
-        buf.Data = g_rx_buffer;
-        buf.Length = sizeof(g_rx_buffer);
+    if (status == GMAC_STATUS_SUCCESS) {
+        /* Process the received packet */
+        process_rx_packet(buf.Data, rx_info.PktLen);
 
-        status = Gmac_Ip_ReadFrame(0, 0, &buf, &rx_info);
-
-        if (status == GMAC_STATUS_SUCCESS) {
-            process_rx_packet(g_rx_buffer, rx_info.PktLen);
-        }
-
-        /* Provide buffer back */
+        /* Return buffer to driver */
         Gmac_Ip_ProvideRxBuff(0, 0, &buf);
     }
 }
