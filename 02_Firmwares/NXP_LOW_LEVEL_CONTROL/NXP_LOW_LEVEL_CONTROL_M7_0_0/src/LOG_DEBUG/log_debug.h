@@ -1,17 +1,15 @@
-/*
- * log_debug.h
- *
- *  Created on: Jan 6, 2026
- *      Author: phamnamhien
+/**
+ * @file    log_debug.h
+ * @brief   Debug logging using NXP MCAL UART driver
+ * @note    Uses Uart_SyncSend for reliable blocking transmission
  */
 
 #ifndef LOG_DEBUG_H_
 #define LOG_DEBUG_H_
 
-#include "CDD_Uart.h"
-#include "Lpuart_Uart_Ip_Irq.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 
 /* Debug levels */
 typedef enum {
@@ -22,9 +20,6 @@ typedef enum {
     LOG_LEVEL_DEBUG,
     LOG_LEVEL_VERBOSE
 } log_level_t;
-
-/* Debug UART channel */
-#define LOG_UART_CHANNEL 0
 
 /* Log macros */
 #define LOG_E(tag, ...) log_write(LOG_LEVEL_ERROR, tag, __VA_ARGS__)
@@ -38,5 +33,9 @@ void log_init(void);
 void log_set_level(log_level_t level);
 void log_write(log_level_t level, const char* tag, const char* format, ...);
 
-#endif /* LOG_DEBUG_H_ */
+/* Compatibility functions (no-op when using Uart_SyncSend) */
+void log_start_flush_timer(void);
+void log_flush(void);
+void log_flush_blocking(void);
 
+#endif /* LOG_DEBUG_H_ */

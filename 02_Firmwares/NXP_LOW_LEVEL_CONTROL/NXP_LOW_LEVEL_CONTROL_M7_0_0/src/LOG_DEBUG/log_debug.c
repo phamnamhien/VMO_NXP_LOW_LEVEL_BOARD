@@ -1,18 +1,36 @@
-/*
- * log_debug.c
+/**
+ * @file    log_debug.c
+ * @brief   Debug logging using NXP MCAL UART driver (Baremetal)
  */
+
 #include "log_debug.h"
-#include "OsIf.h"
-#include "string.h"
+#include "CDD_Uart.h"
+#include <string.h>
+#include <stdio.h>
+
+/*===========================================================================*/
+/*                          CONFIGURATION                                     */
+/*===========================================================================*/
+
+#define LOG_UART_CHANNEL    0U
+#define LOG_UART_TIMEOUT_US 100000U  /* 100ms timeout for full message */
+
+/*===========================================================================*/
+/*                          STATE                                             */
+/*===========================================================================*/
 
 static log_level_t current_level = LOG_LEVEL_INFO;
-static uint8_t is_initialized = 0;
-static uint32 log_start_counter = 0;
+
+/*===========================================================================*/
+/*                          PUBLIC API                                        */
+/*===========================================================================*/
 
 void log_init(void) {
-    /* Note: Uart_Init(NULL_PTR) must be called BEFORE log_init() */
-    log_start_counter = OsIf_GetCounter(OSIF_COUNTER_DUMMY);
-    is_initialized = 1;
+    /* Nothing to initialize */
+}
+
+void log_start_flush_timer(void) {
+    /* No-op for baremetal */
 }
 
 void log_set_level(log_level_t level) {
@@ -23,8 +41,7 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
     if (level > current_level) return;
 
     char buffer[256];
-    char* level_str;
-    uint32 timeout = 0xFFFFFF;
+    const char* level_str;
 
     switch(level) {
         case LOG_LEVEL_ERROR:   level_str = "E"; break;
@@ -35,24 +52,27 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         default: return;
     }
 
-    /* Get elapsed time (dummy counter - timestamp will be 0.000) */
-    uint32 elapsed = OsIf_GetElapsed(&log_start_counter, OSIF_COUNTER_DUMMY);
-    uint32 sec = elapsed / 1000000U;
-    uint32 ms = (elapsed / 1000U) % 1000U;
-
-    int len = snprintf(buffer, sizeof(buffer), "[%lu.%03lu] %s (%s): ",
-                      sec, ms, level_str, tag);
+    /* Format: [LEVEL] (TAG): message */
+    int len = snprintf(buffer, sizeof(buffer), "[%s] (%s): ", level_str, tag);
 
     va_list args;
     va_start(args, format);
-    len += vsnprintf(buffer + len, sizeof(buffer) - len, format, args);
+    len += vsnprintf(buffer + len, sizeof(buffer) - len - 3, format, args);
     va_end(args);
 
-    len += snprintf(buffer + len, sizeof(buffer) - len, "\r\n");
+    /* Add CRLF */
+    buffer[len++] = '\r';
+    buffer[len++] = '\n';
+    buffer[len] = '\0';
 
-    uint32 bytesTransferred = 0;
-    Std_ReturnType ret = Uart_AsyncSend(LOG_UART_CHANNEL, (const uint8*)buffer, len);
-    if (ret == E_OK) {
-        while (Uart_GetStatus(LOG_UART_CHANNEL, &bytesTransferred, UART_SEND) == UART_STATUS_OPERATION_ONGOING && timeout-- > 0);
-    }
+    /* Blocking UART send - wait until complete */
+    (void)Uart_SyncSend(LOG_UART_CHANNEL, (const uint8*)buffer, (uint32)len, LOG_UART_TIMEOUT_US);
+}
+
+void log_flush(void) {
+    /* No-op - Uart_SyncSend already blocks */
+}
+
+void log_flush_blocking(void) {
+    /* No-op - Uart_SyncSend already blocks */
 }
