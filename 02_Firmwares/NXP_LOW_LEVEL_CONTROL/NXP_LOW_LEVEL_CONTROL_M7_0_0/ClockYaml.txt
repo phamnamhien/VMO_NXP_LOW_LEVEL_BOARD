@@ -87,7 +87,7 @@ outputs:
 - {id: FLEXCANB_CLK.outFreq, value: 24 MHz}
 - {id: FLEXIO0_CLK.outFreq, value: 160 MHz}
 - {id: FXOSCOUT.outFreq, value: 16 MHz}
-- {id: GMAC0_MII_RGMII_RX.outFreq, value: 125 MHz}
+- {id: GMAC0_MII_RGMII_RX.outFreq, value: 125 MHz, locked: true, accuracy: '0.001'}
 - {id: GMAC0_RX_CLK.outFreq, value: 48 MHz, locked: true, accuracy: '0.001'}
 - {id: GMAC0_TX_CLK.outFreq, value: 250 MHz}
 - {id: GMAC1_RX_CLK.outFreq, value: 48 MHz}

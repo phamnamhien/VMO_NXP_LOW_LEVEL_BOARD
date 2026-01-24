@@ -134,32 +134,6 @@ extern "C"{
 
 /*================================================================================================*/
 
-/*==================================================================================================
-*                                       GLOBAL VARIABLES
-==================================================================================================*/
-#if (OSIF_USE_SYSTEM_TIMER == STD_ON)
-
-#define BASENXP_START_SEC_CONFIG_DATA_UNSPECIFIED
-#include "BaseNXP_MemMap.h"
-
-/* OsIf configuration for system timer - 160MHz core frequency */
-static const OsIf_ConfigType OsIf_xPredefinedConfig =
-{
-    0U,           /* counterId */
-    160000000U    /* counterFrequency - 160 MHz */
-};
-
-/* Array of pointers to OsIf configuration for each core */
-const OsIf_ConfigType *const OsIf_apxPredefinedConfig[OSIF_MAX_COREIDX_SUPPORTED] =
-{
-    &OsIf_xPredefinedConfig
-};
-
-#define BASENXP_STOP_SEC_CONFIG_DATA_UNSPECIFIED
-#include "BaseNXP_MemMap.h"
-
-#endif /* (OSIF_USE_SYSTEM_TIMER == STD_ON) */
-
 
 #ifdef __cplusplus
 }

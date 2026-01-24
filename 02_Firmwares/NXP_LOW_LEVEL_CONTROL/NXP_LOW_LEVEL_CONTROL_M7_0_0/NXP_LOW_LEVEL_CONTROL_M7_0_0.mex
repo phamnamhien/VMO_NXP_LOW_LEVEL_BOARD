@@ -727,7 +727,7 @@
                   <clock_output id="FLEXCANB_CLK.outFreq" value="24 MHz" locked="false" accuracy=""/>
                   <clock_output id="FLEXIO0_CLK.outFreq" value="160 MHz" locked="false" accuracy=""/>
                   <clock_output id="FXOSCOUT.outFreq" value="16 MHz" locked="false" accuracy=""/>
-                  <clock_output id="GMAC0_MII_RGMII_RX.outFreq" value="125 MHz" locked="false" accuracy=""/>
+                  <clock_output id="GMAC0_MII_RGMII_RX.outFreq" value="125 MHz" locked="true" accuracy="0.001"/>
                   <clock_output id="GMAC0_RX_CLK.outFreq" value="48 MHz" locked="true" accuracy="0.001"/>
                   <clock_output id="GMAC0_TX_CLK.outFreq" value="250 MHz" locked="false" accuracy=""/>
                   <clock_output id="GMAC1_RX_CLK.outFreq" value="48 MHz" locked="false" accuracy=""/>
