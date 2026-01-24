@@ -184,21 +184,34 @@ static Gmac_Ip_StatusType send_packet_data(const uint8_t* data, uint16_t len) {
     Gmac_Ip_StatusType status;
     uint16_t buff_id;
 
+    LOG_D(TAG, "TX: requesting buf len=%u", (unsigned)len);
+
     /* Request buffer from driver's TX ring */
     buf.Length = len;
     status = Gmac_Ip_GetTxBuff(0, 0, &buf, &buff_id);
+
+    LOG_D(TAG, "TX: GetTxBuff status=%d buf=%p", (int)status, (void*)buf.Data);
 
     if (status != GMAC_STATUS_SUCCESS) {
         LOG_E(TAG, "GetTxBuff failed: %d", (int)status);
         return status;
     }
 
+    if (buf.Data == NULL) {
+        LOG_E(TAG, "GetTxBuff returned NULL data!");
+        return GMAC_STATUS_TX_BUFF_BUSY;
+    }
+
     /* Copy data to driver's DMA buffer */
     memcpy(buf.Data, data, len);
     buf.Length = len;
 
+    LOG_D(TAG, "TX: sending frame...");
+
     /* Send the frame */
     status = Gmac_Ip_SendFrame(0, 0, &buf, NULL);
+
+    LOG_D(TAG, "TX: SendFrame status=%d", (int)status);
 
     if (status == GMAC_STATUS_SUCCESS) {
         g_tx_count++;
@@ -541,6 +554,7 @@ int main(void) {
     /* UART & Log */
     Uart_Init(NULL_PTR);
     log_init();
+    log_set_level(LOG_LEVEL_DEBUG);  /* Enable debug logging */
 
     /* Banner */
     LOG_I(TAG, "");
