@@ -390,6 +390,9 @@ int main(void) {
     LOG_I(TAG, "Starting FreeRTOS scheduler...");
     LOG_I(TAG, "");
 
+    /* Wait for UART to complete before starting scheduler */
+    delay_ms(50);
+
     /* Mark scheduler as started and start it */
     g_scheduler_started = true;
     vTaskStartScheduler();
