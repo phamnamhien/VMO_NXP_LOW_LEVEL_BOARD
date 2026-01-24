@@ -48,7 +48,7 @@ extern const Eth_43_GMAC_ConfigType Eth_43_GMAC_xPredefinedConfig;
 #define ETH_CTRL_IDX            0U
 
 /* FreeRTOS Task Configuration */
-#define DIAG_TASK_STACK_SIZE    4096U
+#define DIAG_TASK_STACK_SIZE    8192U  /* Increased for heavy logging */
 #define DIAG_TASK_PRIORITY      (tskIDLE_PRIORITY + 2U)
 
 /*===========================================================================*/
