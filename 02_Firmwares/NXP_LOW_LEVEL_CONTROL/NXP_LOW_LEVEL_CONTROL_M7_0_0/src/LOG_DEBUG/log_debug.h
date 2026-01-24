@@ -38,9 +38,10 @@ void log_init(void);
 void log_set_level(log_level_t level);
 void log_write(log_level_t level, const char* tag, const char* format, ...);
 
-/* Ring buffer management - call log_flush() periodically if needed */
-void log_flush(void);          /* Non-blocking: pump data from ring buffer */
-void log_flush_blocking(void); /* Blocking: wait for all data to be sent */
+/* Ring buffer management */
+void log_start_flush_timer(void); /* Start auto-flush timer (call after scheduler starts) */
+void log_flush(void);             /* Non-blocking: pump data from ring buffer */
+void log_flush_blocking(void);    /* Blocking: wait for all data to be sent */
 
 #endif /* LOG_DEBUG_H_ */
 

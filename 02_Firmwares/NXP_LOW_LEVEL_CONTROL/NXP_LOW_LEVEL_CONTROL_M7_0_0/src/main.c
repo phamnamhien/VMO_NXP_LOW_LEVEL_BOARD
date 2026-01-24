@@ -284,6 +284,9 @@ static void device_init(void) {
 static void diagnostic_task(void *pvParameters) {
     (void)pvParameters;
 
+    /* Start log auto-flush timer (runs every 10ms to drain ring buffer) */
+    log_start_flush_timer();
+
     LOG_I(TAG, "");
     LOG_I(TAG, "================================================================");
     LOG_I(TAG, "    RX PATH DEBUG - S32K388 GMAC <-- LAN9646 Port 6");

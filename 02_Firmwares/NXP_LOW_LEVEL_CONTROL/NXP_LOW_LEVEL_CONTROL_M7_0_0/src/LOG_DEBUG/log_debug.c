@@ -1,15 +1,15 @@
 /*
  * log_debug.c
- * Non-blocking UART logging with ring buffer
+ * Non-blocking UART logging with ring buffer and auto-flush timer
  */
 #include "log_debug.h"
 #include "OsIf.h"
 #include "string.h"
 
-/* FreeRTOS for timestamps and synchronization */
+/* FreeRTOS for timestamps, synchronization and timer */
 #include "FreeRTOS.h"
 #include "task.h"
-#include "semphr.h"
+#include "timers.h"
 
 /*===========================================================================*/
 /*                          CONFIGURATION                                     */
@@ -21,6 +21,9 @@
 
 /* TX buffer for DMA - size of one log message */
 #define LOG_TX_BUFFER_SIZE      256U
+
+/* Timer period for auto-flush (ms) */
+#define LOG_FLUSH_PERIOD_MS     10U
 
 /*===========================================================================*/
 /*                          RING BUFFER                                       */
@@ -41,6 +44,9 @@ static volatile uint8_t g_tx_busy = 0;
 static log_level_t current_level = LOG_LEVEL_INFO;
 static uint8_t is_initialized = 0;
 static uint32_t pre_scheduler_ms = 0;
+
+/* Auto-flush timer */
+static TimerHandle_t g_flush_timer = NULL;
 
 /*===========================================================================*/
 /*                          RING BUFFER HELPERS                                */
@@ -76,8 +82,8 @@ static uint32_t ring_read(uint8_t* data, uint32_t max_len) {
 /*                          UART TX PUMP                                       */
 /*===========================================================================*/
 
-/* Start next TX transfer if data available and not busy */
-static void log_pump_tx(void) {
+/* Start next TX transfer if data available and not busy (call from critical section) */
+static void log_pump_tx_unsafe(void) {
     if (g_tx_busy) {
         /* Check if previous transfer completed */
         uint32 bytesTransferred = 0;
@@ -103,6 +109,19 @@ static void log_pump_tx(void) {
 }
 
 /*===========================================================================*/
+/*                          TIMER CALLBACK                                     */
+/*===========================================================================*/
+
+static void log_flush_timer_callback(TimerHandle_t xTimer) {
+    (void)xTimer;
+
+    /* Pump TX from timer context (runs in timer task) */
+    taskENTER_CRITICAL();
+    log_pump_tx_unsafe();
+    taskEXIT_CRITICAL();
+}
+
+/*===========================================================================*/
 /*                          PUBLIC API                                         */
 /*===========================================================================*/
 
@@ -113,6 +132,23 @@ void log_init(void) {
     g_tx_busy = 0;
     pre_scheduler_ms = 0;
     is_initialized = 1;
+}
+
+void log_start_flush_timer(void) {
+    /* Create and start auto-flush timer (call after scheduler started) */
+    if (g_flush_timer == NULL) {
+        g_flush_timer = xTimerCreate(
+            "LogFlush",
+            pdMS_TO_TICKS(LOG_FLUSH_PERIOD_MS),
+            pdTRUE,  /* Auto-reload */
+            NULL,
+            log_flush_timer_callback
+        );
+
+        if (g_flush_timer != NULL) {
+            xTimerStart(g_flush_timer, 0);
+        }
+    }
 }
 
 void log_set_level(log_level_t level) {
@@ -175,10 +211,10 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         if ((uint32_t)len <= ring_free()) {
             ring_write((const uint8_t*)buffer, len);
         }
-        /* else: buffer full, drop message (could add overflow counter) */
+        /* else: buffer full, drop message */
 
-        /* Pump TX to start transfer if not busy */
-        log_pump_tx();
+        /* Try to pump TX immediately */
+        log_pump_tx_unsafe();
 
         taskEXIT_CRITICAL();
     }
@@ -188,7 +224,7 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
 void log_flush(void) {
     if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
         taskENTER_CRITICAL();
-        log_pump_tx();
+        log_pump_tx_unsafe();
         taskEXIT_CRITICAL();
     }
 }
