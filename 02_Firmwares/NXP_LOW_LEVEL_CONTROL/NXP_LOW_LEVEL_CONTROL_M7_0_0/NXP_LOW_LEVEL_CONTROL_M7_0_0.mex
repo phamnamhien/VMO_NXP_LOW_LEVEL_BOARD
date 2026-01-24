@@ -1099,11 +1099,6 @@
                   <data type="Version">1.0.0</data>
                </feature>
             </dependency>
-            <dependency resourceType="Tool" resourceId="Clocks" description="The Clocks tool is required by the Peripherals tool, but it is disabled." problem_level="2" source="Peripherals">
-               <feature name="enabled" evaluation="equal">
-                  <data>true</data>
-               </feature>
-            </dependency>
          </dependencies>
          <generated_project_files>
             <file path="board/Siul2_Port_Ip_Cfg.c" update_enabled="true"/>
@@ -1743,6 +1738,10 @@
                                     </struct>
                                     <struct name="7">
                                        <setting name="Name" value="LPUART4_CLK"/>
+                                       <setting name="McuClockFrequencySelect" value="AIPS_PLAT_CLK"/>
+                                    </struct>
+                                    <struct name="8">
+                                       <setting name="Name" value="STM_CLK"/>
                                        <setting name="McuClockFrequencySelect" value="AIPS_PLAT_CLK"/>
                                     </struct>
                                  </array>
