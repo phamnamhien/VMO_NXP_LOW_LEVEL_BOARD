@@ -100,19 +100,18 @@ static uint32_t lan_read_mib(uint8_t port, uint8_t index) {
     if (!g_lan) return 0;
 
     uint16_t base = (uint16_t)port << 12;
-    uint32_t ctrl, data = 0;
+    uint32_t ctrl;
     uint32_t timeout = 1000;
 
     ctrl = ((uint32_t)index << 16) | 0x02000000UL;
     lan_write32(base | 0x0500, ctrl);
 
     do {
-        lan_read32(base | 0x0500, &ctrl);
+        ctrl = lan_read32(base | 0x0500);
         if (--timeout == 0) break;
     } while (ctrl & 0x02000000UL);
 
-    lan_read32(base | 0x0504, &data);
-    return data;
+    return lan_read32(base | 0x0504);
 }
 
 /* Flush MIB counters */
@@ -978,6 +977,12 @@ void rx_debug_auto_diagnose(void) {
         LOG_I(TAG, "  DCMRWF3: 0x%08lX -> 0x%08lX",
               (unsigned long)dcmrwf3,
               (unsigned long)IP_DCM_GPR->DCMRWF3);
+    }
+
+    if (!pins_ok) {
+        LOG_I(TAG, "");
+        LOG_I(TAG, "[WARN] RX pin configuration may have issues.");
+        LOG_I(TAG, "       Check IMCR and MSCR settings above.");
     }
 
     if (!dma_ok) {
