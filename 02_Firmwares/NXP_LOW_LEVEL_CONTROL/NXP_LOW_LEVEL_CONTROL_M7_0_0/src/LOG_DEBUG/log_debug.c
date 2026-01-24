@@ -1,15 +1,27 @@
 /**
  * @file    log_debug.c
- * @brief   Debug logging using simple direct UART access
+ * @brief   Debug logging using NXP MCAL UART driver
+ * @note    Uses Uart_SyncSend for reliable blocking transmission
  */
+
 #include "log_debug.h"
-#include "simple_uart.h"
+#include "CDD_Uart.h"
 #include <string.h>
 #include <stdio.h>
 
 /* FreeRTOS for timestamps */
 #include "FreeRTOS.h"
 #include "task.h"
+
+/*===========================================================================*/
+/*                          CONFIGURATION                                     */
+/*===========================================================================*/
+
+/* UART channel configured in EB Tresos */
+#define LOG_UART_CHANNEL    0U
+
+/* Timeout for UART transmission (microseconds) */
+#define LOG_UART_TIMEOUT_US 100000U  /* 100ms timeout */
 
 /*===========================================================================*/
 /*                          STATE                                             */
@@ -24,13 +36,13 @@ static uint32_t pre_scheduler_ms = 0;
 /*===========================================================================*/
 
 void log_init(void) {
-    simple_uart_init();
+    /* Uart_Init() should be called before this in main() */
     pre_scheduler_ms = 0;
     is_initialized = 1;
 }
 
 void log_start_flush_timer(void) {
-    /* No-op - using blocking mode */
+    /* No-op - using blocking Uart_SyncSend */
 }
 
 void log_set_level(log_level_t level) {
@@ -64,36 +76,33 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
     uint32_t sec = elapsed_ms / 1000U;
     uint32_t ms = elapsed_ms % 1000U;
 
-    /* Format header */
+    /* Format the complete message */
     int len = snprintf(buffer, sizeof(buffer), "[%lu.%03lu] %s (%s): ",
                       (unsigned long)sec, (unsigned long)ms, level_str, tag);
 
-    /* Format message */
     va_list args;
     va_start(args, format);
     len += vsnprintf(buffer + len, sizeof(buffer) - len, format, args);
     va_end(args);
 
-    /* Add newline */
+    /* Add CRLF */
     if (len < (int)sizeof(buffer) - 2) {
         buffer[len++] = '\r';
         buffer[len++] = '\n';
         buffer[len] = '\0';
     }
 
-    /* Send via simple UART (blocking) */
-    simple_uart_puts(buffer);
+    /*
+     * Use Uart_SyncSend - blocking send with timeout
+     * This is the proper MCAL way to send data synchronously
+     */
+    (void)Uart_SyncSend(LOG_UART_CHANNEL, (const uint8*)buffer, (uint32)len, LOG_UART_TIMEOUT_US);
 }
 
 void log_flush(void) {
-    /* No-op - using blocking mode */
+    /* No-op - Uart_SyncSend already blocks until complete */
 }
 
 void log_flush_blocking(void) {
-    /* No-op - already blocking */
-}
-
-/* Test function for simple UART */
-void log_test_uart(void) {
-    simple_uart_test();
+    /* No-op - Uart_SyncSend already blocks until complete */
 }

@@ -1,6 +1,7 @@
 /**
  * @file    log_debug.h
- * @brief   Debug logging using simple direct UART access
+ * @brief   Debug logging using NXP MCAL UART driver
+ * @note    Uses Uart_SyncSend for reliable blocking transmission
  */
 
 #ifndef LOG_DEBUG_H_
@@ -32,12 +33,9 @@ void log_init(void);
 void log_set_level(log_level_t level);
 void log_write(log_level_t level, const char* tag, const char* format, ...);
 
-/* Compatibility functions (no-op in simple mode) */
+/* Compatibility functions (no-op when using Uart_SyncSend) */
 void log_start_flush_timer(void);
 void log_flush(void);
 void log_flush_blocking(void);
-
-/* Test function - run this to verify UART works */
-void log_test_uart(void);
 
 #endif /* LOG_DEBUG_H_ */

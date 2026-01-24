@@ -258,9 +258,6 @@ static void device_init(void) {
     Uart_Init(NULL_PTR);
     log_init();
 
-    /* Test UART first - uncomment next line to run test */
-    /* log_test_uart(); */
-
     LOG_I(TAG, "");
     LOG_I(TAG, "================================================================");
     LOG_I(TAG, "  RGMII 1Gbps DIAGNOSTIC - S32K388 + LAN9646 (FreeRTOS)");
