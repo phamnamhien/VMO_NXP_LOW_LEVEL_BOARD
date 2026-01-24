@@ -342,27 +342,40 @@ static void diagnostic_task(void *pvParameters) {
     /*=========================================================================*/
 
     uint32_t loop_count = 0;
+    uint32_t i;
+
     for (;;) {
         loop_count++;
-        LOG_I(TAG, "[%lu] Waiting 1s...", (unsigned long)loop_count);
 
-        vTaskDelay(pdMS_TO_TICKS(1000));  /* 1 second delay */
-
-        LOG_I(TAG, "[%lu] After delay, RX=%lu",
+        /* Print RX packet count */
+        LOG_I(TAG, "[%lu] RX=%lu",
               (unsigned long)loop_count,
               (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
+
+        /* Yield to scheduler after UART output */
+        taskYIELD();
+
+        /* 2 second delay using multiple short delays for better responsiveness */
+        for (i = 0; i < 20; i++) {
+            vTaskDelay(pdMS_TO_TICKS(100));  /* 100ms x 20 = 2 seconds */
+        }
 
         /* Every 30 seconds (15 iterations), show counters */
         if (loop_count % 15 == 0) {
             LOG_I(TAG, "--- Periodic Counter Check ---");
+            taskYIELD();
             rx_debug_dump_gmac_counters();
+            taskYIELD();
             rx_debug_dump_lan9646_tx_counters();
+            taskYIELD();
         }
 
         /* Every 60 seconds (30 iterations), full analysis */
         if (loop_count % 30 == 0) {
             LOG_I(TAG, "--- Periodic RX Analysis ---");
+            taskYIELD();
             rx_debug_full_analysis();
+            taskYIELD();
         }
     }
 }

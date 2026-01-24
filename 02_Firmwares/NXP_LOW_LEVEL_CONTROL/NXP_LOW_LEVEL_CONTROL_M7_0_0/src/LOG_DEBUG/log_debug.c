@@ -21,7 +21,7 @@
 #define LOG_UART_CHANNEL    0U
 
 /* Timeout for UART transmission (microseconds) */
-#define LOG_UART_TIMEOUT_US 100000U  /* 100ms timeout */
+#define LOG_UART_TIMEOUT_US 10000U  /* 10ms timeout - sufficient for 256 bytes at 115200 baud */
 
 /*===========================================================================*/
 /*                          STATE                                             */
