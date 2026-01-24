@@ -170,6 +170,8 @@
                   <pin peripheral="SIUL2" signal="gpio, 34" pin_num="T11" pin_signal="PTB2">
                      <pin_features>
                         <pin_feature name="direction" value="OUTPUT"/>
+                        <pin_feature name="pullSelect" value="pullUp"/>
+                        <pin_feature name="pullEnable" value="enabled"/>
                         <pin_feature name="InitValue" value="state_1"/>
                      </pin_features>
                   </pin>
@@ -725,12 +727,12 @@
                   <clock_output id="FLEXCANB_CLK.outFreq" value="24 MHz" locked="false" accuracy=""/>
                   <clock_output id="FLEXIO0_CLK.outFreq" value="160 MHz" locked="false" accuracy=""/>
                   <clock_output id="FXOSCOUT.outFreq" value="16 MHz" locked="false" accuracy=""/>
-                  <clock_output id="GMAC0_MII_RGMII_RX.outFreq" value="125 MHz" locked="false" accuracy=""/>
+                  <clock_output id="GMAC0_MII_RGMII_RX.outFreq" value="125 MHz" locked="true" accuracy="0.001"/>
                   <clock_output id="GMAC0_RX_CLK.outFreq" value="48 MHz" locked="true" accuracy="0.001"/>
-                  <clock_output id="GMAC0_TX_CLK.outFreq" value="50 MHz" locked="false" accuracy=""/>
+                  <clock_output id="GMAC0_TX_CLK.outFreq" value="250 MHz" locked="false" accuracy=""/>
                   <clock_output id="GMAC1_RX_CLK.outFreq" value="48 MHz" locked="false" accuracy=""/>
                   <clock_output id="GMAC1_TX_CLK.outFreq" value="48 MHz" locked="false" accuracy=""/>
-                  <clock_output id="GMAC_TS_CLK.outFreq" value="50 MHz" locked="false" accuracy=""/>
+                  <clock_output id="GMAC_TS_CLK.outFreq" value="250 MHz" locked="false" accuracy=""/>
                   <clock_output id="HSE_CLK.outFreq" value="160 MHz" locked="false" accuracy=""/>
                   <clock_output id="INTM_CLK.outFreq" value="40 MHz" locked="false" accuracy=""/>
                   <clock_output id="LBIST_CLK.outFreq" value="40 MHz" locked="false" accuracy=""/>
@@ -841,9 +843,9 @@
                   <setting id="MODULE_CLOCKS.MC_CGM_AUX3_DIV0.scale" value="2" locked="true"/>
                   <setting id="MODULE_CLOCKS.MC_CGM_AUX4_DIV0.scale" value="2" locked="true"/>
                   <setting id="MODULE_CLOCKS.MC_CGM_AUX7_DIV0.scale" value="1" locked="true"/>
-                  <setting id="MODULE_CLOCKS.MC_CGM_AUX8_DIV0.scale" value="5" locked="true"/>
+                  <setting id="MODULE_CLOCKS.MC_CGM_AUX8_DIV0.scale" value="1" locked="true"/>
                   <setting id="MODULE_CLOCKS.MC_CGM_AUX8_MUX.sel" value="PLLAUX_PHI0" locked="false"/>
-                  <setting id="MODULE_CLOCKS.MC_CGM_AUX9_DIV0.scale" value="5" locked="true"/>
+                  <setting id="MODULE_CLOCKS.MC_CGM_AUX9_DIV0.scale" value="1" locked="true"/>
                   <setting id="MODULE_CLOCKS.MC_CGM_AUX9_MUX.sel" value="PLLAUX_PHI0" locked="false"/>
                   <setting id="PHI0.scale" value="3" locked="true"/>
                   <setting id="PHI1.scale" value="3" locked="true"/>
@@ -3599,7 +3601,7 @@
                                     <setting name="0" value="REDUCED"/>
                                  </array>
                                  <array name="EthCtrlMacLayerSpeed">
-                                    <setting name="0" value="ETH_MAC_LAYER_SPEED_100M"/>
+                                    <setting name="0" value="ETH_MAC_LAYER_SPEED_1G"/>
                                  </array>
                                  <array name="EthCtrlPhyAddress">
                                     <setting name="0" value="10:11:22:77:77:77"/>
@@ -4436,8 +4438,8 @@
                                     </struct>
                                     <struct name="20">
                                        <setting name="Name" value="PortPin_20"/>
-                                       <setting name="PortPinPue" value="false"/>
-                                       <setting name="PortPinPus" value="false"/>
+                                       <setting name="PortPinPue" value="true"/>
+                                       <setting name="PortPinPus" value="true"/>
                                        <setting name="PortPinSafeMode" value="false"/>
                                        <setting name="PortPinDse" value="false"/>
                                        <setting name="PortPinWithReadBack" value="false"/>

@@ -9,17 +9,26 @@
 #include "S32K388.h"
 #include "Mcal.h"
 #include "Mcu.h"
+#include "Mcu_Cfg.h"
 #include "Port.h"
+#include "Port_Cfg.h"
 #include "OsIf.h"
 #include "Platform.h"
 #include "Gpt.h"
+#include "Gpt_Cfg.h"
 #include "Eth_43_GMAC.h"
+#include "Eth_43_GMAC_Cfg.h"
 #include "Gmac_Ip.h"
 
 #include "lan9646.h"
 #include "s32k3xx_soft_i2c.h"
-#include "log.h"
+#include "CDD_Uart.h"
+#include "log_debug.h"
 #include "rgmii_diag.h"
+#include "rgmii_config_debug.h"
+
+/* External config symbols from generated PBcfg files */
+extern const Eth_43_GMAC_ConfigType Eth_43_GMAC_xPredefinedConfig;
 
 #define TAG "MAIN"
 
@@ -77,7 +86,19 @@ static lan9646r_t i2c_mem_read_cb(uint8_t dev_addr, uint16_t mem_addr,
 /*===========================================================================*/
 
 static void delay_ms(uint32_t ms) {
-    OsIf_TimeDelay(ms * 1000);  /* OsIf uses microseconds */
+    /*
+     * Simple busy-wait delay - cannot use OsIf functions because
+     * USING_OS_FREERTOS is defined but scheduler is not running.
+     * Calibrated for ~160MHz core clock.
+     */
+    volatile uint32_t count;
+    while (ms > 0) {
+        count = 40000U;  /* Approx 1ms at 160MHz */
+        while (count > 0) {
+            count--;
+        }
+        ms--;
+    }
 }
 
 /*===========================================================================*/
@@ -88,12 +109,15 @@ static lan9646r_t init_lan9646(void) {
     LOG_I(TAG, "Initializing LAN9646...");
 
     lan9646_cfg_t cfg = {
+        .if_type = LAN9646_IF_I2C,
         .i2c_addr = 0x5F,
-        .init = i2c_init_cb,
-        .write = i2c_write_cb,
-        .read = i2c_read_cb,
-        .mem_write = i2c_mem_write_cb,
-        .mem_read = i2c_mem_read_cb,
+        .ops.i2c = {
+            .init_fn = i2c_init_cb,
+            .write_fn = i2c_write_cb,
+            .read_fn = i2c_read_cb,
+            .mem_write_fn = i2c_mem_write_cb,
+            .mem_read_fn = i2c_mem_read_cb,
+        },
     };
 
     if (lan9646_init(&g_lan9646, &cfg) != lan9646OK) {
@@ -107,14 +131,56 @@ static lan9646r_t init_lan9646(void) {
     lan9646_get_chip_id(&g_lan9646, &chip_id, &revision);
     LOG_I(TAG, "Chip: 0x%04X Rev:%d", chip_id, revision);
 
-    /* Configure Port 6 for RGMII 100Mbps - start with no delay */
-    LOG_I(TAG, "Configuring Port 6 for RGMII 100Mbps...");
+    /*
+     * Configure Port 6 for RGMII 1Gbps
+     *
+     * RGMII Clock/Data Flow:
+     *   S32K388 (MAC)              LAN9646 (PHY Port 6)
+     *       |                            |
+     *       |-- TXD, TX_CTL, TX_CLK ---->|  S32K388 TX → LAN9646 RX
+     *       |                            |
+     *       |<-- RXD, RX_CTL, RX_CLK ---|  LAN9646 TX → S32K388 RX
+     *
+     * RGMII requires ~1.5-2ns clock skew. S32K388 GMAC has NO internal delay,
+     * so LAN9646 must provide the delay on BOTH paths.
+     */
+    LOG_I(TAG, "Configuring Port 6 for RGMII 1Gbps...");
 
-    /* XMII_CTRL0: Full duplex, Flow control, 100M */
-    lan9646_write_reg8(&g_lan9646, 0x6300, 0x78);
+    /*
+     * XMII_CTRL0 [0x6300]:
+     *   Bit 6: Duplex        (1=Full duplex)
+     *   Bit 5: TX Flow Ctrl  (1=Enable)
+     *   Bit 4: Speed 100     (0=1Gbps mode, 1=100Mbps mode)
+     *   Bit 3: RX Flow Ctrl  (1=Enable)
+     * Value: 0x68 = Full duplex, flow control enabled, 1Gbps mode
+     */
+    lan9646_write_reg8(&g_lan9646, 0x6300, 0x68);
 
-    /* XMII_CTRL1: 100M mode, no delay initially (will be tested) */
-    lan9646_write_reg8(&g_lan9646, 0x6301, 0x40);
+    /*
+     * XMII_CTRL1 [0x6301]:
+     *   Bit 6: Speed 1000    (0=1Gbps, 1=10/100Mbps select)
+     *   Bit 4: RX ID Enable  - Add ~1.5ns delay to TX_CLK INPUT (from S32K388)
+     *                          Helps LAN9646 sample TXD/TX_CTL correctly
+     *   Bit 3: TX ID Enable  - Add ~1.5ns delay to RX_CLK OUTPUT (to S32K388)
+     *                          Helps S32K388 sample RXD/RX_CTL correctly
+     *
+     * Value: 0x18 = 1Gbps mode + RX ID + TX ID (both delays enabled)
+     *
+     * NOTE: "TX ID" delays the clock that LAN9646 TRANSMITS (RX_CLK to S32K388)
+     *       "RX ID" delays the clock that LAN9646 RECEIVES (TX_CLK from S32K388)
+     */
+    lan9646_write_reg8(&g_lan9646, 0x6301, 0x18);
+
+    /* Verify XMII configuration */
+    uint8_t xmii_ctrl0, xmii_ctrl1;
+    lan9646_read_reg8(&g_lan9646, 0x6300, &xmii_ctrl0);
+    lan9646_read_reg8(&g_lan9646, 0x6301, &xmii_ctrl1);
+    LOG_I(TAG, "  XMII_CTRL0=0x%02X XMII_CTRL1=0x%02X", xmii_ctrl0, xmii_ctrl1);
+    LOG_I(TAG, "    Duplex: %s, Speed: %s",
+          (xmii_ctrl0 & 0x40) ? "Full" : "Half",
+          (xmii_ctrl1 & 0x40) ? "10/100M" : "1Gbps");
+    LOG_I(TAG, "    TX ID (RX_CLK delay): %s", (xmii_ctrl1 & 0x08) ? "ON (+1.5ns)" : "OFF");
+    LOG_I(TAG, "    RX ID (TX_CLK delay): %s", (xmii_ctrl1 & 0x10) ? "ON (+1.5ns)" : "OFF");
 
     /* Enable switch */
     lan9646_write_reg8(&g_lan9646, 0x0300, 0x01);
@@ -134,35 +200,218 @@ static lan9646r_t init_lan9646(void) {
 /*                          S32K388 GMAC INIT                                 */
 /*===========================================================================*/
 
-static void configure_s32k388_rgmii(void) {
-    LOG_I(TAG, "Configuring S32K388 for RGMII 100Mbps...");
+/*===========================================================================*/
+/*                      DEBUG FUNCTIONS                                        */
+/*===========================================================================*/
 
-    /* DCM_GPR: Set RGMII mode */
+static void debug_gmac_rx_input_mux(void) {
+    /*
+     * Debug SIUL2 Input Mux Configuration for GMAC0 RX signals
+     * SIUL2_0 base: 0x40290000
+     * IMCR base offset: 0x0A40 (from Siul2_Port_Ip.h)
+     *
+     * GMAC0 RGMII RX IMCR indexes (from Port_PBcfg.c and pin config):
+     * - IMCR 292: RXCTL  (MSCR 80 / PTC16)
+     * - IMCR 294: RXD0   (MSCR 78 / PTC14)
+     * - IMCR 295: RXD1   (MSCR 79 / PTC15)
+     * - IMCR 300: RX_CLK (MSCR 54 / PTB22) - CRITICAL!
+     * - IMCR 301: RXD2   (MSCR 55 / PTB23)
+     * - IMCR 302: RXD3   (MSCR 56 / PTB24)
+     */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "=== GMAC0 RX Input Mux Debug ===");
+
+    /* SIUL2_0 IMCR base address: 0x40290000 + 0x0A40 */
+    volatile uint32_t *siul2_imcr = (volatile uint32_t *)(0x40290000UL + 0x0A40UL);
+
+    /* Print GMAC0 RGMII RX IMCRs with correct indexes */
+    LOG_I(TAG, "SIUL2_0 IMCR registers (GMAC0 RGMII RX):");
+    LOG_I(TAG, "  IMCR[292] (RXCTL/PTC16)  = 0x%02lX", (unsigned long)(siul2_imcr[292] & 0x0F));
+    LOG_I(TAG, "  IMCR[294] (RXD0/PTC14)   = 0x%02lX", (unsigned long)(siul2_imcr[294] & 0x0F));
+    LOG_I(TAG, "  IMCR[295] (RXD1/PTC15)   = 0x%02lX", (unsigned long)(siul2_imcr[295] & 0x0F));
+    LOG_I(TAG, "  IMCR[300] (RX_CLK/PTB22) = 0x%02lX <-- CRITICAL", (unsigned long)(siul2_imcr[300] & 0x0F));
+    LOG_I(TAG, "  IMCR[301] (RXD2/PTB23)   = 0x%02lX", (unsigned long)(siul2_imcr[301] & 0x0F));
+    LOG_I(TAG, "  IMCR[302] (RXD3/PTB24)   = 0x%02lX", (unsigned long)(siul2_imcr[302] & 0x0F));
+
+    /* Also check MC_CGM MUX_7 for RX_CLK (should be bypassed for RGMII) */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "MC_CGM MUX_7 (GMAC0_RX_CLK - should be bypassed):");
+    LOG_I(TAG, "  MUX_7_CSC = 0x%08lX", (unsigned long)IP_MC_CGM->MUX_7_CSC);
+    LOG_I(TAG, "  MUX_7_CSS = 0x%08lX", (unsigned long)IP_MC_CGM->MUX_7_CSS);
+    LOG_I(TAG, "  MUX_7_DC_0 = 0x%08lX", (unsigned long)IP_MC_CGM->MUX_7_DC_0);
+
+    /* Check GMAC PHY interface status */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "GMAC0 PHY Interface Status:");
+    LOG_I(TAG, "  MAC_PHYIF_CONTROL_STATUS = 0x%08lX",
+          (unsigned long)IP_GMAC_0->MAC_PHYIF_CONTROL_STATUS);
+
+    uint32_t phyif = IP_GMAC_0->MAC_PHYIF_CONTROL_STATUS;
+    LOG_I(TAG, "    TC [0]   = %lu (TX config)", (unsigned long)(phyif & 1));
+    LOG_I(TAG, "    LUD [1]  = %lu (Link Up/Down)", (unsigned long)((phyif >> 1) & 1));
+    LOG_I(TAG, "    LNKSTS [19] = %lu (Link Status)", (unsigned long)((phyif >> 19) & 1));
+    LOG_I(TAG, "    LNKSPEED [18:17] = %lu", (unsigned long)((phyif >> 17) & 3));
+
+    /* Check DMA RX status */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "GMAC0 DMA RX Status:");
+    LOG_I(TAG, "  DMA_CH0_STATUS = 0x%08lX", (unsigned long)IP_GMAC_0->DMA_CH0_STATUS);
+    LOG_I(TAG, "  DMA_CH0_RX_CONTROL = 0x%08lX", (unsigned long)IP_GMAC_0->DMA_CH0_RX_CONTROL);
+    LOG_I(TAG, "  DMA_DEBUG_STATUS0 = 0x%08lX", (unsigned long)IP_GMAC_0->DMA_DEBUG_STATUS0);
+
+    /* Check RX packet counters */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "GMAC0 RX Packet Counters:");
+    LOG_I(TAG, "  RX_PACKETS_COUNT_GOOD_BAD = %lu", (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
+    LOG_I(TAG, "  RX_OCTET_COUNT_GOOD = %lu", (unsigned long)IP_GMAC_0->RX_OCTET_COUNT_GOOD);
+    LOG_I(TAG, "  RX_CRC_ERROR_PACKETS = %lu", (unsigned long)IP_GMAC_0->RX_CRC_ERROR_PACKETS);
+    LOG_I(TAG, "  RX_ALIGNMENT_ERROR_PACKETS = %lu", (unsigned long)IP_GMAC_0->RX_ALIGNMENT_ERROR_PACKETS);
+    LOG_I(TAG, "  RX_RUNT_ERROR_PACKETS = %lu", (unsigned long)IP_GMAC_0->RX_RUNT_ERROR_PACKETS);
+    LOG_I(TAG, "  RX_JABBER_ERROR_PACKETS = %lu", (unsigned long)IP_GMAC_0->RX_JABBER_ERROR_PACKETS);
+
+    /* Check MTL RX queue status */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "GMAC0 MTL RX Queue Status:");
+    LOG_I(TAG, "  MTL_RXQ0_DEBUG = 0x%08lX", (unsigned long)IP_GMAC_0->MTL_RXQ0_DEBUG);
+    uint32_t mtl_rxq0 = IP_GMAC_0->MTL_RXQ0_DEBUG;
+    LOG_I(TAG, "    RXQSTS [5:4] = %lu (Queue state)", (unsigned long)((mtl_rxq0 >> 4) & 0x03));
+    LOG_I(TAG, "    PRXQ [15:8]  = %lu (Packets in queue)", (unsigned long)((mtl_rxq0 >> 8) & 0xFF));
+
+    LOG_I(TAG, "=================================");
+    LOG_I(TAG, "");
+}
+
+/*
+ * DCMRWF3 bit definitions for GMAC0 clock control (S32K388):
+ *
+ *   Bit 13: MAC_RX_CLK_MUX_BYPASS
+ *           0 = RX_CLK from MUX_7 (internal PLL)
+ *           1 = RX_CLK from external pin (PHY provides clock) ← REQUIRED for RGMII
+ *
+ *   Bit 12: MAC_TX_CLK_MUX_BYPASS
+ *           0 = TX_CLK from MUX_8 (internal PLL, 125MHz) ← REQUIRED for RGMII
+ *           1 = TX_CLK from external source (not used in RGMII)
+ *
+ *   Bit 11: MAC_TX_CLK_OUT_EN
+ *           0 = TX_CLK output disabled
+ *           1 = TX_CLK output enabled to PHY ← REQUIRED for RGMII
+ */
+#define DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT   (13U)
+#define DCMRWF3_MAC_TX_CLK_MUX_BYPASS_BIT   (12U)
+#define DCMRWF3_MAC_TX_CLK_OUT_EN_BIT       (11U)
+
+static void configure_s32k388_rgmii(void) {
+    /*
+     * S32K388 GMAC0 RGMII Configuration
+     *
+     * === DCMRWF1: Interface Mode Selection ===
+     * S32K388 uses DIFFERENT MAC_CONF_SEL values than other S32K3:
+     *   MAC_CONF_SEL [1:0]:
+     *     0 = MII
+     *     1 = RGMII (with MAC_TX_RMII_CLK_LPBCK_EN=1) ← S32K388 specific!
+     *     2 = RMII
+     *
+     *   MAC_TX_RMII_CLK_LPBCK_EN [6]: Must be 1 for RGMII on S32K388
+     *
+     * === DCMRWF3: Clock Configuration ===
+     *   TX Path (S32K388 → LAN9646):
+     *   ┌─────────────┐                      ┌─────────────┐
+     *   │  S32K388    │  TX_CLK (125MHz)     │  LAN9646    │
+     *   │  GMAC0      │ ───────────────────> │  Port 6     │
+     *   │             │  TXD[3:0], TX_CTL    │             │
+     *   │  PLL→MUX_8  │ ───────────────────> │             │
+     *   └─────────────┘                      └─────────────┘
+     *   TX_CLK_MUX_BYPASS = 0 (use MUX_8 from PLL)
+     *   TX_CLK_OUT_EN = 1 (enable output)
+     *
+     *   RX Path (LAN9646 → S32K388):
+     *   ┌─────────────┐                      ┌─────────────┐
+     *   │  S32K388    │  RX_CLK (125MHz)     │  LAN9646    │
+     *   │  GMAC0      │ <─────────────────── │  Port 6     │
+     *   │             │  RXD[3:0], RX_CTL    │             │
+     *   │  BYPASS MUX7│ <─────────────────── │             │
+     *   └─────────────┘                      └─────────────┘
+     *   RX_CLK_MUX_BYPASS = 1 (bypass MUX_7, use external clock from PHY)
+     *
+     * Reference: https://community.nxp.com/t5/S32K/S32K388-GMAC-with-RGMII/m-p/1999697
+     */
+    LOG_I(TAG, "Configuring S32K388 RGMII settings...");
+
+    /*
+     * Step 1: Set DCMRWF1 for RGMII interface mode
+     * S32K388 RGMII requires: MAC_CONF_SEL=1 + MAC_TX_RMII_CLK_LPBCK_EN=1
+     */
     uint32_t dcmrwf1 = IP_DCM_GPR->DCMRWF1;
-    dcmrwf1 &= ~0x03U;
-    dcmrwf1 |= 0x02U;  /* RGMII mode */
+    LOG_I(TAG, "  DCMRWF1 before: 0x%08lX (MAC_CONF_SEL=%lu)",
+          (unsigned long)dcmrwf1, (unsigned long)(dcmrwf1 & 0x03U));
+
+    /* Clear MAC_CONF_SEL bits [1:0] and set to 1 (RGMII) */
+    dcmrwf1 = (dcmrwf1 & ~0x03U) | 0x01U;
+
+    /* Set MAC_TX_RMII_CLK_LPBCK_EN bit [6] = 1 (required for S32K388 RGMII) */
+    dcmrwf1 |= (1U << 6);
+
     IP_DCM_GPR->DCMRWF1 = dcmrwf1;
 
-    /* DCM_GPR: Enable TX clock output, bypass RX clock mux */
+    /* Read back and verify */
+    dcmrwf1 = IP_DCM_GPR->DCMRWF1;
+    LOG_I(TAG, "  DCMRWF1 after:  0x%08lX (MAC_CONF_SEL=%lu) -> %s",
+          (unsigned long)dcmrwf1, (unsigned long)(dcmrwf1 & 0x03U),
+          ((dcmrwf1 & 0x03U) == 1) ? "RGMII" : "ERROR!");
+
+    /*
+     * Step 2: Set DCMRWF3 for clock configuration
+     */
     uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
-    dcmrwf3 |= (1U << 3);  /* GMAC_TX_CLK_OUT_EN */
-    dcmrwf3 |= (1U << 0);  /* GMAC_RX_CLK_MUX_BYPASS */
+    LOG_I(TAG, "  DCMRWF3 before: 0x%08lX", (unsigned long)dcmrwf3);
+
+    /* RX_CLK_MUX_BYPASS = 1: Bypass MUX_7, receive RX_CLK from LAN9646 */
+    dcmrwf3 |= (1U << DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT);
+
+    /* TX_CLK_MUX_BYPASS = 0: Use MUX_8 (PLL) for TX_CLK - already 0 by default */
+    /* dcmrwf3 &= ~(1U << DCMRWF3_MAC_TX_CLK_MUX_BYPASS_BIT); */
+
+    /* TX_CLK_OUT_EN = 1: Enable TX_CLK output to LAN9646 */
+    dcmrwf3 |= (1U << DCMRWF3_MAC_TX_CLK_OUT_EN_BIT);
+
     IP_DCM_GPR->DCMRWF3 = dcmrwf3;
 
-    LOG_I(TAG, "  DCMRWF1=0x%08lX DCMRWF3=0x%08lX",
-          (unsigned long)IP_DCM_GPR->DCMRWF1,
-          (unsigned long)IP_DCM_GPR->DCMRWF3);
+    /* Read back and verify */
+    dcmrwf3 = IP_DCM_GPR->DCMRWF3;
+    LOG_I(TAG, "  DCMRWF3 after:  0x%08lX (expected: 0x2800)", (unsigned long)dcmrwf3);
+    LOG_I(TAG, "    RX_CLK_MUX_BYPASS [13] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT) & 1U),
+          ((dcmrwf3 >> DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT) & 1U) ? "BYPASS (from LAN9646)" : "MUX_7 (ERROR!)");
+    LOG_I(TAG, "    TX_CLK_MUX_BYPASS [12] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_MUX_BYPASS_BIT) & 1U),
+          ((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_MUX_BYPASS_BIT) & 1U) ? "BYPASS (unexpected)" : "MUX_8 (PLL)");
+    LOG_I(TAG, "    TX_CLK_OUT_EN     [11] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_OUT_EN_BIT) & 1U),
+          ((dcmrwf3 >> DCMRWF3_MAC_TX_CLK_OUT_EN_BIT) & 1U) ? "ENABLED" : "DISABLED (ERROR!)");
+
+    /* Debug: Check RX input mux configuration */
+    debug_gmac_rx_input_mux();
 }
 
 static void configure_gmac_mac(void) {
-    LOG_I(TAG, "Configuring GMAC MAC...");
+    LOG_I(TAG, "Configuring GMAC MAC for 1Gbps...");
 
-    /* MAC Configuration for 100Mbps Full Duplex */
+    /*
+     * MAC Configuration for 1Gbps Full Duplex:
+     *   PS [15] = 0: 1000Mbps mode
+     *   FES [14] = 0: Not used when PS=0 (1Gbps)
+     *   DM [13] = 1: Full Duplex
+     *   TE [1] = 1: Transmitter Enable
+     *   RE [0] = 1: Receiver Enable
+     */
     uint32_t mac_cfg = IP_GMAC_0->MAC_CONFIGURATION;
 
-    mac_cfg |= (1U << 14);  /* FES: Fast Ethernet Speed (100M) */
+    /* Clear PS and FES for 1Gbps */
+    mac_cfg &= ~(1U << 15);  /* PS = 0 for 1Gbps */
+    mac_cfg &= ~(1U << 14);  /* FES = 0 for 1Gbps */
+
+    /* Set other bits */
     mac_cfg |= (1U << 13);  /* DM: Full Duplex */
-    mac_cfg |= (1U << 15);  /* PS: Port Select (MII/RMII/RGMII) */
     mac_cfg |= (1U << 0);   /* RE: Receiver Enable */
     mac_cfg |= (1U << 1);   /* TE: Transmitter Enable */
 
@@ -172,57 +421,245 @@ static void configure_gmac_mac(void) {
 }
 
 /*===========================================================================*/
+/*                          DEBUG READBACK                                    */
+/*===========================================================================*/
+
+static void debug_readback_config(void) {
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  CONFIGURATION READBACK VERIFICATION");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "");
+
+    /* S32K388 GMAC0 */
+    LOG_I(TAG, "--- S32K388 GMAC0 ---");
+
+    uint32_t dcmrwf1 = IP_DCM_GPR->DCMRWF1;
+    uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
+    uint32_t mac_cfg = IP_GMAC_0->MAC_CONFIGURATION;
+
+    /*
+     * S32K388 DCMRWF1 MAC_CONF_SEL values (different from other S32K3 variants!):
+     *   0 = MII
+     *   1 = RGMII (with MAC_TX_RMII_CLK_LPBCK_EN)
+     *   2 = RMII
+     */
+    LOG_I(TAG, "  DCM_GPR:");
+    LOG_I(TAG, "    DCMRWF1 = 0x%08lX", (unsigned long)dcmrwf1);
+    uint8_t mac_conf_sel = dcmrwf1 & 0x03U;
+    const char* intf_mode_str;
+    switch (mac_conf_sel) {
+        case 0: intf_mode_str = "MII"; break;
+        case 1: intf_mode_str = "RGMII"; break;  /* S32K388 specific! */
+        case 2: intf_mode_str = "RMII"; break;
+        default: intf_mode_str = "RESERVED"; break;
+    }
+    LOG_I(TAG, "      MAC_CONF_SEL [1:0] = %u -> %s", mac_conf_sel, intf_mode_str);
+
+    LOG_I(TAG, "    DCMRWF3 = 0x%08lX", (unsigned long)dcmrwf3);
+    LOG_I(TAG, "      RX_CLK_MUX_BYPASS [13] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> 13) & 1),
+          ((dcmrwf3 >> 13) & 1) ? "BYPASS (from LAN9646)" : "MUX7");
+    LOG_I(TAG, "      TX_CLK_MUX_BYPASS [12] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> 12) & 1),
+          ((dcmrwf3 >> 12) & 1) ? "BYPASS" : "MUX8");
+    LOG_I(TAG, "      TX_CLK_OUT_EN     [11] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> 11) & 1),
+          ((dcmrwf3 >> 11) & 1) ? "ENABLED" : "DISABLED");
+
+    LOG_I(TAG, "  MAC_CONFIGURATION = 0x%08lX", (unsigned long)mac_cfg);
+    LOG_I(TAG, "    PS  [15] = %lu", (unsigned long)((mac_cfg >> 15) & 1));
+    LOG_I(TAG, "    FES [14] = %lu", (unsigned long)((mac_cfg >> 14) & 1));
+    LOG_I(TAG, "    DM  [13] = %lu -> %s",
+          (unsigned long)((mac_cfg >> 13) & 1),
+          ((mac_cfg >> 13) & 1) ? "Full Duplex" : "Half Duplex");
+    LOG_I(TAG, "    TE  [1]  = %lu -> %s",
+          (unsigned long)((mac_cfg >> 1) & 1),
+          ((mac_cfg >> 1) & 1) ? "TX ENABLED" : "TX DISABLED");
+    LOG_I(TAG, "    RE  [0]  = %lu -> %s",
+          (unsigned long)(mac_cfg & 1),
+          (mac_cfg & 1) ? "RX ENABLED" : "RX DISABLED");
+
+    /* Calculate effective speed */
+    uint8_t ps = (mac_cfg >> 15) & 1;
+    uint8_t fes = (mac_cfg >> 14) & 1;
+    const char* speed;
+    if (ps == 0) {
+        speed = "1000 Mbps (1Gbps)";
+    } else if (fes == 1) {
+        speed = "100 Mbps";
+    } else {
+        speed = "10 Mbps";
+    }
+    LOG_I(TAG, "    -> Effective Speed: %s", speed);
+
+    LOG_I(TAG, "");
+
+    /* LAN9646 Port 6 */
+    LOG_I(TAG, "--- LAN9646 Port 6 ---");
+
+    uint8_t xmii_ctrl0, xmii_ctrl1, port_status;
+    lan9646_read_reg8(&g_lan9646, 0x6300, &xmii_ctrl0);
+    lan9646_read_reg8(&g_lan9646, 0x6301, &xmii_ctrl1);
+    lan9646_read_reg8(&g_lan9646, 0x6030, &port_status);
+
+    LOG_I(TAG, "  XMII_CTRL0 [0x6300] = 0x%02X", xmii_ctrl0);
+    LOG_I(TAG, "    Duplex [6]       = %d -> %s",
+          (xmii_ctrl0 >> 6) & 1,
+          ((xmii_ctrl0 >> 6) & 1) ? "Full" : "Half");
+    LOG_I(TAG, "    TX Flow Ctrl [5] = %d", (xmii_ctrl0 >> 5) & 1);
+    LOG_I(TAG, "    Speed 100 [4]    = %d -> %s",
+          (xmii_ctrl0 >> 4) & 1,
+          ((xmii_ctrl0 >> 4) & 1) ? "100M mode" : "1G mode");
+    LOG_I(TAG, "    RX Flow Ctrl [3] = %d", (xmii_ctrl0 >> 3) & 1);
+
+    LOG_I(TAG, "  XMII_CTRL1 [0x6301] = 0x%02X", xmii_ctrl1);
+    LOG_I(TAG, "    Speed 1000 [6]   = %d -> %s",
+          (xmii_ctrl1 >> 6) & 1,
+          ((xmii_ctrl1 >> 6) & 1) ? "10/100M mode" : "1Gbps mode");
+    LOG_I(TAG, "    RX Delay [4]     = %d -> %s",
+          (xmii_ctrl1 >> 4) & 1,
+          ((xmii_ctrl1 >> 4) & 1) ? "ON" : "OFF");
+    LOG_I(TAG, "    TX Delay [3]     = %d -> %s",
+          (xmii_ctrl1 >> 3) & 1,
+          ((xmii_ctrl1 >> 3) & 1) ? "ON" : "OFF");
+
+    LOG_I(TAG, "  PORT_STATUS [0x6030] = 0x%02X", port_status);
+
+    /* Calculate LAN9646 effective speed */
+    uint8_t spd1000 = (xmii_ctrl1 >> 6) & 1;
+    uint8_t spd100 = (xmii_ctrl0 >> 4) & 1;
+    const char* lan_speed;
+    if (spd1000 == 0) {
+        lan_speed = "1000 Mbps (1Gbps)";
+    } else if (spd100 == 1) {
+        lan_speed = "100 Mbps";
+    } else {
+        lan_speed = "10 Mbps";
+    }
+    LOG_I(TAG, "    -> Effective Speed: %s", lan_speed);
+
+    LOG_I(TAG, "");
+
+    /* Verification summary */
+    LOG_I(TAG, "--- VERIFICATION SUMMARY ---");
+    uint8_t all_ok = 1;
+
+    /* Check RGMII mode - S32K388 uses MAC_CONF_SEL = 1 for RGMII (not 2!) */
+    if ((dcmrwf1 & 0x03U) != 1) {
+        LOG_E(TAG, "  [FAIL] S32K388 not in RGMII mode! (MAC_CONF_SEL=%lu, expected 1)",
+              (unsigned long)(dcmrwf1 & 0x03U));
+        all_ok = 0;
+    } else {
+        LOG_I(TAG, "  [OK] S32K388 RGMII mode (MAC_CONF_SEL=1)");
+    }
+
+    /* Check RX_CLK bypass - bit 13 */
+    if (((dcmrwf3 >> 13) & 1) == 0) {
+        LOG_E(TAG, "  [FAIL] RX_CLK bypass NOT enabled! (DCMRWF3[13]=0)");
+        all_ok = 0;
+    } else {
+        LOG_I(TAG, "  [OK] RX_CLK bypass enabled (DCMRWF3[13]=1)");
+    }
+
+    /* Check TX_CLK output - bit 11 */
+    if (((dcmrwf3 >> 11) & 1) == 0) {
+        LOG_E(TAG, "  [FAIL] TX_CLK output NOT enabled! (DCMRWF3[11]=0)");
+        all_ok = 0;
+    } else {
+        LOG_I(TAG, "  [OK] TX_CLK output enabled (DCMRWF3[11]=1)");
+    }
+
+    /* Check speed match */
+    uint8_t gmac_1g = (ps == 0);
+    uint8_t lan_1g = (spd1000 == 0);
+    if (gmac_1g != lan_1g) {
+        LOG_E(TAG, "  [FAIL] Speed mismatch! GMAC=%s, LAN9646=%s",
+              gmac_1g ? "1G" : "100M",
+              lan_1g ? "1G" : "100M");
+        all_ok = 0;
+    } else {
+        LOG_I(TAG, "  [OK] Speed match: %s", gmac_1g ? "1Gbps" : "100Mbps");
+    }
+
+    /* Check LAN9646 RX delay */
+    if (((xmii_ctrl1 >> 4) & 1) == 0) {
+        LOG_W(TAG, "  [WARN] LAN9646 RX delay OFF - may need to be ON");
+    } else {
+        LOG_I(TAG, "  [OK] LAN9646 RX delay ON");
+    }
+
+    LOG_I(TAG, "");
+    if (all_ok) {
+        LOG_I(TAG, "==> ALL CONFIGURATIONS VERIFIED OK");
+    } else {
+        LOG_E(TAG, "==> CONFIGURATION ERRORS DETECTED!");
+    }
+    LOG_I(TAG, "");
+}
+
+/*===========================================================================*/
 /*                          DEVICE INIT                                       */
 /*===========================================================================*/
 
 static void device_init(void) {
-    LOG_I(TAG, "");
-    LOG_I(TAG, "================================================================");
-    LOG_I(TAG, "          RGMII HARDWARE DIAGNOSTIC - S32K388 + LAN9646");
-    LOG_I(TAG, "================================================================");
-    LOG_I(TAG, "");
+    /* Initialize in correct order (matching working pattern) */
+    OsIf_Init(NULL_PTR);
+    Port_Init(NULL_PTR);
 
-    /* Step 1: MCU Init */
-    LOG_I(TAG, "[Step 1] MCU Init...");
-    Mcu_Init(&Mcu_Config);
+    Mcu_Init(NULL_PTR);
     Mcu_InitClock(McuClockSettingConfig_0);
-    while (MCU_PLL_LOCKED != Mcu_GetPllStatus()) {}
+    while (Mcu_GetPllStatus() != MCU_PLL_LOCKED) {}
     Mcu_DistributePllClock();
-    Mcu_SetMode(McuModeSettingConf_Run);
+    Mcu_SetMode(McuModeSettingConf_0);
 
-    /* Step 2: Platform & Port */
-    LOG_I(TAG, "[Step 2] Platform & Port Init...");
-    OsIf_Init(NULL);
-    Platform_Init(NULL);
-    Platform_InstallIrqHandler(GMAC0_TX_CH0_CH1_IRQn, GMAC_0_TX_IRQHandler, NULL);
-    Platform_InstallIrqHandler(GMAC0_RX_CH0_CH1_IRQn, GMAC_0_RX_IRQHandler, NULL);
-    Platform_InstallIrqHandler(GMAC0_SAFETY_IRQn, GMAC_0_SAFETY_IRQHandler, NULL);
-    Port_Init(&Port_Config);
-    Gpt_Init(&Gpt_Config);
-    Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 0xFFFFFFFFU);
+    Platform_Init(NULL_PTR);
 
-    /* Step 3: Configure S32K388 RGMII */
-    LOG_I(TAG, "[Step 3] Configure S32K388 RGMII...");
-    configure_s32k388_rgmii();
+    /* Initialize GPT for OsIf_Millisecond callback (PIT0 CH0) */
+    Gpt_Init(NULL_PTR);
+    Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 40000U);  /* 1ms @ 40MHz */
+    Gpt_EnableNotification(GptConf_GptChannelConfiguration_GptChannelConfiguration_0);
 
-    /* Step 4: Init LAN9646 */
-    LOG_I(TAG, "[Step 4] Init LAN9646...");
+    Uart_Init(NULL_PTR);
+    log_init();
+
+    /* Print banner */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "      RGMII 1Gbps HARDWARE DIAGNOSTIC - S32K388 + LAN9646");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "");
+    LOG_I(TAG, "[Step 1] MCU Init... Done");
+    LOG_I(TAG, "[Step 2] Platform & Port Init... Done");
+
+    /* Step 3: Init LAN9646 */
+    LOG_I(TAG, "[Step 3] Init LAN9646...");
     if (init_lan9646() != lan9646OK) {
         LOG_E(TAG, "FATAL: LAN9646 init failed!");
         while (1) {}
     }
 
-    /* Step 5: Init Ethernet (AUTOSAR) */
-    LOG_I(TAG, "[Step 5] Init Ethernet...");
-    Eth_43_GMAC_Init(&Eth_43_GMAC_Config);
+    /* Step 4: Init Ethernet (AUTOSAR)
+     * NOTE: Clock configuration is handled by S32 Config Tool (Mcu_InitClock)
+     */
+    LOG_I(TAG, "[Step 4] Init Ethernet...");
+    Eth_43_GMAC_Init(&Eth_43_GMAC_xPredefinedConfig);
 
-    /* Step 6: Configure GMAC MAC */
-    LOG_I(TAG, "[Step 6] Configure GMAC MAC...");
+    /* Step 5: Configure GMAC MAC */
+    LOG_I(TAG, "[Step 5] Configure GMAC MAC...");
     configure_gmac_mac();
 
-    /* Step 7: Set controller active */
-    LOG_I(TAG, "[Step 7] Activate Ethernet controller...");
+    /* Step 6: Set controller active */
+    LOG_I(TAG, "[Step 6] Activate Ethernet controller...");
     Eth_43_GMAC_SetControllerMode(ETH_CTRL_IDX, ETH_MODE_ACTIVE);
+
+    /* Step 7: Configure S32K388 RGMII (AFTER Eth init to avoid being overwritten) */
+    LOG_I(TAG, "[Step 7] Configure S32K388 RGMII bypass...");
+    configure_s32k388_rgmii();
+
+    /* Step 8: Debug readback - verify all configurations */
+    LOG_I(TAG, "[Step 8] Verifying configurations...");
+    debug_readback_config();
 
     LOG_I(TAG, "");
     LOG_I(TAG, "Device initialization complete!");
@@ -240,29 +677,74 @@ int main(void) {
     /* Small delay for hardware to stabilize */
     delay_ms(100);
 
-    /* Initialize diagnostic module */
+    /* Initialize diagnostic modules */
     rgmii_diag_init(&g_lan9646, delay_ms);
+    rgmii_debug_init(&g_lan9646, delay_ms);
 
-    /* Run full diagnostic suite */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  SELECT DEBUG MODE:");
+    LOG_I(TAG, "  1. Quick Summary (rgmii_debug_quick_summary)");
+    LOG_I(TAG, "  2. Full Configuration Dump (rgmii_debug_dump_all)");
+    LOG_I(TAG, "  3. Full Diagnostic with Tests (rgmii_debug_full_diagnostic)");
+    LOG_I(TAG, "  4. Original RGMII Diagnostic (rgmii_diag_run_all)");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "");
+
+    /* --- Run Quick Summary first for overview --- */
+    LOG_I(TAG, "Running Quick Summary...");
+    rgmii_debug_quick_summary();
+
+    /* --- Run Full Configuration Dump --- */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "Running Full Configuration Dump...");
+    delay_ms(100);
+    rgmii_debug_dump_all();
+
+    /* --- Run Full Diagnostic with Tests --- */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "Running Full Diagnostic with Tests...");
+    delay_ms(100);
+    rgmii_debug_full_diagnostic();
+
+    /* --- Also run original diagnostic for comparison --- */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "Running Original RGMII Diagnostic...");
+    delay_ms(100);
     rgmii_test_result_t result = rgmii_diag_run_all();
 
     LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "                    FINAL SUMMARY");
     LOG_I(TAG, "================================================================");
     if (result == RGMII_TEST_PASS) {
         LOG_I(TAG, "  RGMII DIAGNOSTIC: ALL TESTS PASSED!");
         LOG_I(TAG, "  Hardware is working correctly.");
     } else {
-        LOG_E(TAG, "  RGMII DIAGNOSTIC: FAILED!");
+        LOG_E(TAG, "  RGMII DIAGNOSTIC: ISSUES DETECTED");
         LOG_E(TAG, "  Result: %s", rgmii_diag_result_str(result));
-        LOG_E(TAG, "  Check the timing sweep results above for best config.");
+        LOG_E(TAG, "");
+        LOG_E(TAG, "  Recommended Actions:");
+        LOG_E(TAG, "  1. Check the configuration dump above");
+        LOG_E(TAG, "  2. Review the timing sweep results");
+        LOG_E(TAG, "  3. See troubleshooting guide above");
     }
     LOG_I(TAG, "================================================================");
     LOG_I(TAG, "");
 
-    /* Infinite loop - can add periodic monitoring here */
+    /* Infinite loop with periodic status */
+    uint32_t loop_count = 0;
     while (1) {
         delay_ms(5000);
-        LOG_I(TAG, "System running... (diagnostic complete)");
+        loop_count++;
+
+        LOG_I(TAG, "[%lu] System running...", (unsigned long)loop_count);
+
+        /* Every 60 seconds, print quick summary */
+        if (loop_count % 12 == 0) {
+            LOG_I(TAG, "--- Periodic Status Check ---");
+            rgmii_debug_quick_summary();
+        }
     }
 
     return 0;

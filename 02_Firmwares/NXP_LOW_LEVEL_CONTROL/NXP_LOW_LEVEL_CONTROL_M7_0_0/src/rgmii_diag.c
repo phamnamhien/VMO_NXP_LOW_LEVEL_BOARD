@@ -6,6 +6,7 @@
 #include "rgmii_diag.h"
 #include "log.h"
 #include "Gmac_Ip.h"
+#include "S32K388.h"
 
 #define TAG "RGMII_DIAG"
 
@@ -57,40 +58,98 @@ static void read_gmac_stats(rgmii_stats_t* s) {
     s->gmac_rx_oversize = IP_GMAC_0->RX_OVERSIZE_PACKETS_GOOD;
 }
 
-/* LAN9646 MIB counter offsets for Port 6 */
-#define MIB_BASE(port)      (0x0500 + ((port) * 0x80))
-#define MIB_RX_TOTAL        0x08
-#define MIB_RX_CRC          0x34
-#define MIB_RX_SYMBOL       0x3C
-#define MIB_RX_UNDERSIZE    0x24
-#define MIB_RX_OVERSIZE     0x30
-#define MIB_TX_TOTAL        0x50
-#define MIB_TX_LATE_COL     0x64
-#define MIB_TX_EXCESS_COL   0x68
+/* LAN9646/KSZ9477 MIB counter indices for INDIRECT access
+ * Port N registers are at 0xN000 (e.g., Port 6 = 0x6000)
+ * MIB control register: port_base + 0x0500
+ * MIB data register:    port_base + 0x0504
+ *
+ * KSZ9477/LAN9646 MIB counter indices (from Linux kernel ksz_common.c):
+ * - 0x00-0x14: RX counters
+ * - 0x15-0x1F: TX counters
+ * - 0x80-0x83: Total/discard counters
+ */
+#define MIB_CTRL(port)      (((uint16_t)(port) << 12) | 0x0500)
+#define MIB_DATA(port)      (((uint16_t)(port) << 12) | 0x0504)
 
-static uint32_t read_mib(uint8_t port, uint8_t offset) {
-    uint32_t val;
-    lan9646_read_reg32(g_lan, MIB_BASE(port) | offset, &val);
-    return val;
+/* RX MIB counter indices (from Linux kernel ksz_common.c ksz9477_mib_names) */
+#define MIB_RX_HI           0x00   /* rx_hi */
+#define MIB_RX_UNDERSIZE    0x01   /* rx_undersize */
+#define MIB_RX_FRAGMENTS    0x02   /* rx_fragments */
+#define MIB_RX_OVERSIZE     0x03   /* rx_oversize */
+#define MIB_RX_JABBERS      0x04   /* rx_jabbers */
+#define MIB_RX_SYMBOL       0x05   /* rx_symbol_err */
+#define MIB_RX_CRC          0x06   /* rx_crc_err */
+#define MIB_RX_ALIGN        0x07   /* rx_align_err */
+#define MIB_RX_MAC_CTRL     0x08   /* rx_mac_ctrl */
+#define MIB_RX_PAUSE        0x09   /* rx_pause */
+#define MIB_RX_BROADCAST    0x0A   /* rx_bcast */
+#define MIB_RX_MULTICAST    0x0B   /* rx_mcast */
+#define MIB_RX_UNICAST      0x0C   /* rx_ucast */
+
+/* TX MIB counter indices (from Linux kernel ksz_common.c ksz9477_mib_names) */
+#define MIB_TX_HI           0x15   /* tx_hi */
+#define MIB_TX_LATE_COL     0x16   /* tx_late_col */
+#define MIB_TX_PAUSE        0x17   /* tx_pause */
+#define MIB_TX_BROADCAST    0x18   /* tx_bcast */
+#define MIB_TX_MULTICAST    0x19   /* tx_mcast */
+#define MIB_TX_UNICAST      0x1A   /* tx_ucast */
+#define MIB_TX_DEFERRED     0x1B   /* tx_deferred */
+#define MIB_TX_TOTAL_COL    0x1C   /* tx_total_col */
+#define MIB_TX_EXCESS_COL   0x1D   /* tx_exc_col */
+#define MIB_TX_SINGLE_COL   0x1E   /* tx_single_col */
+#define MIB_TX_MULTI_COL    0x1F   /* tx_mult_col */
+
+/* Total/discard counters */
+#define MIB_RX_TOTAL        0x80   /* rx_total */
+#define MIB_TX_TOTAL        0x81   /* tx_total */
+#define MIB_RX_DISCARDS     0x82   /* rx_discards */
+#define MIB_TX_DISCARDS     0x83   /* tx_discards */
+
+/* Read MIB counter using indirect access */
+static uint32_t read_mib(uint8_t port, uint8_t index) {
+    if (!g_lan) return 0;
+
+    uint32_t ctrl, data = 0;
+    uint32_t timeout = 1000;
+
+    /* Set MIB index and read enable (bit25) */
+    ctrl = ((uint32_t)index << 16) | 0x02000000UL;
+    lan9646_write_reg32(g_lan, MIB_CTRL(port), ctrl);
+
+    /* Wait for read complete (bit25 clears) */
+    do {
+        lan9646_read_reg32(g_lan, MIB_CTRL(port), &ctrl);
+        if (--timeout == 0) break;
+    } while (ctrl & 0x02000000UL);
+
+    /* Read data */
+    lan9646_read_reg32(g_lan, MIB_DATA(port), &data);
+    return data;
 }
 
 static void read_lan_stats(rgmii_stats_t* s, uint8_t port) {
+    /* RX counters - use MIB_RX_TOTAL (0x80) which is valid for KSZ9477/LAN9646 */
     s->lan_rx_good      = read_mib(port, MIB_RX_TOTAL);
     s->lan_rx_crc_err   = read_mib(port, MIB_RX_CRC);
     s->lan_rx_symbol_err = read_mib(port, MIB_RX_SYMBOL);
     s->lan_rx_undersize = read_mib(port, MIB_RX_UNDERSIZE);
     s->lan_rx_oversize  = read_mib(port, MIB_RX_OVERSIZE);
+
+    /* TX counters - use MIB_TX_TOTAL (0x81) which is valid for KSZ9477/LAN9646 */
     s->lan_tx_good      = read_mib(port, MIB_TX_TOTAL);
     s->lan_tx_late_col  = read_mib(port, MIB_TX_LATE_COL);
     s->lan_tx_excess_col = read_mib(port, MIB_TX_EXCESS_COL);
 }
 
 static void flush_mib(uint8_t port) {
-    /* Read all counters to clear them (read-to-clear) */
-    uint16_t base = MIB_BASE(port);
-    uint32_t dummy;
-    for (uint16_t i = 0; i < 0x80; i += 4) {
-        lan9646_read_reg32(g_lan, base | i, &dummy);
+    /* Read all MIB counters to clear them (read-to-clear) using indirect access
+     * Valid counters: 0x00-0x1F (RX/TX), 0x80-0x83 (totals/discards)
+     */
+    for (uint8_t i = 0; i <= 0x1F; i++) {
+        (void)read_mib(port, i);
+    }
+    for (uint8_t i = 0x80; i <= 0x83; i++) {
+        (void)read_mib(port, i);
     }
 }
 
@@ -128,8 +187,7 @@ static Gmac_Ip_StatusType send_test_packet(uint32_t seq) {
         .Length = sizeof(g_test_packet)
     };
 
-    Gmac_Ip_TxInfoType info;
-    return Gmac_Ip_SendFrame(0, 0, &buf, NULL, &info);
+    return Gmac_Ip_SendFrame(0, 0, &buf, NULL);
 }
 
 /*===========================================================================*/
@@ -165,7 +223,7 @@ rgmii_test_result_t rgmii_diag_test_clocks(void) {
     LOG_I(TAG, "#              TEST 1: CLOCK VERIFICATION                      #");
     LOG_I(TAG, "################################################################");
 
-    /* Check S32K388 GMAC TX clock source */
+    /* Check S32K388 GMAC TX clock source - use SDK register definitions */
     uint32_t csc = IP_MC_CGM->MUX_8_CSC;
     uint32_t css = IP_MC_CGM->MUX_8_CSS;
     uint32_t dc0 = IP_MC_CGM->MUX_8_DC_0;
@@ -189,8 +247,8 @@ rgmii_test_result_t rgmii_diag_test_clocks(void) {
     LOG_I(TAG, "  DCMRWF1=0x%08lX (MAC mode=%lu)",
           (unsigned long)dcmrwf1, (unsigned long)(dcmrwf1 & 0x03));
     LOG_I(TAG, "  DCMRWF3=0x%08lX", (unsigned long)dcmrwf3);
-    LOG_I(TAG, "    TX_CLK_OUT_EN=%d RX_CLK_BYPASS=%d",
-          (dcmrwf3 >> 3) & 1, dcmrwf3 & 1);
+    LOG_I(TAG, "    RX_CLK_MUX_BYPASS[13]=%d TX_CLK_MUX_BYPASS[12]=%d TX_CLK_OUT_EN[11]=%d",
+          (dcmrwf3 >> 13) & 1, (dcmrwf3 >> 12) & 1, (dcmrwf3 >> 11) & 1);
 
     /* Check LAN9646 Port 6 status */
     uint8_t ctrl0, ctrl1, status;
@@ -210,14 +268,18 @@ rgmii_test_result_t rgmii_diag_test_clocks(void) {
           (ctrl1 & 0x08) ? "+1.3ns" : "None",
           (ctrl1 & 0x10) ? "+1.3ns" : "None");
 
-    /* Basic validation */
-    if ((dcmrwf1 & 0x03) != 2) {
-        LOG_E(TAG, "ERROR: S32K388 not in RGMII mode!");
+    /* Basic validation
+     * S32K388 specific: MAC_CONF_SEL = 1 for RGMII (not 2!)
+     * TX_CLK_OUT_EN is at bit 11 (0x0800), not bit 3
+     */
+    uint8_t mac_conf_sel = dcmrwf1 & 0x03;
+    if (mac_conf_sel != 1) {
+        LOG_E(TAG, "ERROR: S32K388 not in RGMII mode! MAC_CONF_SEL=%d (expected 1)", mac_conf_sel);
         return RGMII_TEST_FAIL_TX_CLK;
     }
 
-    if (!(dcmrwf3 & 0x08)) {
-        LOG_E(TAG, "ERROR: TX_CLK output not enabled!");
+    if (!(dcmrwf3 & (1U << 11))) {  /* TX_CLK_OUT_EN at bit 11 */
+        LOG_E(TAG, "ERROR: TX_CLK output not enabled! (DCMRWF3[11]=0)");
         return RGMII_TEST_FAIL_TX_CLK;
     }
 
@@ -474,7 +536,8 @@ void rgmii_diag_timing_sweep(void) {
         "RX delay only (+1.3ns)",
         "Both TX+RX delay"
     };
-    const uint8_t delay_configs[] = {0x40, 0x48, 0x50, 0x58};
+    /* 1Gbps mode: bit6=0, bit4=RX_delay, bit3=TX_delay */
+    const uint8_t delay_configs[] = {0x00, 0x08, 0x10, 0x18};
 
     LOG_I(TAG, "Option | Config | LAN RX | LAN CRC | GMAC RX | GMAC CRC | Status");
     LOG_I(TAG, "-------+--------+--------+---------+---------+----------+--------");

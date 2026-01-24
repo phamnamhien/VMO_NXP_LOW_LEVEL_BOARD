@@ -87,12 +87,12 @@ outputs:
 - {id: FLEXCANB_CLK.outFreq, value: 24 MHz}
 - {id: FLEXIO0_CLK.outFreq, value: 160 MHz}
 - {id: FXOSCOUT.outFreq, value: 16 MHz}
-- {id: GMAC0_MII_RGMII_RX.outFreq, value: 125 MHz}
+- {id: GMAC0_MII_RGMII_RX.outFreq, value: 125 MHz, locked: true, accuracy: '0.001'}
 - {id: GMAC0_RX_CLK.outFreq, value: 48 MHz, locked: true, accuracy: '0.001'}
-- {id: GMAC0_TX_CLK.outFreq, value: 50 MHz}
+- {id: GMAC0_TX_CLK.outFreq, value: 250 MHz}
 - {id: GMAC1_RX_CLK.outFreq, value: 48 MHz}
 - {id: GMAC1_TX_CLK.outFreq, value: 48 MHz}
-- {id: GMAC_TS_CLK.outFreq, value: 50 MHz}
+- {id: GMAC_TS_CLK.outFreq, value: 250 MHz}
 - {id: HSE_CLK.outFreq, value: 160 MHz}
 - {id: INTM_CLK.outFreq, value: 40 MHz}
 - {id: LBIST_CLK.outFreq, value: 40 MHz}
@@ -202,9 +202,9 @@ settings:
 - {id: MODULE_CLOCKS.MC_CGM_AUX3_DIV0.scale, value: '2', locked: true}
 - {id: MODULE_CLOCKS.MC_CGM_AUX4_DIV0.scale, value: '2', locked: true}
 - {id: MODULE_CLOCKS.MC_CGM_AUX7_DIV0.scale, value: '1', locked: true}
-- {id: MODULE_CLOCKS.MC_CGM_AUX8_DIV0.scale, value: '5', locked: true}
+- {id: MODULE_CLOCKS.MC_CGM_AUX8_DIV0.scale, value: '1', locked: true}
 - {id: MODULE_CLOCKS.MC_CGM_AUX8_MUX.sel, value: PLLAUX_PHI0}
-- {id: MODULE_CLOCKS.MC_CGM_AUX9_DIV0.scale, value: '5', locked: true}
+- {id: MODULE_CLOCKS.MC_CGM_AUX9_DIV0.scale, value: '1', locked: true}
 - {id: MODULE_CLOCKS.MC_CGM_AUX9_MUX.sel, value: PLLAUX_PHI0}
 - {id: PHI0.scale, value: '3', locked: true}
 - {id: PHI1.scale, value: '3', locked: true}
