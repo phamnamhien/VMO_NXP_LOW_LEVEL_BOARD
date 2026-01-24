@@ -41,11 +41,11 @@ void SysTick_Custom_Handler(void) {
 /*                          NETWORK CONFIGURATION                             */
 /*===========================================================================*/
 
-/* Our MAC address */
-static const uint8_t g_our_mac[6] = {0x10, 0x11, 0x22, 0x33, 0x44, 0x55};
+/* Our MAC address (as configured in EB Tresos) */
+static const uint8_t g_our_mac[6] = {0x10, 0x11, 0x22, 0x77, 0x77, 0x77};
 
-/* Our IP address: 192.168.1.100 */
-static const uint8_t g_our_ip[4] = {192, 168, 1, 100};
+/* Our IP address: 192.168.1.200 (as configured in EB Tresos tcp_stack_1) */
+static const uint8_t g_our_ip[4] = {192, 168, 1, 200};
 
 /* Broadcast MAC */
 static const uint8_t g_bcast_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
