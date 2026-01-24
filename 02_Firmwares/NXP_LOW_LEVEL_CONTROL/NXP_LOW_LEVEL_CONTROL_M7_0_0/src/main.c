@@ -26,6 +26,7 @@
 #include "log_debug.h"
 #include "rgmii_diag.h"
 #include "rgmii_config_debug.h"
+#include "rgmii_rx_debug.h"
 
 /* External config symbols from generated PBcfg files */
 extern const Eth_43_GMAC_ConfigType Eth_43_GMAC_xPredefinedConfig;
@@ -680,36 +681,119 @@ int main(void) {
     /* Initialize diagnostic modules */
     rgmii_diag_init(&g_lan9646, delay_ms);
     rgmii_debug_init(&g_lan9646, delay_ms);
+    rx_debug_init(&g_lan9646, delay_ms);
 
     LOG_I(TAG, "");
     LOG_I(TAG, "================================================================");
-    LOG_I(TAG, "  SELECT DEBUG MODE:");
-    LOG_I(TAG, "  1. Quick Summary (rgmii_debug_quick_summary)");
-    LOG_I(TAG, "  2. Full Configuration Dump (rgmii_debug_dump_all)");
-    LOG_I(TAG, "  3. Full Diagnostic with Tests (rgmii_debug_full_diagnostic)");
-    LOG_I(TAG, "  4. Original RGMII Diagnostic (rgmii_diag_run_all)");
+    LOG_I(TAG, "    RX PATH FOCUSED DEBUG - S32K388 GMAC <-- LAN9646 Port 6");
     LOG_I(TAG, "================================================================");
     LOG_I(TAG, "");
+    LOG_I(TAG, "TX path confirmed working. Now focusing on RX path analysis.");
+    LOG_I(TAG, "");
 
-    /* --- Run Quick Summary first for overview --- */
-    LOG_I(TAG, "Running Quick Summary...");
+    /*=========================================================================*/
+    /*                    RX PATH DEBUGGING SEQUENCE                           */
+    /*=========================================================================*/
+
+    /* Step 1: Quick configuration summary */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  STEP 1: Quick Configuration Summary");
+    LOG_I(TAG, "================================================================");
     rgmii_debug_quick_summary();
 
-    /* --- Run Full Configuration Dump --- */
+    /* Step 2: Full RX path analysis */
     LOG_I(TAG, "");
-    LOG_I(TAG, "Running Full Configuration Dump...");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  STEP 2: Full RX Path Analysis");
+    LOG_I(TAG, "================================================================");
     delay_ms(100);
-    rgmii_debug_dump_all();
+    rx_debug_full_analysis();
 
-    /* --- Run Full Diagnostic with Tests --- */
+    /* Step 3: Deep RX_CLK analysis (most critical signal) */
     LOG_I(TAG, "");
-    LOG_I(TAG, "Running Full Diagnostic with Tests...");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  STEP 3: Deep RX_CLK Signal Analysis");
+    LOG_I(TAG, "================================================================");
     delay_ms(100);
-    rgmii_debug_full_diagnostic();
+    rx_debug_analyze_rx_clk();
 
-    /* --- Also run original diagnostic for comparison --- */
+    /* Step 4: Dump all IMCR (Input Mux) for RX pins */
     LOG_I(TAG, "");
-    LOG_I(TAG, "Running Original RGMII Diagnostic...");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  STEP 4: SIUL2 IMCR Configuration (RX Pin Routing)");
+    LOG_I(TAG, "================================================================");
+    delay_ms(100);
+    rx_debug_dump_imcr();
+
+    /* Step 5: Dump MSCR (Pin Configuration) */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  STEP 5: SIUL2 MSCR Configuration (RX Pin Settings)");
+    LOG_I(TAG, "================================================================");
+    delay_ms(100);
+    rx_debug_dump_mscr();
+
+    /* Step 6: DMA and MTL RX status */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  STEP 6: GMAC DMA & MTL RX Status");
+    LOG_I(TAG, "================================================================");
+    delay_ms(100);
+    rx_debug_dump_dma_status();
+    rx_debug_dump_mtl_status();
+
+    /* Step 7: Current RX counters */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  STEP 7: Current RX Counters");
+    LOG_I(TAG, "================================================================");
+    delay_ms(100);
+    rx_debug_dump_gmac_counters();
+    rx_debug_dump_lan9646_tx_counters();
+
+    /* Step 8: Loopback test */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  STEP 8: Loopback Test (LAN9646 Port 1 -> Port 6 -> GMAC)");
+    LOG_I(TAG, "================================================================");
+    delay_ms(100);
+    uint32_t rx_count = rx_debug_test_loopback(10);
+    LOG_I(TAG, "  Loopback test: Sent 10 packets, GMAC received %lu", (unsigned long)rx_count);
+
+    /* Step 9: TX delay sweep */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  STEP 9: LAN9646 TX Delay Sweep (Timing Analysis)");
+    LOG_I(TAG, "================================================================");
+    delay_ms(100);
+    rx_debug_delay_sweep();
+
+    /* Step 10: Auto diagnosis and suggestions */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  STEP 10: Automated Diagnosis & Suggestions");
+    LOG_I(TAG, "================================================================");
+    delay_ms(100);
+    rx_debug_auto_diagnose();
+
+    /* Step 11: Print troubleshooting guide */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  STEP 11: RX Path Troubleshooting Guide");
+    LOG_I(TAG, "================================================================");
+    delay_ms(100);
+    rx_debug_print_troubleshooting();
+
+    /*=========================================================================*/
+    /*                    ADDITIONAL DIAGNOSTICS                               */
+    /*=========================================================================*/
+
+    /* Also run original diagnostic for comparison */
+    LOG_I(TAG, "");
+    LOG_I(TAG, "================================================================");
+    LOG_I(TAG, "  ADDITIONAL: Original RGMII Diagnostic (for comparison)");
+    LOG_I(TAG, "================================================================");
     delay_ms(100);
     rgmii_test_result_t result = rgmii_diag_run_all();
 
@@ -717,22 +801,25 @@ int main(void) {
     LOG_I(TAG, "================================================================");
     LOG_I(TAG, "                    FINAL SUMMARY");
     LOG_I(TAG, "================================================================");
-    if (result == RGMII_TEST_PASS) {
-        LOG_I(TAG, "  RGMII DIAGNOSTIC: ALL TESTS PASSED!");
-        LOG_I(TAG, "  Hardware is working correctly.");
+    if (result == RGMII_TEST_PASS && rx_count > 0) {
+        LOG_I(TAG, "  RX PATH STATUS: WORKING!");
+        LOG_I(TAG, "  Received %lu packets via RX path.", (unsigned long)rx_count);
     } else {
-        LOG_E(TAG, "  RGMII DIAGNOSTIC: ISSUES DETECTED");
-        LOG_E(TAG, "  Result: %s", rgmii_diag_result_str(result));
+        LOG_E(TAG, "  RX PATH STATUS: NOT WORKING");
+        LOG_E(TAG, "  GMAC RX packets received: %lu", (unsigned long)rx_count);
         LOG_E(TAG, "");
-        LOG_E(TAG, "  Recommended Actions:");
-        LOG_E(TAG, "  1. Check the configuration dump above");
-        LOG_E(TAG, "  2. Review the timing sweep results");
-        LOG_E(TAG, "  3. See troubleshooting guide above");
+        LOG_E(TAG, "  Most likely causes:");
+        LOG_E(TAG, "  1. RX_CLK signal not reaching GMAC");
+        LOG_E(TAG, "  2. IMCR mux not routing RX signals correctly");
+        LOG_E(TAG, "  3. MSCR IBE (Input Buffer Enable) not set on RX pins");
+        LOG_E(TAG, "  4. RGMII timing mismatch (adjust TX delay on LAN9646)");
+        LOG_E(TAG, "");
+        LOG_E(TAG, "  See detailed analysis above for specific issues.");
     }
     LOG_I(TAG, "================================================================");
     LOG_I(TAG, "");
 
-    /* Infinite loop with periodic status */
+    /* Infinite loop with periodic RX path monitoring */
     uint32_t loop_count = 0;
     while (1) {
         delay_ms(5000);
@@ -740,10 +827,17 @@ int main(void) {
 
         LOG_I(TAG, "[%lu] System running...", (unsigned long)loop_count);
 
-        /* Every 60 seconds, print quick summary */
+        /* Every 30 seconds, show RX counters */
+        if (loop_count % 6 == 0) {
+            LOG_I(TAG, "--- Periodic RX Counter Check ---");
+            rx_debug_dump_gmac_counters();
+            rx_debug_dump_lan9646_tx_counters();
+        }
+
+        /* Every 60 seconds, run RX path analysis */
         if (loop_count % 12 == 0) {
-            LOG_I(TAG, "--- Periodic Status Check ---");
-            rgmii_debug_quick_summary();
+            LOG_I(TAG, "--- Periodic RX Path Analysis ---");
+            rx_debug_full_analysis();
         }
     }
 
