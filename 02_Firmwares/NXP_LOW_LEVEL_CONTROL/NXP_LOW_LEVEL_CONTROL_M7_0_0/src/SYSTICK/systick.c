@@ -1,5 +1,10 @@
 #include "systick.h"
 #include "Pit_Ip.h"
+#include "FreeRTOS.h"
+#include "task.h"
+
+/* FreeRTOS tick handler from port.c */
+extern void xPortSysTickHandler(void);
 
 volatile uint32 g_sysTick = 0;
 
@@ -21,4 +26,9 @@ void SysTick_DelayMs(uint32 ms) {
 
 void SysTick_Custom_Handler(void) {
     g_sysTick++;
+
+    /* Call FreeRTOS tick handler if scheduler is running */
+    if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+        xPortSysTickHandler();
+    }
 }

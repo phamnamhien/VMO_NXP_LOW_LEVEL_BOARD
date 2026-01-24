@@ -31,6 +31,7 @@
 #include "rgmii_diag.h"
 #include "rgmii_config_debug.h"
 #include "rgmii_rx_debug.h"
+#include "systick.h"
 
 /* External config symbols from generated PBcfg files */
 extern const Eth_43_GMAC_ConfigType Eth_43_GMAC_xPredefinedConfig;
@@ -259,6 +260,9 @@ static void device_init(void) {
     Gpt_StartTimer(GptConf_GptChannelConfiguration_GptChannelConfiguration_0, 40000U);
     Gpt_EnableNotification(GptConf_GptChannelConfiguration_GptChannelConfiguration_0);
 
+    /* Initialize SysTick using GPT channel 1 - provides FreeRTOS tick */
+    SysTick_Init();
+
     Uart_Init(NULL_PTR);
     log_init();
 
@@ -285,49 +289,8 @@ static void device_init(void) {
 /*                          DIAGNOSTIC TASK                                   */
 /*===========================================================================*/
 
-/* SysTick registers for manual control */
-#define SYST_CSR    (*(volatile uint32_t*)0xE000E010)  /* Control and Status */
-#define SYST_RVR    (*(volatile uint32_t*)0xE000E014)  /* Reload Value */
-#define SYST_CVR    (*(volatile uint32_t*)0xE000E018)  /* Current Value */
-
-/* SysTick CSR bits */
-#define SYST_CSR_ENABLE     (1U << 0)
-#define SYST_CSR_TICKINT    (1U << 1)
-#define SYST_CSR_CLKSOURCE  (1U << 2)
-#define SYST_CSR_COUNTFLAG  (1U << 16)
-
-/* FreeRTOS internal tick handler - declared in port.c */
-extern void xPortSysTickHandler(void);
-
 static void diagnostic_task(void *pvParameters) {
     (void)pvParameters;
-
-    /* DEBUG: Check SysTick status */
-    LOG_I(TAG, "SysTick CSR=0x%08X RVR=%lu", (unsigned int)SYST_CSR, (unsigned long)SYST_RVR);
-
-    /* Force enable SysTick with interrupt */
-    SYST_RVR = 159999UL;  /* 160MHz / 1000 = 160000 - 1 */
-    SYST_CVR = 0;
-    SYST_CSR = SYST_CSR_ENABLE | SYST_CSR_TICKINT | SYST_CSR_CLKSOURCE;
-    LOG_I(TAG, "SysTick forced: CSR=0x%08X", (unsigned int)SYST_CSR);
-
-    /* TEST: Manually call tick handler to see if tick increments */
-    TickType_t tick_before = xTaskGetTickCount();
-    LOG_I(TAG, "Before manual tick: %lu", (unsigned long)tick_before);
-
-    /* Call tick handler directly 5 times */
-    for (int i = 0; i < 5; i++) {
-        xPortSysTickHandler();
-    }
-
-    TickType_t tick_after = xTaskGetTickCount();
-    LOG_I(TAG, "After 5 manual ticks: %lu", (unsigned long)tick_after);
-
-    if (tick_after > tick_before) {
-        LOG_I(TAG, "GOOD: Manual tick handler works! Problem is SysTick interrupt.");
-    } else {
-        LOG_E(TAG, "BAD: Manual tick handler doesn't increment tick!");
-    }
 
     /* Start log auto-flush timer (runs every 10ms to drain ring buffer) */
     log_start_flush_timer();
@@ -388,30 +351,20 @@ static void diagnostic_task(void *pvParameters) {
 
     uint32_t loop_count = 0;
 
-    /*
-     * DEBUG TEST: Check if FreeRTOS tick is incrementing
-     * Using busy_delay to avoid vTaskDelay hang issue
-     */
-    LOG_I(TAG, "DEBUG: Testing if SysTick is working...");
-    LOG_I(TAG, "DEBUG: If tick count stays 0, SysTick is NOT firing!");
-
     for (;;) {
         loop_count++;
 
-        /* Read tick count - should increment if SysTick is firing */
-        TickType_t tick = xTaskGetTickCount();
-
-        /* Print tick count and RX packets */
-        LOG_I(TAG, "[%lu] tick=%lu RX=%lu",
+        /* Print RX packet count */
+        LOG_I(TAG, "[%lu] RX=%lu tick=%lu",
               (unsigned long)loop_count,
-              (unsigned long)tick,
-              (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
+              (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD,
+              (unsigned long)xTaskGetTickCount());
 
-        /* Use busy-wait delay (NOT vTaskDelay) */
-        busy_delay_ms(1000);
+        /* 2 second delay using FreeRTOS - allows other tasks to run */
+        vTaskDelay(pdMS_TO_TICKS(2000));
 
-        /* Every 30 iterations, show counters */
-        if (loop_count % 30 == 0) {
+        /* Every 15 iterations (30 seconds), show counters */
+        if (loop_count % 15 == 0) {
             LOG_I(TAG, "--- Periodic Counter Check ---");
             rx_debug_dump_gmac_counters();
             rx_debug_dump_lan9646_tx_counters();
