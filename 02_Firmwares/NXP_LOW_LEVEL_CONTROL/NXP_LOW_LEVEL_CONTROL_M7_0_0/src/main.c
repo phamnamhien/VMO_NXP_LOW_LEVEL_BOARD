@@ -178,35 +178,50 @@ static uint16_t ip_checksum(const uint8_t* data, uint16_t len) {
 /*                          PACKET SEND FUNCTIONS                             */
 /*===========================================================================*/
 
+/* Check if address is valid RAM (S32K388 SRAM range) */
+static inline int is_valid_ram_addr(const void* addr) {
+    uint32_t a = (uint32_t)addr;
+    /* S32K388 SRAM: 0x20400000 - 0x2047FFFF (512KB) */
+    return (a >= 0x20400000U && a < 0x20480000U);
+}
+
 /* Get TX buffer from driver and send packet */
 static Gmac_Ip_StatusType send_packet_data(const uint8_t* data, uint16_t len) {
     Gmac_Ip_BufferType buf;
     Gmac_Ip_StatusType status;
     uint16_t buff_id;
+    int retries = 10;
 
     LOG_D(TAG, "TX: requesting buf len=%u", (unsigned)len);
 
-    /* Request buffer from driver's TX ring */
-    buf.Length = len;
-    status = Gmac_Ip_GetTxBuff(0, 0, &buf, &buff_id);
+    /* Retry loop - wait for TX buffer to become available */
+    while (retries > 0) {
+        /* Request buffer from driver's TX ring */
+        buf.Length = len;
+        buf.Data = NULL;
+        status = Gmac_Ip_GetTxBuff(0, 0, &buf, &buff_id);
 
-    LOG_D(TAG, "TX: GetTxBuff status=%d buf=%p", (int)status, (void*)buf.Data);
+        if (status == GMAC_STATUS_SUCCESS && buf.Data != NULL && is_valid_ram_addr(buf.Data)) {
+            /* Got valid buffer */
+            break;
+        }
 
-    if (status != GMAC_STATUS_SUCCESS) {
-        LOG_E(TAG, "GetTxBuff failed: %d", (int)status);
-        return status;
+        /* Buffer not available or invalid - wait and retry */
+        LOG_D(TAG, "TX: retry, status=%d buf=%p", (int)status, (void*)buf.Data);
+        delay_ms(1);
+        retries--;
     }
 
-    if (buf.Data == NULL) {
-        LOG_E(TAG, "GetTxBuff returned NULL data!");
+    if (retries == 0) {
+        LOG_E(TAG, "TX: No valid buffer after retries!");
         return GMAC_STATUS_TX_BUFF_BUSY;
     }
+
+    LOG_D(TAG, "TX: GetTxBuff OK buf=%p", (void*)buf.Data);
 
     /* Copy data to driver's DMA buffer */
     memcpy(buf.Data, data, len);
     buf.Length = len;
-
-    LOG_D(TAG, "TX: sending frame...");
 
     /* Send the frame */
     status = Gmac_Ip_SendFrame(0, 0, &buf, NULL);
