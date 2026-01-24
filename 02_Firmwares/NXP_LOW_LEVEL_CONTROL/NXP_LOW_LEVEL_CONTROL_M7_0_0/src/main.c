@@ -334,6 +334,7 @@ static void diagnostic_task(void *pvParameters) {
     LOG_I(TAG, "================================================================");
     LOG_I(TAG, "");
     LOG_I(TAG, "Diagnostic complete. Entering monitoring mode...");
+    LOG_I(TAG, "(Will print status every 2 seconds)");
     LOG_I(TAG, "");
 
     /*=========================================================================*/
@@ -342,20 +343,22 @@ static void diagnostic_task(void *pvParameters) {
 
     uint32_t loop_count = 0;
     for (;;) {
-        vTaskDelay(pdMS_TO_TICKS(5000));  /* 5 second delay */
         loop_count++;
+        LOG_I(TAG, "[%lu] Running... (RX=%lu)",
+              (unsigned long)loop_count,
+              (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
 
-        LOG_I(TAG, "[%lu] Running...", (unsigned long)loop_count);
+        vTaskDelay(pdMS_TO_TICKS(2000));  /* 2 second delay */
 
-        /* Every 30 seconds, show counters */
-        if (loop_count % 6 == 0) {
+        /* Every 30 seconds (15 iterations), show counters */
+        if (loop_count % 15 == 0) {
             LOG_I(TAG, "--- Periodic Counter Check ---");
             rx_debug_dump_gmac_counters();
             rx_debug_dump_lan9646_tx_counters();
         }
 
-        /* Every 60 seconds, full analysis */
-        if (loop_count % 12 == 0) {
+        /* Every 60 seconds (30 iterations), full analysis */
+        if (loop_count % 30 == 0) {
             LOG_I(TAG, "--- Periodic RX Analysis ---");
             rx_debug_full_analysis();
         }
