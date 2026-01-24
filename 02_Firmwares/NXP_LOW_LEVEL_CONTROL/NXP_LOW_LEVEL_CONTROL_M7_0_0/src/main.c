@@ -285,8 +285,42 @@ static void device_init(void) {
 /*                          DIAGNOSTIC TASK                                   */
 /*===========================================================================*/
 
+/* SysTick registers for manual control */
+#define SYST_CSR    (*(volatile uint32_t*)0xE000E010)  /* Control and Status */
+#define SYST_RVR    (*(volatile uint32_t*)0xE000E014)  /* Reload Value */
+#define SYST_CVR    (*(volatile uint32_t*)0xE000E018)  /* Current Value */
+
+/* SysTick CSR bits */
+#define SYST_CSR_ENABLE     (1U << 0)
+#define SYST_CSR_TICKINT    (1U << 1)
+#define SYST_CSR_CLKSOURCE  (1U << 2)
+#define SYST_CSR_COUNTFLAG  (1U << 16)
+
 static void diagnostic_task(void *pvParameters) {
     (void)pvParameters;
+
+    /* DEBUG: Check SysTick status */
+    LOG_I(TAG, "DEBUG: SysTick CSR=0x%08X RVR=%lu CVR=%lu",
+          (unsigned int)SYST_CSR,
+          (unsigned long)SYST_RVR,
+          (unsigned long)SYST_CVR);
+
+    /* If SysTick is not enabled, manually enable it */
+    if ((SYST_CSR & SYST_CSR_ENABLE) == 0) {
+        LOG_I(TAG, "DEBUG: SysTick NOT enabled! Enabling now...");
+        /* Configure SysTick: 160MHz / 1000 = 160000 ticks per ms */
+        SYST_RVR = (160000000UL / 1000UL) - 1UL;  /* 159999 */
+        SYST_CVR = 0;  /* Clear current value */
+        SYST_CSR = SYST_CSR_ENABLE | SYST_CSR_TICKINT | SYST_CSR_CLKSOURCE;
+        LOG_I(TAG, "DEBUG: SysTick enabled! CSR=0x%08X", (unsigned int)SYST_CSR);
+    } else {
+        LOG_I(TAG, "DEBUG: SysTick already enabled");
+        /* Check if interrupt is enabled */
+        if ((SYST_CSR & SYST_CSR_TICKINT) == 0) {
+            LOG_I(TAG, "DEBUG: SysTick INT not enabled! Enabling...");
+            SYST_CSR |= SYST_CSR_TICKINT;
+        }
+    }
 
     /* Start log auto-flush timer (runs every 10ms to drain ring buffer) */
     log_start_flush_timer();
