@@ -5,13 +5,17 @@
 #include "OsIf.h"
 #include "string.h"
 
+/* FreeRTOS for proper timestamps */
+#include "FreeRTOS.h"
+#include "task.h"
+
 static log_level_t current_level = LOG_LEVEL_INFO;
 static uint8_t is_initialized = 0;
-static uint32 log_start_counter = 0;
+static TickType_t log_start_tick = 0;
 
 void log_init(void) {
     /* Note: Uart_Init(NULL_PTR) must be called BEFORE log_init() */
-    log_start_counter = OsIf_GetCounter(OSIF_COUNTER_DUMMY);
+    log_start_tick = 0;  /* Will be set properly when scheduler starts */
     is_initialized = 1;
 }
 
@@ -35,10 +39,17 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         default: return;
     }
 
-    /* Get elapsed time (dummy counter - timestamp will be 0.000) */
-    uint32 elapsed = OsIf_GetElapsed(&log_start_counter, OSIF_COUNTER_DUMMY);
-    uint32 sec = elapsed / 1000000U;
-    uint32 ms = (elapsed / 1000U) % 1000U;
+    /* Get elapsed time using FreeRTOS tick count */
+    uint32 elapsed_ms;
+    if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+        TickType_t current_tick = xTaskGetTickCount();
+        elapsed_ms = (uint32)(current_tick * 1000U / configTICK_RATE_HZ);
+    } else {
+        elapsed_ms = 0;  /* Scheduler not started yet */
+    }
+
+    uint32 sec = elapsed_ms / 1000U;
+    uint32 ms = elapsed_ms % 1000U;
 
     int len = snprintf(buffer, sizeof(buffer), "[%lu.%03lu] %s (%s): ",
                       sec, ms, level_str, tag);

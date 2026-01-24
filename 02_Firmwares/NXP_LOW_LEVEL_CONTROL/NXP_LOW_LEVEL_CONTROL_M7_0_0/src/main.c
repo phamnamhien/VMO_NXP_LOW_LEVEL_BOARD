@@ -299,82 +299,27 @@ static void diagnostic_task(void *pvParameters) {
     /*                    RX PATH DEBUGGING SEQUENCE                           */
     /*=========================================================================*/
 
-    /* Step 1: Quick summary */
+    /* Step 1: Quick config summary */
     LOG_I(TAG, "[STEP 1] Quick Configuration Summary");
-    UART_FLUSH_DELAY();
     rgmii_debug_quick_summary();
-    UART_FLUSH_DELAY();
 
-    /* Step 2: Full RX analysis */
+    /* Step 2: Full RX path analysis (includes loopback test) */
     LOG_I(TAG, "");
     LOG_I(TAG, "[STEP 2] Full RX Path Analysis");
-    UART_FLUSH_DELAY();
     rx_debug_full_analysis();
-    UART_FLUSH_DELAY();
 
-    /* Step 3: RX_CLK analysis */
+    /* Step 3: TX Delay sweep */
     LOG_I(TAG, "");
-    LOG_I(TAG, "[STEP 3] RX_CLK Signal Analysis");
-    UART_FLUSH_DELAY();
-    rx_debug_analyze_rx_clk();
-    UART_FLUSH_DELAY();
-
-    /* Step 4: IMCR dump */
-    LOG_I(TAG, "");
-    LOG_I(TAG, "[STEP 4] SIUL2 IMCR Configuration");
-    UART_FLUSH_DELAY();
-    rx_debug_dump_imcr();
-
-    /* Step 5: MSCR dump */
-    LOG_I(TAG, "");
-    LOG_I(TAG, "[STEP 5] SIUL2 MSCR Configuration");
-    UART_FLUSH_DELAY();
-    rx_debug_dump_mscr();
-
-    /* Step 6: DMA/MTL status */
-    LOG_I(TAG, "");
-    LOG_I(TAG, "[STEP 6] GMAC DMA & MTL Status");
-    UART_FLUSH_DELAY();
-    rx_debug_dump_dma_status();
-    rx_debug_dump_mtl_status();
-    UART_FLUSH_DELAY();
-
-    /* Step 7: Counters */
-    LOG_I(TAG, "");
-    LOG_I(TAG, "[STEP 7] RX Counters");
-    UART_FLUSH_DELAY();
-    rx_debug_dump_gmac_counters();
-    rx_debug_dump_lan9646_tx_counters();
-    UART_FLUSH_DELAY();
-
-    /* Step 8: Loopback test */
-    LOG_I(TAG, "");
-    LOG_I(TAG, "[STEP 8] Loopback Test");
-    UART_FLUSH_DELAY();
-    uint32_t rx_count = rx_debug_test_loopback(10);
-    LOG_I(TAG, "  Result: Sent 10, Received %lu", (unsigned long)rx_count);
-    UART_FLUSH_DELAY();
-
-    /* Step 9: Delay sweep */
-    LOG_I(TAG, "");
-    LOG_I(TAG, "[STEP 9] TX Delay Sweep");
-    UART_FLUSH_DELAY();
+    LOG_I(TAG, "[STEP 3] TX Delay Sweep");
     rx_debug_delay_sweep();
-    UART_FLUSH_DELAY();
 
-    /* Step 10: Auto diagnosis */
+    /* Step 4: Auto diagnosis */
     LOG_I(TAG, "");
-    LOG_I(TAG, "[STEP 10] Auto Diagnosis");
-    UART_FLUSH_DELAY();
+    LOG_I(TAG, "[STEP 4] Auto Diagnosis");
     rx_debug_auto_diagnose();
-    UART_FLUSH_DELAY();
 
-    /* Step 11: Troubleshooting guide */
-    LOG_I(TAG, "");
-    LOG_I(TAG, "[STEP 11] Troubleshooting Guide");
-    UART_FLUSH_DELAY();
-    rx_debug_print_troubleshooting();
-    UART_FLUSH_DELAY();
+    /* Get final RX count for summary */
+    uint32_t rx_count = IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD;
 
     /* Final summary */
     LOG_I(TAG, "");
