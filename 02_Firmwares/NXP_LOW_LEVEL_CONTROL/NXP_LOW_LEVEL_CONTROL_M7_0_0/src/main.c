@@ -213,21 +213,28 @@ static Gmac_Ip_StatusType send_packet_data(const uint8_t* data, uint16_t len) {
 static void send_broadcast(void) {
     static uint32_t seq = 0;
     uint8_t* pkt = g_tx_buffer;
-    uint16_t len = 0;
 
     seq++;
+
+    /* Build payload first to know the length */
+    uint8_t* payload = &pkt[42];
+    int payload_len = snprintf((char*)payload, 100, "S32K388 Hello #%lu", (unsigned long)seq);
+
+    uint16_t udp_len = 8 + payload_len;
+    uint16_t ip_total_len = 20 + udp_len;
+    uint16_t eth_len = 14 + ip_total_len;
 
     /* Ethernet header (14 bytes) */
     memcpy(&pkt[0], g_bcast_mac, 6);      /* Dest MAC: broadcast */
     memcpy(&pkt[6], g_our_mac, 6);        /* Src MAC: our MAC */
     pkt[12] = 0x08; pkt[13] = 0x00;       /* EtherType: IP */
-    len = 14;
 
     /* IP header (20 bytes) */
     uint8_t* ip = &pkt[14];
     ip[0] = 0x45;                         /* Version 4, IHL 5 */
     ip[1] = 0x00;                         /* DSCP/ECN */
-    ip[2] = 0x00; ip[3] = 50;             /* Total length: 20 + 8 + 22 = 50 */
+    ip[2] = (ip_total_len >> 8) & 0xFF;
+    ip[3] = ip_total_len & 0xFF;          /* Total length */
     ip[4] = (seq >> 8); ip[5] = seq;      /* ID */
     ip[6] = 0x00; ip[7] = 0x00;           /* Flags/Fragment */
     ip[8] = 64;                           /* TTL */
@@ -240,27 +247,21 @@ static void send_broadcast(void) {
     uint16_t ip_csum = ip_checksum(ip, 20);
     ip[10] = ip_csum >> 8;
     ip[11] = ip_csum & 0xFF;
-    len += 20;
 
     /* UDP header (8 bytes) */
     uint8_t* udp = &pkt[34];
     udp[0] = 0x13; udp[1] = 0x88;         /* Src port: 5000 */
     udp[2] = 0x13; udp[3] = 0x88;         /* Dst port: 5000 */
-    udp[4] = 0x00; udp[5] = 30;           /* Length: 8 + 22 = 30 */
+    udp[4] = (udp_len >> 8) & 0xFF;
+    udp[5] = udp_len & 0xFF;              /* UDP Length */
     udp[6] = 0x00; udp[7] = 0x00;         /* Checksum: 0 (optional for IPv4) */
-    len += 8;
 
-    /* Payload: "S32K388 Hello #XXXX" */
-    uint8_t* payload = &pkt[42];
-    int plen = snprintf((char*)payload, 100, "S32K388 Hello #%lu", (unsigned long)seq);
-    len += plen;
-
-    /* Pad to minimum 60 bytes */
-    while (len < 60) {
-        pkt[len++] = 0;
+    /* Pad to minimum 60 bytes for Ethernet */
+    while (eth_len < 60) {
+        pkt[eth_len++] = 0;
     }
 
-    send_packet_data(pkt, len);
+    send_packet_data(pkt, eth_len);
     LOG_I(TAG, "TX Broadcast #%lu", (unsigned long)seq);
 }
 
@@ -342,10 +343,11 @@ static void handle_icmp(uint8_t* pkt, uint16_t len) {
     memcpy(src_mac, &pkt[6], 6);
     memcpy(src_ip, &ip[12], 4);
 
-    LOG_I(TAG, "PING from %d.%d.%d.%d",
-          src_ip[0], src_ip[1], src_ip[2], src_ip[3]);
+    LOG_I(TAG, "PING from %d.%d.%d.%d (len=%u, ip_hdr=%u)",
+          src_ip[0], src_ip[1], src_ip[2], src_ip[3],
+          (unsigned)len, (unsigned)ip_hdr_len);
 
-    /* Build ICMP echo reply */
+    /* Build ICMP echo reply - use same structure as received packet */
     uint8_t* reply = g_tx_buffer;
     uint16_t total_len = len;
 
@@ -380,8 +382,13 @@ static void handle_icmp(uint8_t* pkt, uint16_t len) {
     reply_icmp[2] = icmp_csum >> 8;
     reply_icmp[3] = icmp_csum & 0xFF;
 
-    send_packet_data(reply, total_len);
-    LOG_I(TAG, "PONG sent");
+    LOG_I(TAG, "Sending PONG len=%u", (unsigned)total_len);
+    Gmac_Ip_StatusType status = send_packet_data(reply, total_len);
+    if (status == GMAC_STATUS_SUCCESS) {
+        LOG_I(TAG, "PONG sent OK");
+    } else {
+        LOG_E(TAG, "PONG failed: %d", (int)status);
+    }
 }
 
 /*===========================================================================*/
