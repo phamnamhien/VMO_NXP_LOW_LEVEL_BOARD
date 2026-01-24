@@ -9,14 +9,20 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+/* ARM Cortex-M SysTick for pre-scheduler timestamps */
+#define SYSTICK_LOAD  (*(volatile uint32_t*)0xE000E014)
+#define SYSTICK_VAL   (*(volatile uint32_t*)0xE000E018)
+#define SYSTICK_CTRL  (*(volatile uint32_t*)0xE000E010)
+
 static log_level_t current_level = LOG_LEVEL_INFO;
 static uint8_t is_initialized = 0;
-static uint32 log_start_counter = 0;
+static uint32_t log_start_systick = 0;
+static uint32_t pre_scheduler_ms = 0;
 
 void log_init(void) {
     /* Note: Uart_Init(NULL_PTR) must be called BEFORE log_init() */
-    /* Use system counter for pre-scheduler timestamps */
-    log_start_counter = OsIf_GetCounter(OSIF_COUNTER_SYSTEM);
+    log_start_systick = SYSTICK_VAL;
+    pre_scheduler_ms = 0;
     is_initialized = 1;
 }
 
@@ -47,9 +53,9 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         TickType_t current_tick = xTaskGetTickCount();
         elapsed_ms = (uint32)(current_tick * 1000U / configTICK_RATE_HZ);
     } else {
-        /* Use OsIf counter before scheduler starts (microseconds -> milliseconds) */
-        uint32 elapsed_us = OsIf_GetElapsed(&log_start_counter, OSIF_COUNTER_SYSTEM);
-        elapsed_ms = elapsed_us / 1000U;
+        /* Simple incrementing counter before scheduler (rough estimate) */
+        /* Each LOG call takes ~1ms at 115200 baud for ~100 chars */
+        elapsed_ms = pre_scheduler_ms++;
     }
 
     uint32 sec = elapsed_ms / 1000U;
