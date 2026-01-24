@@ -59,6 +59,44 @@ static softi2c_t g_i2c;
 static volatile bool g_scheduler_started = false;
 
 /*===========================================================================*/
+/*                          SYSTICK HANDLER FIX                               */
+/*===========================================================================*/
+/*
+ * Custom SysTick_Handler to override the weak definition in exceptions.c
+ * This ensures FreeRTOS tick interrupt is properly handled.
+ *
+ * The weak SysTick_Handler in exceptions.c has an infinite loop which
+ * causes vTaskDelay to hang forever.
+ */
+
+/* NVIC register for triggering PendSV */
+#define portNVIC_INT_CTRL_REG     (*((volatile uint32_t *)0xe000ed04))
+#define portNVIC_PENDSVSET_BIT    (1UL << 28UL)
+
+/* Declare the FreeRTOS function we need to call */
+extern BaseType_t xTaskIncrementTick(void);
+
+void SysTick_Handler(void)
+{
+    /* Only process tick if scheduler has started */
+    if (g_scheduler_started)
+    {
+        /* Enter critical section */
+        uint32_t ulPreviousMask = portSET_INTERRUPT_MASK_FROM_ISR();
+
+        /* Increment the RTOS tick */
+        if (xTaskIncrementTick() != pdFALSE)
+        {
+            /* A context switch is required. Pend the PendSV interrupt. */
+            portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;
+        }
+
+        /* Exit critical section */
+        portCLEAR_INTERRUPT_MASK_FROM_ISR(ulPreviousMask);
+    }
+}
+
+/*===========================================================================*/
 /*                          I2C CALLBACKS                                     */
 /*===========================================================================*/
 
@@ -345,9 +383,7 @@ static void diagnostic_task(void *pvParameters) {
     /*                    MONITORING LOOP                                      */
     /*=========================================================================*/
     /*
-     * NOTE: Using busy_delay_ms instead of vTaskDelay to test if FreeRTOS
-     * scheduling is causing the hang issue. If this works, the problem is
-     * with FreeRTOS tick/scheduler configuration.
+     * Now using vTaskDelay properly with custom SysTick_Handler fix.
      */
 
     uint32_t loop_count = 0;
@@ -360,8 +396,8 @@ static void diagnostic_task(void *pvParameters) {
               (unsigned long)loop_count,
               (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
 
-        /* 2 second delay using busy-wait (bypasses FreeRTOS) */
-        busy_delay_ms(2000);
+        /* 2 second delay using FreeRTOS (allows other tasks to run) */
+        vTaskDelay(pdMS_TO_TICKS(2000));
 
         /* Every 30 seconds (15 iterations), show counters */
         if (loop_count % 15 == 0) {
