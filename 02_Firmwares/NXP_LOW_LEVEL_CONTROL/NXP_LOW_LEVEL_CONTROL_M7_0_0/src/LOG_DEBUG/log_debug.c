@@ -13,21 +13,20 @@
 /*===========================================================================*/
 
 #define LOG_UART_CHANNEL    0U
-#define LOG_UART_TIMEOUT_US 10000U  /* 10ms timeout */
+#define LOG_UART_TIMEOUT_US 100000U  /* 100ms timeout for full message */
 
 /*===========================================================================*/
 /*                          STATE                                             */
 /*===========================================================================*/
 
 static log_level_t current_level = LOG_LEVEL_INFO;
-static uint32_t log_counter = 0;
 
 /*===========================================================================*/
 /*                          PUBLIC API                                        */
 /*===========================================================================*/
 
 void log_init(void) {
-    log_counter = 0;
+    /* Nothing to initialize */
 }
 
 void log_start_flush_timer(void) {
@@ -53,26 +52,20 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         default: return;
     }
 
-    /* Simple counter-based timestamp */
-    log_counter++;
-
-    /* Format the complete message */
-    int len = snprintf(buffer, sizeof(buffer), "[%05lu] %s (%s): ",
-                      (unsigned long)log_counter, level_str, tag);
+    /* Format: [LEVEL] (TAG): message */
+    int len = snprintf(buffer, sizeof(buffer), "[%s] (%s): ", level_str, tag);
 
     va_list args;
     va_start(args, format);
-    len += vsnprintf(buffer + len, sizeof(buffer) - len, format, args);
+    len += vsnprintf(buffer + len, sizeof(buffer) - len - 3, format, args);
     va_end(args);
 
     /* Add CRLF */
-    if (len < (int)sizeof(buffer) - 2) {
-        buffer[len++] = '\r';
-        buffer[len++] = '\n';
-        buffer[len] = '\0';
-    }
+    buffer[len++] = '\r';
+    buffer[len++] = '\n';
+    buffer[len] = '\0';
 
-    /* Blocking UART send */
+    /* Blocking UART send - wait until complete */
     (void)Uart_SyncSend(LOG_UART_CHANNEL, (const uint8*)buffer, (uint32)len, LOG_UART_TIMEOUT_US);
 }
 
