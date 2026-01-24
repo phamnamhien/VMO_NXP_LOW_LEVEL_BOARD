@@ -360,8 +360,8 @@ static void diagnostic_task(void *pvParameters) {
               (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD,
               (unsigned long)SysTick_GetTick());
 
-        /* 2 second delay */
-        SysTick_DelayMs(2000);
+        /* 2 second delay - use busy_delay_ms (GPT notification not working) */
+        busy_delay_ms(2000);
 
         /* Every 15 iterations (30 seconds), show counters */
         if (loop_count % 15 == 0) {
