@@ -344,24 +344,29 @@ static void diagnostic_task(void *pvParameters) {
     /*=========================================================================*/
     /*                    MONITORING LOOP                                      */
     /*=========================================================================*/
-    /*
-     * Using busy_delay_ms because vTaskDelay hangs due to FreeRTOS tick
-     * configuration issue (SysTick not firing properly after UART activity).
-     * This is a known limitation with OSIF_COUNTER_DUMMY timeout method.
-     */
 
     uint32_t loop_count = 0;
+
+    /* Test: Print tick count to verify FreeRTOS tick is working */
+    LOG_I(TAG, "Before loop: TickCount=%lu", (unsigned long)xTaskGetTickCount());
 
     for (;;) {
         loop_count++;
 
-        /* Print RX packet count */
-        LOG_I(TAG, "[%lu] RX=%lu",
-              (unsigned long)loop_count,
-              (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
+        /* Test vTaskDelay - print tick before and after */
+        TickType_t tick_before = xTaskGetTickCount();
 
-        /* 2 second delay using busy-wait */
-        busy_delay_ms(2000);
+        /* Try vTaskDelay instead of busy_delay_ms */
+        vTaskDelay(pdMS_TO_TICKS(2000));
+
+        TickType_t tick_after = xTaskGetTickCount();
+
+        /* Print RX packet count with tick info */
+        LOG_I(TAG, "[%lu] RX=%lu tick:%lu->%lu",
+              (unsigned long)loop_count,
+              (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD,
+              (unsigned long)tick_before,
+              (unsigned long)tick_after);
 
         /* Every 30 seconds (15 iterations), show counters */
         if (loop_count % 15 == 0) {
