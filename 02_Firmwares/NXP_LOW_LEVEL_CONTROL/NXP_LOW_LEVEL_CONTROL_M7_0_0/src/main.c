@@ -700,7 +700,9 @@ int main(void) {
     LOG_I(TAG, "================================================================");
     LOG_I(TAG, "  STEP 1: Quick Configuration Summary");
     LOG_I(TAG, "================================================================");
+    delay_ms(50);  /* Allow UART to flush */
     rgmii_debug_quick_summary();
+    delay_ms(200);  /* Allow UART to flush after large output */
 
     /* Step 2: Full RX path analysis */
     LOG_I(TAG, "");
@@ -709,6 +711,7 @@ int main(void) {
     LOG_I(TAG, "================================================================");
     delay_ms(100);
     rx_debug_full_analysis();
+    delay_ms(300);  /* Large output - need more UART flush time */
 
     /* Step 3: Deep RX_CLK analysis (most critical signal) */
     LOG_I(TAG, "");
@@ -717,6 +720,7 @@ int main(void) {
     LOG_I(TAG, "================================================================");
     delay_ms(100);
     rx_debug_analyze_rx_clk();
+    delay_ms(200);
 
     /* Step 4: Dump all IMCR (Input Mux) for RX pins */
     LOG_I(TAG, "");
@@ -741,7 +745,9 @@ int main(void) {
     LOG_I(TAG, "================================================================");
     delay_ms(100);
     rx_debug_dump_dma_status();
+    delay_ms(100);
     rx_debug_dump_mtl_status();
+    delay_ms(200);
 
     /* Step 7: Current RX counters */
     LOG_I(TAG, "");
@@ -750,7 +756,9 @@ int main(void) {
     LOG_I(TAG, "================================================================");
     delay_ms(100);
     rx_debug_dump_gmac_counters();
+    delay_ms(100);
     rx_debug_dump_lan9646_tx_counters();
+    delay_ms(200);
 
     /* Step 8: Loopback test */
     LOG_I(TAG, "");
@@ -759,6 +767,7 @@ int main(void) {
     LOG_I(TAG, "================================================================");
     delay_ms(100);
     uint32_t rx_count = rx_debug_test_loopback(10);
+    delay_ms(200);
     LOG_I(TAG, "  Loopback test: Sent 10 packets, GMAC received %lu", (unsigned long)rx_count);
 
     /* Step 9: TX delay sweep */
@@ -768,6 +777,7 @@ int main(void) {
     LOG_I(TAG, "================================================================");
     delay_ms(100);
     rx_debug_delay_sweep();
+    delay_ms(300);  /* Delay sweep has a lot of output */
 
     /* Step 10: Auto diagnosis and suggestions */
     LOG_I(TAG, "");
@@ -776,6 +786,7 @@ int main(void) {
     LOG_I(TAG, "================================================================");
     delay_ms(100);
     rx_debug_auto_diagnose();
+    delay_ms(300);
 
     /* Step 11: Print troubleshooting guide */
     LOG_I(TAG, "");
@@ -784,6 +795,7 @@ int main(void) {
     LOG_I(TAG, "================================================================");
     delay_ms(100);
     rx_debug_print_troubleshooting();
+    delay_ms(300);
 
     /*=========================================================================*/
     /*                    ADDITIONAL DIAGNOSTICS                               */

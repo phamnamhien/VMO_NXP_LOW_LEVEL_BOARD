@@ -95,22 +95,29 @@ static void lan_write32(uint16_t addr, uint32_t val) {
     if (g_lan) lan9646_write_reg32(g_lan, addr, val);
 }
 
-/* Read MIB counter */
+/* Read MIB counter with proper timing */
 static uint32_t lan_read_mib(uint8_t port, uint8_t index) {
     if (!g_lan) return 0;
 
     uint16_t base = (uint16_t)port << 12;
     uint32_t ctrl;
-    uint32_t timeout = 1000;
+    uint32_t timeout = 10000;  /* Increased timeout */
 
+    /* Set MIB index and read enable bit */
     ctrl = ((uint32_t)index << 16) | 0x02000000UL;
     lan_write32(base | 0x0500, ctrl);
 
+    /* Small delay for MIB controller */
+    volatile uint32_t delay = 100;
+    while (delay--) { __asm__ volatile ("nop"); }
+
+    /* Wait for read to complete (bit 25 clears) */
     do {
         ctrl = lan_read32(base | 0x0500);
         if (--timeout == 0) break;
     } while (ctrl & 0x02000000UL);
 
+    /* Read data */
     return lan_read32(base | 0x0504);
 }
 
@@ -514,7 +521,12 @@ void rx_debug_dump_lan9646_tx_counters(void) {
     LOG_I(TAG, "TX Excess Collision    | %10lu", (unsigned long)tx_excess);
     LOG_I(TAG, "TX Dropped (0x83)      | %10lu", (unsigned long)tx_drop);
 
-    if (tx_total == 0) {
+    if (tx_total == 0 && tx_bytes > 0) {
+        LOG_I(TAG, "");
+        LOG_I(TAG, "[NOTE] TX packet counters = 0 but TX bytes > 0");
+        LOG_I(TAG, "  This is normal for loopback traffic.");
+        LOG_I(TAG, "  Check GMAC RX counters to verify reception.");
+    } else if (tx_total == 0 && tx_bytes == 0) {
         LOG_I(TAG, "");
         LOG_I(TAG, "[INFO] LAN9646 not transmitting to GMAC!");
         LOG_I(TAG, "  Check Port 6 TX enable (MSTP_STATE)");
