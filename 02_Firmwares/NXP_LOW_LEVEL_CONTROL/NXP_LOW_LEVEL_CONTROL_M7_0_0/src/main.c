@@ -347,38 +347,33 @@ static void diagnostic_task(void *pvParameters) {
 
     uint32_t loop_count = 0;
 
-    /* Test: Print tick count to verify FreeRTOS tick is working */
-    LOG_I(TAG, "Before loop: TickCount=%lu", (unsigned long)xTaskGetTickCount());
+    /*
+     * DEBUG TEST: Check if FreeRTOS tick is incrementing
+     * Using busy_delay to avoid vTaskDelay hang issue
+     */
+    LOG_I(TAG, "DEBUG: Testing if SysTick is working...");
+    LOG_I(TAG, "DEBUG: If tick count stays 0, SysTick is NOT firing!");
 
     for (;;) {
         loop_count++;
 
-        /* Test vTaskDelay - print tick before and after */
-        TickType_t tick_before = xTaskGetTickCount();
+        /* Read tick count - should increment if SysTick is firing */
+        TickType_t tick = xTaskGetTickCount();
 
-        /* Try vTaskDelay instead of busy_delay_ms */
-        vTaskDelay(pdMS_TO_TICKS(2000));
-
-        TickType_t tick_after = xTaskGetTickCount();
-
-        /* Print RX packet count with tick info */
-        LOG_I(TAG, "[%lu] RX=%lu tick:%lu->%lu",
+        /* Print tick count and RX packets */
+        LOG_I(TAG, "[%lu] tick=%lu RX=%lu",
               (unsigned long)loop_count,
-              (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD,
-              (unsigned long)tick_before,
-              (unsigned long)tick_after);
+              (unsigned long)tick,
+              (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
 
-        /* Every 30 seconds (15 iterations), show counters */
-        if (loop_count % 15 == 0) {
+        /* Use busy-wait delay (NOT vTaskDelay) */
+        busy_delay_ms(1000);
+
+        /* Every 30 iterations, show counters */
+        if (loop_count % 30 == 0) {
             LOG_I(TAG, "--- Periodic Counter Check ---");
             rx_debug_dump_gmac_counters();
             rx_debug_dump_lan9646_tx_counters();
-        }
-
-        /* Every 60 seconds (30 iterations), full analysis */
-        if (loop_count % 30 == 0) {
-            LOG_I(TAG, "--- Periodic RX Analysis ---");
-            rx_debug_full_analysis();
         }
     }
 }
