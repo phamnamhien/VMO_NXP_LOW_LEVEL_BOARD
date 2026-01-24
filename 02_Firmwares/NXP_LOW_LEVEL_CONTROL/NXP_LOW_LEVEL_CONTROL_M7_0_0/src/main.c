@@ -292,9 +292,6 @@ static void device_init(void) {
 static void diagnostic_task(void *pvParameters) {
     (void)pvParameters;
 
-    /* Enable FreeRTOS tick now that scheduler is running */
-    SysTick_SetSchedulerStarted();
-
     /* Start log auto-flush timer (runs every 10ms to drain ring buffer) */
     log_start_flush_timer();
 
@@ -357,14 +354,14 @@ static void diagnostic_task(void *pvParameters) {
     for (;;) {
         loop_count++;
 
-        /* Print RX packet count */
-        LOG_I(TAG, "[%lu] RX=%lu tick=%lu",
+        /* Print RX packet count with timestamp */
+        LOG_I(TAG, "[%lu] RX=%lu ms=%lu",
               (unsigned long)loop_count,
               (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD,
-              (unsigned long)xTaskGetTickCount());
+              (unsigned long)SysTick_GetTick());
 
-        /* 2 second delay using FreeRTOS - allows other tasks to run */
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        /* 2 second delay */
+        SysTick_DelayMs(2000);
 
         /* Every 15 iterations (30 seconds), show counters */
         if (loop_count % 15 == 0) {
