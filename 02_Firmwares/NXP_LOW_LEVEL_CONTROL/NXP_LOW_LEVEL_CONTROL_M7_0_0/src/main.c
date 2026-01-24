@@ -95,20 +95,24 @@ static lan9646r_t i2c_mem_read_cb(uint8_t dev_addr, uint16_t mem_addr,
 /*                          DELAY FUNCTION                                    */
 /*===========================================================================*/
 
+/* Simple busy-wait delay - does NOT use FreeRTOS */
+static void busy_delay_ms(uint32_t ms) {
+    volatile uint32_t count;
+    while (ms > 0) {
+        count = 40000U;  /* Approx 1ms at 160MHz */
+        while (count > 0) {
+            count--;
+        }
+        ms--;
+    }
+}
+
 static void delay_ms(uint32_t ms) {
     if (g_scheduler_started) {
         /* Use FreeRTOS delay - non-blocking, allows other tasks to run */
         vTaskDelay(pdMS_TO_TICKS(ms));
     } else {
-        /* Busy-wait before scheduler starts (during init) */
-        volatile uint32_t count;
-        while (ms > 0) {
-            count = 40000U;  /* Approx 1ms at 160MHz */
-            while (count > 0) {
-                count--;
-            }
-            ms--;
-        }
+        busy_delay_ms(ms);
     }
 }
 
@@ -340,9 +344,13 @@ static void diagnostic_task(void *pvParameters) {
     /*=========================================================================*/
     /*                    MONITORING LOOP                                      */
     /*=========================================================================*/
+    /*
+     * NOTE: Using busy_delay_ms instead of vTaskDelay to test if FreeRTOS
+     * scheduling is causing the hang issue. If this works, the problem is
+     * with FreeRTOS tick/scheduler configuration.
+     */
 
     uint32_t loop_count = 0;
-    uint32_t i;
 
     for (;;) {
         loop_count++;
@@ -352,30 +360,20 @@ static void diagnostic_task(void *pvParameters) {
               (unsigned long)loop_count,
               (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
 
-        /* Yield to scheduler after UART output */
-        taskYIELD();
-
-        /* 2 second delay using multiple short delays for better responsiveness */
-        for (i = 0; i < 20; i++) {
-            vTaskDelay(pdMS_TO_TICKS(100));  /* 100ms x 20 = 2 seconds */
-        }
+        /* 2 second delay using busy-wait (bypasses FreeRTOS) */
+        busy_delay_ms(2000);
 
         /* Every 30 seconds (15 iterations), show counters */
         if (loop_count % 15 == 0) {
             LOG_I(TAG, "--- Periodic Counter Check ---");
-            taskYIELD();
             rx_debug_dump_gmac_counters();
-            taskYIELD();
             rx_debug_dump_lan9646_tx_counters();
-            taskYIELD();
         }
 
         /* Every 60 seconds (30 iterations), full analysis */
         if (loop_count % 30 == 0) {
             LOG_I(TAG, "--- Periodic RX Analysis ---");
-            taskYIELD();
             rx_debug_full_analysis();
-            taskYIELD();
         }
     }
 }
