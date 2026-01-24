@@ -344,11 +344,13 @@ static void diagnostic_task(void *pvParameters) {
     uint32_t loop_count = 0;
     for (;;) {
         loop_count++;
-        LOG_I(TAG, "[%lu] Running... (RX=%lu)",
+        LOG_I(TAG, "[%lu] Waiting 1s...", (unsigned long)loop_count);
+
+        vTaskDelay(pdMS_TO_TICKS(1000));  /* 1 second delay */
+
+        LOG_I(TAG, "[%lu] After delay, RX=%lu",
               (unsigned long)loop_count,
               (unsigned long)IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD);
-
-        vTaskDelay(pdMS_TO_TICKS(2000));  /* 2 second delay */
 
         /* Every 30 seconds (15 iterations), show counters */
         if (loop_count % 15 == 0) {
