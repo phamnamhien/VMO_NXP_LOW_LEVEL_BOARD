@@ -296,30 +296,37 @@ static void device_init(void) {
 #define SYST_CSR_CLKSOURCE  (1U << 2)
 #define SYST_CSR_COUNTFLAG  (1U << 16)
 
+/* FreeRTOS internal tick handler - declared in port.c */
+extern void xPortSysTickHandler(void);
+
 static void diagnostic_task(void *pvParameters) {
     (void)pvParameters;
 
     /* DEBUG: Check SysTick status */
-    LOG_I(TAG, "DEBUG: SysTick CSR=0x%08X RVR=%lu CVR=%lu",
-          (unsigned int)SYST_CSR,
-          (unsigned long)SYST_RVR,
-          (unsigned long)SYST_CVR);
+    LOG_I(TAG, "SysTick CSR=0x%08X RVR=%lu", (unsigned int)SYST_CSR, (unsigned long)SYST_RVR);
 
-    /* If SysTick is not enabled, manually enable it */
-    if ((SYST_CSR & SYST_CSR_ENABLE) == 0) {
-        LOG_I(TAG, "DEBUG: SysTick NOT enabled! Enabling now...");
-        /* Configure SysTick: 160MHz / 1000 = 160000 ticks per ms */
-        SYST_RVR = (160000000UL / 1000UL) - 1UL;  /* 159999 */
-        SYST_CVR = 0;  /* Clear current value */
-        SYST_CSR = SYST_CSR_ENABLE | SYST_CSR_TICKINT | SYST_CSR_CLKSOURCE;
-        LOG_I(TAG, "DEBUG: SysTick enabled! CSR=0x%08X", (unsigned int)SYST_CSR);
+    /* Force enable SysTick with interrupt */
+    SYST_RVR = 159999UL;  /* 160MHz / 1000 = 160000 - 1 */
+    SYST_CVR = 0;
+    SYST_CSR = SYST_CSR_ENABLE | SYST_CSR_TICKINT | SYST_CSR_CLKSOURCE;
+    LOG_I(TAG, "SysTick forced: CSR=0x%08X", (unsigned int)SYST_CSR);
+
+    /* TEST: Manually call tick handler to see if tick increments */
+    TickType_t tick_before = xTaskGetTickCount();
+    LOG_I(TAG, "Before manual tick: %lu", (unsigned long)tick_before);
+
+    /* Call tick handler directly 5 times */
+    for (int i = 0; i < 5; i++) {
+        xPortSysTickHandler();
+    }
+
+    TickType_t tick_after = xTaskGetTickCount();
+    LOG_I(TAG, "After 5 manual ticks: %lu", (unsigned long)tick_after);
+
+    if (tick_after > tick_before) {
+        LOG_I(TAG, "GOOD: Manual tick handler works! Problem is SysTick interrupt.");
     } else {
-        LOG_I(TAG, "DEBUG: SysTick already enabled");
-        /* Check if interrupt is enabled */
-        if ((SYST_CSR & SYST_CSR_TICKINT) == 0) {
-            LOG_I(TAG, "DEBUG: SysTick INT not enabled! Enabling...");
-            SYST_CSR |= SYST_CSR_TICKINT;
-        }
+        LOG_E(TAG, "BAD: Manual tick handler doesn't increment tick!");
     }
 
     /* Start log auto-flush timer (runs every 10ms to drain ring buffer) */
