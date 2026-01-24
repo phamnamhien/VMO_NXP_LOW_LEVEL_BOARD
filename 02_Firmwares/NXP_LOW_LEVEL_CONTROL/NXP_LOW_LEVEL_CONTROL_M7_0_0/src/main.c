@@ -192,19 +192,33 @@ static void configure_s32k388_rgmii(void) {
 
     /* DCMRWF1: Set RGMII mode */
     uint32_t dcmrwf1 = IP_DCM_GPR->DCMRWF1;
+    LOG_I(TAG, "  DCMRWF1 before: 0x%08lX", (unsigned long)dcmrwf1);
+
     dcmrwf1 = (dcmrwf1 & ~0x03U) | 0x01U;  /* MAC_CONF_SEL = 1 (RGMII) */
     dcmrwf1 |= (1U << 6);                   /* MAC_TX_RMII_CLK_LPBCK_EN = 1 */
     IP_DCM_GPR->DCMRWF1 = dcmrwf1;
 
+    dcmrwf1 = IP_DCM_GPR->DCMRWF1;  /* Read back */
+    LOG_I(TAG, "  DCMRWF1 after:  0x%08lX -> %s",
+          (unsigned long)dcmrwf1,
+          ((dcmrwf1 & 0x03U) == 1) ? "RGMII OK" : "ERROR");
+
     /* DCMRWF3: Clock configuration */
     uint32_t dcmrwf3 = IP_DCM_GPR->DCMRWF3;
+    LOG_I(TAG, "  DCMRWF3 before: 0x%08lX", (unsigned long)dcmrwf3);
+
     dcmrwf3 |= (1U << DCMRWF3_MAC_RX_CLK_MUX_BYPASS_BIT);  /* Bypass MUX_7 */
     dcmrwf3 |= (1U << DCMRWF3_MAC_TX_CLK_OUT_EN_BIT);      /* Enable TX_CLK output */
     IP_DCM_GPR->DCMRWF3 = dcmrwf3;
 
-    LOG_I(TAG, "  DCMRWF1=0x%08lX DCMRWF3=0x%08lX",
-          (unsigned long)IP_DCM_GPR->DCMRWF1,
-          (unsigned long)IP_DCM_GPR->DCMRWF3);
+    dcmrwf3 = IP_DCM_GPR->DCMRWF3;  /* Read back */
+    LOG_I(TAG, "  DCMRWF3 after:  0x%08lX", (unsigned long)dcmrwf3);
+    LOG_I(TAG, "    RX_CLK bypass [13] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> 13) & 1),
+          ((dcmrwf3 >> 13) & 1) ? "BYPASS OK" : "ERROR");
+    LOG_I(TAG, "    TX_CLK output [11] = %lu -> %s",
+          (unsigned long)((dcmrwf3 >> 11) & 1),
+          ((dcmrwf3 >> 11) & 1) ? "ENABLED OK" : "ERROR");
 }
 
 static void configure_gmac_mac(void) {
