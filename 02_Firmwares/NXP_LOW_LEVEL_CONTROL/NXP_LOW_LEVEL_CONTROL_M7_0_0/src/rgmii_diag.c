@@ -63,28 +63,47 @@ static void read_gmac_stats(rgmii_stats_t* s) {
  * MIB control register: port_base + 0x0500
  * MIB data register:    port_base + 0x0504
  *
- * KSZ9477 MIB counter indices (indirect access):
- * - 0x00-0x1F: RX counters
- * - 0x60-0x7F: TX counters
+ * KSZ9477/LAN9646 MIB counter indices (from Linux kernel ksz_common.c):
+ * - 0x00-0x14: RX counters
+ * - 0x15-0x1F: TX counters
+ * - 0x80-0x83: Total/discard counters
  */
 #define MIB_CTRL(port)      (((uint16_t)(port) << 12) | 0x0500)
 #define MIB_DATA(port)      (((uint16_t)(port) << 12) | 0x0504)
 
-/* RX MIB counter indices (indirect access) */
-#define MIB_RX_BROADCAST    0x0A   /* RxBroadcast */
-#define MIB_RX_MULTICAST    0x0B   /* RxMulticast */
-#define MIB_RX_UNICAST      0x0C   /* RxUnicast */
-#define MIB_RX_CRC          0x06   /* RxCRCError */
-#define MIB_RX_SYMBOL       0x05   /* RxSymbolError */
-#define MIB_RX_UNDERSIZE    0x01   /* RxUndersize */
-#define MIB_RX_OVERSIZE     0x03   /* RxOversize */
+/* RX MIB counter indices (from Linux kernel ksz_common.c ksz9477_mib_names) */
+#define MIB_RX_HI           0x00   /* rx_hi */
+#define MIB_RX_UNDERSIZE    0x01   /* rx_undersize */
+#define MIB_RX_FRAGMENTS    0x02   /* rx_fragments */
+#define MIB_RX_OVERSIZE     0x03   /* rx_oversize */
+#define MIB_RX_JABBERS      0x04   /* rx_jabbers */
+#define MIB_RX_SYMBOL       0x05   /* rx_symbol_err */
+#define MIB_RX_CRC          0x06   /* rx_crc_err */
+#define MIB_RX_ALIGN        0x07   /* rx_align_err */
+#define MIB_RX_MAC_CTRL     0x08   /* rx_mac_ctrl */
+#define MIB_RX_PAUSE        0x09   /* rx_pause */
+#define MIB_RX_BROADCAST    0x0A   /* rx_bcast */
+#define MIB_RX_MULTICAST    0x0B   /* rx_mcast */
+#define MIB_RX_UNICAST      0x0C   /* rx_ucast */
 
-/* TX MIB counter indices (indirect access) */
-#define MIB_TX_BROADCAST    0x63   /* TxBroadcast */
-#define MIB_TX_MULTICAST    0x64   /* TxMulticast */
-#define MIB_TX_UNICAST      0x65   /* TxUnicast */
-#define MIB_TX_LATE_COL     0x61   /* TxLateCollision */
-#define MIB_TX_EXCESS_COL   0x68   /* TxExcessCollision */
+/* TX MIB counter indices (from Linux kernel ksz_common.c ksz9477_mib_names) */
+#define MIB_TX_HI           0x15   /* tx_hi */
+#define MIB_TX_LATE_COL     0x16   /* tx_late_col */
+#define MIB_TX_PAUSE        0x17   /* tx_pause */
+#define MIB_TX_BROADCAST    0x18   /* tx_bcast */
+#define MIB_TX_MULTICAST    0x19   /* tx_mcast */
+#define MIB_TX_UNICAST      0x1A   /* tx_ucast */
+#define MIB_TX_DEFERRED     0x1B   /* tx_deferred */
+#define MIB_TX_TOTAL_COL    0x1C   /* tx_total_col */
+#define MIB_TX_EXCESS_COL   0x1D   /* tx_exc_col */
+#define MIB_TX_SINGLE_COL   0x1E   /* tx_single_col */
+#define MIB_TX_MULTI_COL    0x1F   /* tx_mult_col */
+
+/* Total/discard counters */
+#define MIB_RX_TOTAL        0x80   /* rx_total */
+#define MIB_TX_TOTAL        0x81   /* tx_total */
+#define MIB_RX_DISCARDS     0x82   /* rx_discards */
+#define MIB_TX_DISCARDS     0x83   /* tx_discards */
 
 /* Read MIB counter using indirect access */
 static uint32_t read_mib(uint8_t port, uint8_t index) {
@@ -109,30 +128,27 @@ static uint32_t read_mib(uint8_t port, uint8_t index) {
 }
 
 static void read_lan_stats(rgmii_stats_t* s, uint8_t port) {
-    /* Calculate RX total from individual counters (broadcast test packets) */
-    uint32_t rx_bcast = read_mib(port, MIB_RX_BROADCAST);
-    uint32_t rx_mcast = read_mib(port, MIB_RX_MULTICAST);
-    uint32_t rx_ucast = read_mib(port, MIB_RX_UNICAST);
-    s->lan_rx_good      = rx_bcast + rx_mcast + rx_ucast;
-
+    /* RX counters - use MIB_RX_TOTAL (0x80) which is valid for KSZ9477/LAN9646 */
+    s->lan_rx_good      = read_mib(port, MIB_RX_TOTAL);
     s->lan_rx_crc_err   = read_mib(port, MIB_RX_CRC);
     s->lan_rx_symbol_err = read_mib(port, MIB_RX_SYMBOL);
     s->lan_rx_undersize = read_mib(port, MIB_RX_UNDERSIZE);
     s->lan_rx_oversize  = read_mib(port, MIB_RX_OVERSIZE);
 
-    /* Calculate TX total from individual counters */
-    uint32_t tx_bcast = read_mib(port, MIB_TX_BROADCAST);
-    uint32_t tx_mcast = read_mib(port, MIB_TX_MULTICAST);
-    uint32_t tx_ucast = read_mib(port, MIB_TX_UNICAST);
-    s->lan_tx_good      = tx_bcast + tx_mcast + tx_ucast;
-
+    /* TX counters - use MIB_TX_TOTAL (0x81) which is valid for KSZ9477/LAN9646 */
+    s->lan_tx_good      = read_mib(port, MIB_TX_TOTAL);
     s->lan_tx_late_col  = read_mib(port, MIB_TX_LATE_COL);
     s->lan_tx_excess_col = read_mib(port, MIB_TX_EXCESS_COL);
 }
 
 static void flush_mib(uint8_t port) {
-    /* Read all MIB counters to clear them (read-to-clear) using indirect access */
-    for (uint8_t i = 0; i < 0x90; i++) {
+    /* Read all MIB counters to clear them (read-to-clear) using indirect access
+     * Valid counters: 0x00-0x1F (RX/TX), 0x80-0x83 (totals/discards)
+     */
+    for (uint8_t i = 0; i <= 0x1F; i++) {
+        (void)read_mib(port, i);
+    }
+    for (uint8_t i = 0x80; i <= 0x83; i++) {
         (void)read_mib(port, i);
     }
 }

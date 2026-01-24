@@ -951,9 +951,9 @@ void rgmii_debug_delay_sweep(void) {
         ctrl &= ~0x40;
         lan_write8(0x6020, ctrl);
 
-        /* Read counters - use broadcast counter since we send broadcast packets */
-        uint32_t lan_rx = lan_read_mib(6, 0x0A);    /* RX Broadcast */
-        uint32_t lan_crc = lan_read_mib(6, 0x06);   /* RX CRC */
+        /* Read counters - 0x80 = rx_total, 0x06 = rx_crc_err */
+        uint32_t lan_rx = lan_read_mib(6, 0x80);    /* RX Total (valid for KSZ9477/LAN9646) */
+        uint32_t lan_crc = lan_read_mib(6, 0x06);   /* RX CRC Error */
         uint32_t gmac_rx = IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD - gmac_rx_before;
         uint32_t gmac_crc = IP_GMAC_0->RX_CRC_ERROR_PACKETS - gmac_crc_before;
 
@@ -1033,47 +1033,49 @@ void rgmii_debug_read_lan9646_mib(lan9646_mib_counters_t* counters) {
 
     memset(counters, 0, sizeof(lan9646_mib_counters_t));
 
-    /* RX Counters */
-    counters->rx_hi_priority_bytes = lan_read_mib(6, 0x00);
-    counters->rx_undersize = lan_read_mib(6, 0x01);
-    counters->rx_fragments = lan_read_mib(6, 0x02);
-    counters->rx_oversize = lan_read_mib(6, 0x03);
-    counters->rx_jabbers = lan_read_mib(6, 0x04);
-    counters->rx_symbol_err = lan_read_mib(6, 0x05);
-    counters->rx_crc_err = lan_read_mib(6, 0x06);
-    counters->rx_align_err = lan_read_mib(6, 0x07);
-    counters->rx_control = lan_read_mib(6, 0x08);
-    counters->rx_pause = lan_read_mib(6, 0x09);
-    counters->rx_broadcast = lan_read_mib(6, 0x0A);
-    counters->rx_multicast = lan_read_mib(6, 0x0B);
-    counters->rx_unicast = lan_read_mib(6, 0x0C);
-    counters->rx_64 = lan_read_mib(6, 0x0D);
-    counters->rx_65_127 = lan_read_mib(6, 0x0E);
-    counters->rx_128_255 = lan_read_mib(6, 0x0F);
-    counters->rx_256_511 = lan_read_mib(6, 0x10);
-    counters->rx_512_1023 = lan_read_mib(6, 0x11);
-    counters->rx_1024_1522 = lan_read_mib(6, 0x12);
-    /* Note: MIB 0x80 may not be valid for KSZ9477/LAN9646
-     * Calculate RX total from individual counters instead */
-    counters->rx_total = counters->rx_broadcast + counters->rx_multicast + counters->rx_unicast;
-    counters->rx_dropped = lan_read_mib(6, 0x82);
+    /* KSZ9477/LAN9646 MIB counter indices (from Linux kernel ksz_common.c):
+     * RX counters: 0x00-0x14
+     * TX counters: 0x15-0x1F
+     * Total/discard counters: 0x80-0x83
+     */
 
-    /* TX Counters */
-    counters->tx_hi_priority_bytes = lan_read_mib(6, 0x60);
-    counters->tx_late_collision = lan_read_mib(6, 0x61);
-    counters->tx_pause = lan_read_mib(6, 0x62);
-    counters->tx_broadcast = lan_read_mib(6, 0x63);
-    counters->tx_multicast = lan_read_mib(6, 0x64);
-    counters->tx_unicast = lan_read_mib(6, 0x65);
-    counters->tx_deferred = lan_read_mib(6, 0x66);
-    counters->tx_total_collision = lan_read_mib(6, 0x67);
-    counters->tx_excess_collision = lan_read_mib(6, 0x68);
-    counters->tx_single_collision = lan_read_mib(6, 0x69);
-    counters->tx_multi_collision = lan_read_mib(6, 0x6A);
-    /* Note: MIB 0x81 may not be valid for KSZ9477/LAN9646
-     * Calculate TX total from individual counters instead */
-    counters->tx_total = counters->tx_broadcast + counters->tx_multicast + counters->tx_unicast;
-    counters->tx_dropped = lan_read_mib(6, 0x83);
+    /* RX Counters (0x00-0x14) */
+    counters->rx_hi_priority_bytes = lan_read_mib(6, 0x00);  /* rx_hi */
+    counters->rx_undersize = lan_read_mib(6, 0x01);          /* rx_undersize */
+    counters->rx_fragments = lan_read_mib(6, 0x02);          /* rx_fragments */
+    counters->rx_oversize = lan_read_mib(6, 0x03);           /* rx_oversize */
+    counters->rx_jabbers = lan_read_mib(6, 0x04);            /* rx_jabbers */
+    counters->rx_symbol_err = lan_read_mib(6, 0x05);         /* rx_symbol_err */
+    counters->rx_crc_err = lan_read_mib(6, 0x06);            /* rx_crc_err */
+    counters->rx_align_err = lan_read_mib(6, 0x07);          /* rx_align_err */
+    counters->rx_control = lan_read_mib(6, 0x08);            /* rx_mac_ctrl */
+    counters->rx_pause = lan_read_mib(6, 0x09);              /* rx_pause */
+    counters->rx_broadcast = lan_read_mib(6, 0x0A);          /* rx_bcast */
+    counters->rx_multicast = lan_read_mib(6, 0x0B);          /* rx_mcast */
+    counters->rx_unicast = lan_read_mib(6, 0x0C);            /* rx_ucast */
+    counters->rx_64 = lan_read_mib(6, 0x0D);                 /* rx_64_or_less */
+    counters->rx_65_127 = lan_read_mib(6, 0x0E);             /* rx_65_127 */
+    counters->rx_128_255 = lan_read_mib(6, 0x0F);            /* rx_128_255 */
+    counters->rx_256_511 = lan_read_mib(6, 0x10);            /* rx_256_511 */
+    counters->rx_512_1023 = lan_read_mib(6, 0x11);           /* rx_512_1023 */
+    counters->rx_1024_1522 = lan_read_mib(6, 0x12);          /* rx_1024_1522 */
+    counters->rx_total = lan_read_mib(6, 0x80);              /* rx_total (valid!) */
+    counters->rx_dropped = lan_read_mib(6, 0x82);            /* rx_discards */
+
+    /* TX Counters (0x15-0x1F) - CORRECTED from Linux kernel driver */
+    counters->tx_hi_priority_bytes = lan_read_mib(6, 0x15);  /* tx_hi */
+    counters->tx_late_collision = lan_read_mib(6, 0x16);     /* tx_late_col */
+    counters->tx_pause = lan_read_mib(6, 0x17);              /* tx_pause */
+    counters->tx_broadcast = lan_read_mib(6, 0x18);          /* tx_bcast */
+    counters->tx_multicast = lan_read_mib(6, 0x19);          /* tx_mcast */
+    counters->tx_unicast = lan_read_mib(6, 0x1A);            /* tx_ucast */
+    counters->tx_deferred = lan_read_mib(6, 0x1B);           /* tx_deferred */
+    counters->tx_total_collision = lan_read_mib(6, 0x1C);    /* tx_total_col */
+    counters->tx_excess_collision = lan_read_mib(6, 0x1D);   /* tx_exc_col */
+    counters->tx_single_collision = lan_read_mib(6, 0x1E);   /* tx_single_col */
+    counters->tx_multi_collision = lan_read_mib(6, 0x1F);    /* tx_mult_col */
+    counters->tx_total = lan_read_mib(6, 0x81);              /* tx_total (valid!) */
+    counters->tx_dropped = lan_read_mib(6, 0x83);            /* tx_discards */
 }
 
 void rgmii_debug_dump_s32k388_mmc(void) {
@@ -1188,8 +1190,13 @@ void rgmii_debug_clear_s32k388_mmc(void) {
 void rgmii_debug_clear_lan9646_mib(void) {
     if (!g_lan) return;
 
-    /* Read all MIB counters to clear them (read-to-clear) */
-    for (uint8_t i = 0; i < 0x90; i++) {
+    /* Read all MIB counters to clear them (read-to-clear)
+     * Valid counters: 0x00-0x1F (RX/TX), 0x80-0x83 (totals/discards)
+     */
+    for (uint8_t i = 0; i <= 0x1F; i++) {
+        (void)lan_read_mib(6, i);
+    }
+    for (uint8_t i = 0x80; i <= 0x83; i++) {
         (void)lan_read_mib(6, i);
     }
     LOG_I(TAG, "LAN9646 Port 6 MIB counters cleared");
@@ -1289,9 +1296,9 @@ uint32_t rgmii_debug_test_tx_path(uint32_t count) {
     }
     if (g_delay) g_delay(50);
 
-    /* Check LAN9646 RX - use broadcast counter since we send broadcast packets */
-    uint32_t lan_rx = lan_read_mib(6, 0x0A);  /* RX Broadcast */
-    uint32_t lan_crc = lan_read_mib(6, 0x06);
+    /* Check LAN9646 RX - 0x80 = rx_total, 0x06 = rx_crc_err */
+    uint32_t lan_rx = lan_read_mib(6, 0x80);  /* RX Total (valid for KSZ9477/LAN9646) */
+    uint32_t lan_crc = lan_read_mib(6, 0x06); /* RX CRC Error */
 
     LOG_I(TAG, "TX Path Test Results:");
     LOG_I(TAG, "  GMAC TX:     %lu packets sent", (unsigned long)sent);
@@ -1339,9 +1346,9 @@ uint32_t rgmii_debug_test_loopback(uint32_t count) {
     ctrl &= ~0x40;
     lan_write8(0x6020, ctrl);
 
-    /* Read counters - use broadcast counter since we send broadcast packets */
-    uint32_t lan_rx = lan_read_mib(6, 0x0A);  /* RX Broadcast */
-    uint32_t lan_crc = lan_read_mib(6, 0x06);
+    /* Read counters - 0x80 = rx_total, 0x06 = rx_crc_err */
+    uint32_t lan_rx = lan_read_mib(6, 0x80);  /* RX Total (valid for KSZ9477/LAN9646) */
+    uint32_t lan_crc = lan_read_mib(6, 0x06); /* RX CRC Error */
     uint32_t gmac_rx = IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD - gmac_rx_before;
     uint32_t gmac_crc = IP_GMAC_0->RX_CRC_ERROR_PACKETS - gmac_crc_before;
 
