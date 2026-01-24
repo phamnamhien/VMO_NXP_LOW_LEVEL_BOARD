@@ -178,13 +178,35 @@ static uint16_t ip_checksum(const uint8_t* data, uint16_t len) {
 /*                          PACKET SEND FUNCTIONS                             */
 /*===========================================================================*/
 
-static void send_packet(uint8_t* data, uint16_t len) {
+/* Get TX buffer from driver and send packet */
+static Gmac_Ip_StatusType send_packet_data(const uint8_t* data, uint16_t len) {
     Gmac_Ip_BufferType buf;
-    buf.Data = data;
+    Gmac_Ip_StatusType status;
+    uint16_t buff_id;
+
+    /* Request buffer from driver's TX ring */
+    buf.Length = len;
+    status = Gmac_Ip_GetTxBuff(0, 0, &buf, &buff_id);
+
+    if (status != GMAC_STATUS_SUCCESS) {
+        LOG_E(TAG, "GetTxBuff failed: %d", (int)status);
+        return status;
+    }
+
+    /* Copy data to driver's DMA buffer */
+    memcpy(buf.Data, data, len);
     buf.Length = len;
 
-    Gmac_Ip_SendFrame(0, 0, &buf, NULL);
-    g_tx_count++;
+    /* Send the frame */
+    status = Gmac_Ip_SendFrame(0, 0, &buf, NULL);
+
+    if (status == GMAC_STATUS_SUCCESS) {
+        g_tx_count++;
+    } else {
+        LOG_E(TAG, "SendFrame failed: %d", (int)status);
+    }
+
+    return status;
 }
 
 /* Send UDP broadcast packet */
@@ -238,7 +260,7 @@ static void send_broadcast(void) {
         pkt[len++] = 0;
     }
 
-    send_packet(pkt, len);
+    send_packet_data(pkt, len);
     LOG_I(TAG, "TX Broadcast #%lu", (unsigned long)seq);
 }
 
@@ -291,7 +313,7 @@ static void handle_arp(uint8_t* pkt, uint16_t len) {
     /* Pad to 60 bytes */
     memset(&reply[42], 0, 18);
 
-    send_packet(reply, 60);
+    send_packet_data(reply, 60);
     LOG_I(TAG, "ARP Reply sent");
 }
 
@@ -358,7 +380,7 @@ static void handle_icmp(uint8_t* pkt, uint16_t len) {
     reply_icmp[2] = icmp_csum >> 8;
     reply_icmp[3] = icmp_csum & 0xFF;
 
-    send_packet(reply, total_len);
+    send_packet_data(reply, total_len);
     LOG_I(TAG, "PONG sent");
 }
 
