@@ -1,7 +1,6 @@
 /**
  * @file    log_debug.c
- * @brief   Debug logging using NXP MCAL UART driver
- * @note    Uses Uart_SyncSend for reliable blocking transmission
+ * @brief   Debug logging using NXP MCAL UART driver (Baremetal)
  */
 
 #include "log_debug.h"
@@ -9,40 +8,30 @@
 #include <string.h>
 #include <stdio.h>
 
-/* FreeRTOS for timestamps */
-#include "FreeRTOS.h"
-#include "task.h"
-
 /*===========================================================================*/
 /*                          CONFIGURATION                                     */
 /*===========================================================================*/
 
-/* UART channel configured in EB Tresos */
 #define LOG_UART_CHANNEL    0U
-
-/* Timeout for UART transmission (microseconds) */
-#define LOG_UART_TIMEOUT_US 10000U  /* 10ms timeout - sufficient for 256 bytes at 115200 baud */
+#define LOG_UART_TIMEOUT_US 10000U  /* 10ms timeout */
 
 /*===========================================================================*/
 /*                          STATE                                             */
 /*===========================================================================*/
 
 static log_level_t current_level = LOG_LEVEL_INFO;
-static uint8_t is_initialized = 0;
-static uint32_t pre_scheduler_ms = 0;
+static uint32_t log_counter = 0;
 
 /*===========================================================================*/
-/*                          PUBLIC API                                         */
+/*                          PUBLIC API                                        */
 /*===========================================================================*/
 
 void log_init(void) {
-    /* Uart_Init() should be called before this in main() */
-    pre_scheduler_ms = 0;
-    is_initialized = 1;
+    log_counter = 0;
 }
 
 void log_start_flush_timer(void) {
-    /* No-op - using blocking Uart_SyncSend */
+    /* No-op for baremetal */
 }
 
 void log_set_level(log_level_t level) {
@@ -64,21 +53,12 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         default: return;
     }
 
-    /* Get elapsed time */
-    uint32_t elapsed_ms;
-    if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
-        TickType_t current_tick = xTaskGetTickCount();
-        elapsed_ms = (uint32_t)(current_tick * 1000U / configTICK_RATE_HZ);
-    } else {
-        elapsed_ms = pre_scheduler_ms++;
-    }
-
-    uint32_t sec = elapsed_ms / 1000U;
-    uint32_t ms = elapsed_ms % 1000U;
+    /* Simple counter-based timestamp */
+    log_counter++;
 
     /* Format the complete message */
-    int len = snprintf(buffer, sizeof(buffer), "[%lu.%03lu] %s (%s): ",
-                      (unsigned long)sec, (unsigned long)ms, level_str, tag);
+    int len = snprintf(buffer, sizeof(buffer), "[%05lu] %s (%s): ",
+                      (unsigned long)log_counter, level_str, tag);
 
     va_list args;
     va_start(args, format);
@@ -92,17 +72,14 @@ void log_write(log_level_t level, const char* tag, const char* format, ...) {
         buffer[len] = '\0';
     }
 
-    /*
-     * Use Uart_SyncSend - blocking send with timeout
-     * This is the proper MCAL way to send data synchronously
-     */
+    /* Blocking UART send */
     (void)Uart_SyncSend(LOG_UART_CHANNEL, (const uint8*)buffer, (uint32)len, LOG_UART_TIMEOUT_US);
 }
 
 void log_flush(void) {
-    /* No-op - Uart_SyncSend already blocks until complete */
+    /* No-op - Uart_SyncSend already blocks */
 }
 
 void log_flush_blocking(void) {
-    /* No-op - Uart_SyncSend already blocks until complete */
+    /* No-op - Uart_SyncSend already blocks */
 }
