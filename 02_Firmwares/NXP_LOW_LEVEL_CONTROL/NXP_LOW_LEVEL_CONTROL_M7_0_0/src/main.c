@@ -292,6 +292,9 @@ static void device_init(void) {
 static void diagnostic_task(void *pvParameters) {
     (void)pvParameters;
 
+    /* Enable FreeRTOS tick now that scheduler is running */
+    SysTick_SetSchedulerStarted();
+
     /* Start log auto-flush timer (runs every 10ms to drain ring buffer) */
     log_start_flush_timer();
 
