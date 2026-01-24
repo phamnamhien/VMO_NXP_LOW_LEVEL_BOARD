@@ -302,21 +302,21 @@ static void diagnostic_task(void *pvParameters) {
     /* Step 1: Quick config summary */
     LOG_I(TAG, "[STEP 1] Quick Configuration Summary");
     rgmii_debug_quick_summary();
+    vTaskDelay(pdMS_TO_TICKS(100));  /* Allow UART to flush */
 
     /* Step 2: Full RX path analysis (includes loopback test) */
     LOG_I(TAG, "");
     LOG_I(TAG, "[STEP 2] Full RX Path Analysis");
     rx_debug_full_analysis();
+    vTaskDelay(pdMS_TO_TICKS(100));  /* Allow UART to flush */
 
-    /* Step 3: TX Delay sweep */
+    /* Step 3: TX Delay sweep to find optimal timing */
     LOG_I(TAG, "");
     LOG_I(TAG, "[STEP 3] TX Delay Sweep");
     rx_debug_delay_sweep();
+    vTaskDelay(pdMS_TO_TICKS(100));  /* Allow UART to flush */
 
-    /* Step 4: Auto diagnosis */
-    LOG_I(TAG, "");
-    LOG_I(TAG, "[STEP 4] Auto Diagnosis");
-    rx_debug_auto_diagnose();
+    /* Note: rx_debug_auto_diagnose() removed - it duplicates STEP 2 and 3 */
 
     /* Get final RX count for summary */
     uint32_t rx_count = IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD;
