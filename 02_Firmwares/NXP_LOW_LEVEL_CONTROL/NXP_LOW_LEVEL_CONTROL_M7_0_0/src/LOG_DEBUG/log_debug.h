@@ -1,17 +1,14 @@
-/*
- * log_debug.h
- *
- *  Created on: Jan 6, 2026
- *      Author: phamnamhien
+/**
+ * @file    log_debug.h
+ * @brief   Debug logging using simple direct UART access
  */
 
 #ifndef LOG_DEBUG_H_
 #define LOG_DEBUG_H_
 
-#include "CDD_Uart.h"
-#include "Lpuart_Uart_Ip_Irq.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 
 /* Debug levels */
 typedef enum {
@@ -22,9 +19,6 @@ typedef enum {
     LOG_LEVEL_DEBUG,
     LOG_LEVEL_VERBOSE
 } log_level_t;
-
-/* Debug UART channel */
-#define LOG_UART_CHANNEL 0
 
 /* Log macros */
 #define LOG_E(tag, ...) log_write(LOG_LEVEL_ERROR, tag, __VA_ARGS__)
@@ -38,10 +32,12 @@ void log_init(void);
 void log_set_level(log_level_t level);
 void log_write(log_level_t level, const char* tag, const char* format, ...);
 
-/* Ring buffer management */
-void log_start_flush_timer(void); /* Start auto-flush timer (call after scheduler starts) */
-void log_flush(void);             /* Non-blocking: pump data from ring buffer */
-void log_flush_blocking(void);    /* Blocking: wait for all data to be sent */
+/* Compatibility functions (no-op in simple mode) */
+void log_start_flush_timer(void);
+void log_flush(void);
+void log_flush_blocking(void);
+
+/* Test function - run this to verify UART works */
+void log_test_uart(void);
 
 #endif /* LOG_DEBUG_H_ */
-
