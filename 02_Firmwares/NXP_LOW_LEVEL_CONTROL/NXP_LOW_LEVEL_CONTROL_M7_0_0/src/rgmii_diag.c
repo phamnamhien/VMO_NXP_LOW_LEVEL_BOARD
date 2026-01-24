@@ -58,40 +58,82 @@ static void read_gmac_stats(rgmii_stats_t* s) {
     s->gmac_rx_oversize = IP_GMAC_0->RX_OVERSIZE_PACKETS_GOOD;
 }
 
-/* LAN9646 MIB counter offsets for Port 6 */
-#define MIB_BASE(port)      (0x0500 + ((port) * 0x80))
-#define MIB_RX_TOTAL        0x08
-#define MIB_RX_CRC          0x34
-#define MIB_RX_SYMBOL       0x3C
-#define MIB_RX_UNDERSIZE    0x24
-#define MIB_RX_OVERSIZE     0x30
-#define MIB_TX_TOTAL        0x50
-#define MIB_TX_LATE_COL     0x64
-#define MIB_TX_EXCESS_COL   0x68
+/* LAN9646/KSZ9477 MIB counter indices for INDIRECT access
+ * Port N registers are at 0xN000 (e.g., Port 6 = 0x6000)
+ * MIB control register: port_base + 0x0500
+ * MIB data register:    port_base + 0x0504
+ *
+ * KSZ9477 MIB counter indices (indirect access):
+ * - 0x00-0x1F: RX counters
+ * - 0x60-0x7F: TX counters
+ */
+#define MIB_CTRL(port)      (((uint16_t)(port) << 12) | 0x0500)
+#define MIB_DATA(port)      (((uint16_t)(port) << 12) | 0x0504)
 
-static uint32_t read_mib(uint8_t port, uint8_t offset) {
-    uint32_t val;
-    lan9646_read_reg32(g_lan, MIB_BASE(port) | offset, &val);
-    return val;
+/* RX MIB counter indices (indirect access) */
+#define MIB_RX_BROADCAST    0x0A   /* RxBroadcast */
+#define MIB_RX_MULTICAST    0x0B   /* RxMulticast */
+#define MIB_RX_UNICAST      0x0C   /* RxUnicast */
+#define MIB_RX_CRC          0x06   /* RxCRCError */
+#define MIB_RX_SYMBOL       0x05   /* RxSymbolError */
+#define MIB_RX_UNDERSIZE    0x01   /* RxUndersize */
+#define MIB_RX_OVERSIZE     0x03   /* RxOversize */
+
+/* TX MIB counter indices (indirect access) */
+#define MIB_TX_BROADCAST    0x63   /* TxBroadcast */
+#define MIB_TX_MULTICAST    0x64   /* TxMulticast */
+#define MIB_TX_UNICAST      0x65   /* TxUnicast */
+#define MIB_TX_LATE_COL     0x61   /* TxLateCollision */
+#define MIB_TX_EXCESS_COL   0x68   /* TxExcessCollision */
+
+/* Read MIB counter using indirect access */
+static uint32_t read_mib(uint8_t port, uint8_t index) {
+    if (!g_lan) return 0;
+
+    uint32_t ctrl, data = 0;
+    uint32_t timeout = 1000;
+
+    /* Set MIB index and read enable (bit25) */
+    ctrl = ((uint32_t)index << 16) | 0x02000000UL;
+    lan9646_write_reg32(g_lan, MIB_CTRL(port), ctrl);
+
+    /* Wait for read complete (bit25 clears) */
+    do {
+        lan9646_read_reg32(g_lan, MIB_CTRL(port), &ctrl);
+        if (--timeout == 0) break;
+    } while (ctrl & 0x02000000UL);
+
+    /* Read data */
+    lan9646_read_reg32(g_lan, MIB_DATA(port), &data);
+    return data;
 }
 
 static void read_lan_stats(rgmii_stats_t* s, uint8_t port) {
-    s->lan_rx_good      = read_mib(port, MIB_RX_TOTAL);
+    /* Calculate RX total from individual counters (broadcast test packets) */
+    uint32_t rx_bcast = read_mib(port, MIB_RX_BROADCAST);
+    uint32_t rx_mcast = read_mib(port, MIB_RX_MULTICAST);
+    uint32_t rx_ucast = read_mib(port, MIB_RX_UNICAST);
+    s->lan_rx_good      = rx_bcast + rx_mcast + rx_ucast;
+
     s->lan_rx_crc_err   = read_mib(port, MIB_RX_CRC);
     s->lan_rx_symbol_err = read_mib(port, MIB_RX_SYMBOL);
     s->lan_rx_undersize = read_mib(port, MIB_RX_UNDERSIZE);
     s->lan_rx_oversize  = read_mib(port, MIB_RX_OVERSIZE);
-    s->lan_tx_good      = read_mib(port, MIB_TX_TOTAL);
+
+    /* Calculate TX total from individual counters */
+    uint32_t tx_bcast = read_mib(port, MIB_TX_BROADCAST);
+    uint32_t tx_mcast = read_mib(port, MIB_TX_MULTICAST);
+    uint32_t tx_ucast = read_mib(port, MIB_TX_UNICAST);
+    s->lan_tx_good      = tx_bcast + tx_mcast + tx_ucast;
+
     s->lan_tx_late_col  = read_mib(port, MIB_TX_LATE_COL);
     s->lan_tx_excess_col = read_mib(port, MIB_TX_EXCESS_COL);
 }
 
 static void flush_mib(uint8_t port) {
-    /* Read all counters to clear them (read-to-clear) */
-    uint16_t base = MIB_BASE(port);
-    uint32_t dummy;
-    for (uint16_t i = 0; i < 0x80; i += 4) {
-        lan9646_read_reg32(g_lan, base | i, &dummy);
+    /* Read all MIB counters to clear them (read-to-clear) using indirect access */
+    for (uint8_t i = 0; i < 0x90; i++) {
+        (void)read_mib(port, i);
     }
 }
 

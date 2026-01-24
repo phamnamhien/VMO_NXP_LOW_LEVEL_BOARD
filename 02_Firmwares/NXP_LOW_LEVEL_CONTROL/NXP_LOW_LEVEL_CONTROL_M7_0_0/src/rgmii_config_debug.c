@@ -951,8 +951,8 @@ void rgmii_debug_delay_sweep(void) {
         ctrl &= ~0x40;
         lan_write8(0x6020, ctrl);
 
-        /* Read counters */
-        uint32_t lan_rx = lan_read_mib(6, 0x80);    /* RX Total */
+        /* Read counters - use broadcast counter since we send broadcast packets */
+        uint32_t lan_rx = lan_read_mib(6, 0x0A);    /* RX Broadcast */
         uint32_t lan_crc = lan_read_mib(6, 0x06);   /* RX CRC */
         uint32_t gmac_rx = IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD - gmac_rx_before;
         uint32_t gmac_crc = IP_GMAC_0->RX_CRC_ERROR_PACKETS - gmac_crc_before;
@@ -1053,7 +1053,9 @@ void rgmii_debug_read_lan9646_mib(lan9646_mib_counters_t* counters) {
     counters->rx_256_511 = lan_read_mib(6, 0x10);
     counters->rx_512_1023 = lan_read_mib(6, 0x11);
     counters->rx_1024_1522 = lan_read_mib(6, 0x12);
-    counters->rx_total = lan_read_mib(6, 0x80);
+    /* Note: MIB 0x80 may not be valid for KSZ9477/LAN9646
+     * Calculate RX total from individual counters instead */
+    counters->rx_total = counters->rx_broadcast + counters->rx_multicast + counters->rx_unicast;
     counters->rx_dropped = lan_read_mib(6, 0x82);
 
     /* TX Counters */
@@ -1068,7 +1070,9 @@ void rgmii_debug_read_lan9646_mib(lan9646_mib_counters_t* counters) {
     counters->tx_excess_collision = lan_read_mib(6, 0x68);
     counters->tx_single_collision = lan_read_mib(6, 0x69);
     counters->tx_multi_collision = lan_read_mib(6, 0x6A);
-    counters->tx_total = lan_read_mib(6, 0x81);
+    /* Note: MIB 0x81 may not be valid for KSZ9477/LAN9646
+     * Calculate TX total from individual counters instead */
+    counters->tx_total = counters->tx_broadcast + counters->tx_multicast + counters->tx_unicast;
     counters->tx_dropped = lan_read_mib(6, 0x83);
 }
 
@@ -1285,8 +1289,8 @@ uint32_t rgmii_debug_test_tx_path(uint32_t count) {
     }
     if (g_delay) g_delay(50);
 
-    /* Check LAN9646 RX */
-    uint32_t lan_rx = lan_read_mib(6, 0x80);
+    /* Check LAN9646 RX - use broadcast counter since we send broadcast packets */
+    uint32_t lan_rx = lan_read_mib(6, 0x0A);  /* RX Broadcast */
     uint32_t lan_crc = lan_read_mib(6, 0x06);
 
     LOG_I(TAG, "TX Path Test Results:");
@@ -1335,8 +1339,8 @@ uint32_t rgmii_debug_test_loopback(uint32_t count) {
     ctrl &= ~0x40;
     lan_write8(0x6020, ctrl);
 
-    /* Read counters */
-    uint32_t lan_rx = lan_read_mib(6, 0x80);
+    /* Read counters - use broadcast counter since we send broadcast packets */
+    uint32_t lan_rx = lan_read_mib(6, 0x0A);  /* RX Broadcast */
     uint32_t lan_crc = lan_read_mib(6, 0x06);
     uint32_t gmac_rx = IP_GMAC_0->RX_PACKETS_COUNT_GOOD_BAD - gmac_rx_before;
     uint32_t gmac_crc = IP_GMAC_0->RX_CRC_ERROR_PACKETS - gmac_crc_before;
