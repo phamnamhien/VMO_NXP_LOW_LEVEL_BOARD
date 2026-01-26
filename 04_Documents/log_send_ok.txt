@@ -1,0 +1,291 @@
+[D] (NET): TX: sent 60 bytes OK
+
+[I] (NET): TX Broadcast #10
+[I] (NET): Status: RX=140 TX=13 PING=0 ARP=3
+[I] (NET): 
+[I] (NET): ============================================
+[I] (NET):   S32K388 Network Application
+[I] (NET):   IP: 192.168.1.200
+[I] (NET):   MAC: 10:11:22:77:77:77
+[I] (NET): ============================================
+[I] (NET): 
+[I] (NET): Initializing LAN9646...
+[I] (NET):   Chip ID: 0x9477
+[I] (NET): LAN9646 OK
+[I] (NET): Initializing GMAC...
+[I] (NET): GMAC OK
+[I] (NET): 
+[I] (NET): Ready! Broadcast every 5s, responding to ping...
+[I] (NET): 
+[D] (NET): TX: sent 60 bytes OK
+
+[I] (NET): TX Broadcast #1
+[I] (NET): Status: RX=112 TX=1 PING=0 ARP=0
+[D] (NET): TX: sent 60 bytes OK
+
+[I] (NET): TX Broadcast #2
+[I] (NET): Status: RX=131 TX=2 PING=0 ARP=0
+[D] (NET): TX: sent 60 bytes OK
+
+[I] (NET): TX Broadcast #3
+[I] (NET): Status: RX=140 TX=3 PING=0 ARP=0
+[D] (NET): TX: sent 60 bytes OK
+
+[I] (NET): TX Broadcast #4
+[I] (NET): Status: RX=148 TX=4 PING=0 ARP=0
+[I] (NET): ARP Request from 192.168.1.199
+[D] (NET): TX: sent 60 bytes OK
+[I] (NET): ARP Reply sent
+[I] (NET): PING from 192.168.1.199 (len=74, ip_hdr=20)
+[I] (NET): Sending PONG len=74
+[D] (NET): TX: sent 74 bytes OK
+[I] (NET): PONG sent OK
+[I] (NET): PING from 192.168.1.199 (len=74, ip_hdr=20)
+[I] (NET): Sending PONG len=74
+[D] (NET): TX: sent 74 bytes OK
+[I] (NET): PONG sent OK
+[D] (NET): TX: sent 60 bytes OK
+
+[I] (NET): TX Broadcast #5
+[I] (NET): Status: RX=159 TX=8 PING=2 ARP=1
+[I] (NET): PING from 192.168.1.199 (len=74, ip_hdr=20)
+[I] (NET): Sending PONG len=74
+[D] (NET): TX: sent 74 bytes OK
+[I] (NET): PONG sent OK
+[I] (NET): PING from 192.168.1.199 (len=74, ip_hdr=20)
+[I] (NET): Sending PONG len=74
+[D] (NET): TX: sent 74 bytes OK
+[I] (NET): PONG sent OK
+[D] (NET): TX: sent 60 bytes OK
+
+[I] (NET): TX Broadcast #6
+[I] (NET): Status: RX=180 TX=11 PING=4 ARP=1
+[D] (NET): TX: sent 60 bytes OK
+
+[I] (NET): TX Broadcast #7
+[I] (NET): Status: RX=187 TX=12 PING=4 ARP=1
+
+
+
+
+1	0.000000	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+2	0.698022	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+3	1.692681	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+4	3.015416	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+5	3.700773	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+6	4.420529	192.168.1.200	255.255.255.255	UDP	60	5000 → 5000 Len=16
+7	4.695494	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+8	5.705547	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+9	6.700262	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+10	8.580463	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+11	9.202549	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+12	9.935864	fe80::fb1a:5b4c:6a17:f35b	ff02::1:2	DHCPv6	157	Solicit XID: 0xd61101 CID: 0001000130cd5eb0183d2df66959 
+13	10.200717	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+14	12.585289	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+15	13.181152	192.168.1.200	255.255.255.255	UDP	60	5000 → 5000 Len=16
+16	13.194000	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+17	14.192574	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+18	15.918119	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+19	16.695103	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+20	17.693435	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+21	18.692279	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+22	19.704873	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+23	20.210116	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.200? Tell 192.168.1.199
+24	20.216301	10:11:22:77:77:77	LCFCElectron_f6:69:59	ARP	60	192.168.1.200 is at 10:11:22:77:77:77
+25	20.216318	192.168.1.199	192.168.1.200	ICMP	74	Echo (ping) request  id=0x0001, seq=391/34561, ttl=128 (reply in 26)
+26	20.231088	192.168.1.200	192.168.1.199	ICMP	74	Echo (ping) reply    id=0x0001, seq=391/34561, ttl=128 (request in 25)
+27	20.705046	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+28	21.221062	192.168.1.199	192.168.1.200	ICMP	74	Echo (ping) request  id=0x0001, seq=392/34817, ttl=128 (reply in 29)
+29	21.231424	192.168.1.200	192.168.1.199	ICMP	74	Echo (ping) reply    id=0x0001, seq=392/34817, ttl=128 (request in 28)
+30	21.976703	192.168.1.200	255.255.255.255	UDP	60	5000 → 5000 Len=16
+31	22.236351	192.168.1.199	192.168.1.200	ICMP	74	Echo (ping) request  id=0x0001, seq=393/35073, ttl=128 (reply in 32)
+32	22.247560	192.168.1.200	192.168.1.199	ICMP	74	Echo (ping) reply    id=0x0001, seq=393/35073, ttl=128 (request in 31)
+33	22.308486	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+34	23.201359	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+35	23.248109	192.168.1.199	192.168.1.200	ICMP	74	Echo (ping) request  id=0x0001, seq=394/35329, ttl=128 (reply in 36)
+36	23.258084	192.168.1.200	192.168.1.199	ICMP	74	Echo (ping) reply    id=0x0001, seq=394/35329, ttl=128 (request in 35)
+37	24.201385	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+38	26.107724	192.168.1.199	224.0.0.251	MDNS	276	Standard query response 0x0000 PTR DESKTOP-8L2A9D2._dosvc._tcp.local SRV 0 0 7680 DESKTOP-8L2A9D2.local TXT
+39	26.108097	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	296	Standard query response 0x0000 PTR DESKTOP-8L2A9D2._dosvc._tcp.local SRV 0 0 7680 DESKTOP-8L2A9D2.local TXT
+40	26.108562	192.168.1.199	224.0.0.251	MDNS	93	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QM" question
+41	26.108843	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	113	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QM" question
+42	26.311341	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+43	26.376555	192.168.1.199	224.0.0.251	MDNS	93	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QM" question
+44	26.376897	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	113	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QM" question
+45	26.642956	192.168.1.199	224.0.0.251	MDNS	93	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QM" question
+46	26.643626	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	113	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QM" question
+47	26.910042	192.168.1.199	224.0.0.251	MDNS	341	Standard query response 0x0000 PTR, cache flush DESKTOP-8L2A9D2._dosvc._tcp.local SRV, cache flush 0 0 7680 DESKTOP-8L2A9D2.local TXT, cache flush A, cache flush 192.168.1.199 AAAA, cache flush fe80::fb1a:5b4c:6a17:f35b
+48	26.910466	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	361	Standard query response 0x0000 PTR, cache flush DESKTOP-8L2A9D2._dosvc._tcp.local SRV, cache flush 0 0 7680 DESKTOP-8L2A9D2.local TXT, cache flush A, cache flush 192.168.1.199 AAAA, cache flush fe80::fb1a:5b4c:6a17:f35b
+49	26.910789	192.168.1.199	224.0.0.251	MDNS	277	Standard query response 0x0000 SRV, cache flush 0 0 7680 DESKTOP-8L2A9D2.local TXT, cache flush A, cache flush 192.168.1.199 AAAA, cache flush fe80::fb1a:5b4c:6a17:f35b
+50	26.911090	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	297	Standard query response 0x0000 SRV, cache flush 0 0 7680 DESKTOP-8L2A9D2.local TXT, cache flush A, cache flush 192.168.1.199 AAAA, cache flush fe80::fb1a:5b4c:6a17:f35b
+51	27.204926	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+52	28.199177	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+53	30.322161	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+54	30.763128	192.168.1.200	255.255.255.255	UDP	60	5000 → 5000 Len=16
+55	31.198273	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+56	32.194827	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+57	33.199853	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+58	34.194661	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+59	35.346462	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+60	36.204603	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+61	37.200835	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+62	41.844963	LCFCElectron_f6:69:59	Nearest-Bridge	LLDP	67	LA/DESKTOP-8L2A9D2 MA/18:3d:2d:f6:69:59 3601 
+63	41.885660	fe80::fb1a:5b4c:6a17:f35b	ff02::1:2	DHCPv6	120	Information-request XID: 0x084fd7 CID: 0001000130cd5eb0183d2df66959 
+64	41.906511	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+65	41.930307	fe80::fb1a:5b4c:6a17:f35b	ff02::1:2	DHCPv6	157	Solicit XID: 0x830339 CID: 0001000130cd5eb0183d2df66959 
+66	42.198025	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.199? (ARP Probe)
+67	42.198123	192.168.1.199	224.0.0.22	IGMPv3	54	Membership Report / Join group 224.0.0.251 for any sources
+68	42.198199	::	ff02::1:ff17:f35b	ICMPv6	78	Neighbor Solicitation for fe80::fb1a:5b4c:6a17:f35b
+69	42.198226	fe80::fb1a:5b4c:6a17:f35b	ff02::2	ICMPv6	62	Router Solicitation
+70	42.198258	fe80::fb1a:5b4c:6a17:f35b	ff02::16	ICMPv6	110	Multicast Listener Report Message v2
+71	42.387959	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+72	42.529031	fe80::fb1a:5b4c:6a17:f35b	ff02::16	ICMPv6	90	Multicast Listener Report Message v2
+73	42.529064	192.168.1.199	224.0.0.22	IGMPv3	54	Membership Report / Leave group 224.0.0.251
+74	42.534671	192.168.1.199	224.0.0.22	IGMPv3	54	Membership Report / Join group 224.0.0.251 for any sources
+75	42.534802	fe80::fb1a:5b4c:6a17:f35b	ff02::16	ICMPv6	90	Multicast Listener Report Message v2
+76	42.535570	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+77	42.535674	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+78	42.535923	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+79	42.535979	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+80	42.701206	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+81	42.701260	192.168.1.199	224.0.0.22	IGMPv3	54	Membership Report / Join group 224.0.0.251 for any sources
+82	42.701291	fe80::fb1a:5b4c:6a17:f35b	ff02::16	ICMPv6	110	Multicast Listener Report Message v2
+83	42.857560	LCFCElectron_f6:69:59	Nearest-Bridge	LLDP	67	LA/DESKTOP-8L2A9D2 MA/18:3d:2d:f6:69:59 3601 
+84	42.935714	fe80::fb1a:5b4c:6a17:f35b	ff02::1:2	DHCPv6	157	Solicit XID: 0x830339 CID: 0001000130cd5eb0183d2df66959 
+85	43.202085	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.199? (ARP Probe)
+86	43.202211	fe80::fb1a:5b4c:6a17:f35b	ff02::1	ICMPv6	86	Neighbor Advertisement fe80::fb1a:5b4c:6a17:f35b (ovr) is at 18:3d:2d:f6:69:59
+87	43.214794	fe80::fb1a:5b4c:6a17:f35b	ff02::16	ICMPv6	90	Multicast Listener Report Message v2
+88	43.214917	192.168.1.199	224.0.0.22	IGMPv3	54	Membership Report / Join group 224.0.0.252 for any sources
+89	43.215363	fe80::fb1a:5b4c:6a17:f35b	ff02::1:3	LLMNR	95	Standard query 0x0a75 ANY DESKTOP-8L2A9D2
+90	43.215499	192.168.1.199	224.0.0.252	LLMNR	75	Standard query 0x0a75 ANY DESKTOP-8L2A9D2
+91	43.220293	fe80::fb1a:5b4c:6a17:f35b	ff02::16	ICMPv6	90	Multicast Listener Report Message v2
+92	43.220647	192.168.1.199	224.0.0.22	IGMPv3	54	Membership Report / Join group 239.255.255.250 for any sources
+93	43.546444	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+94	43.546597	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+95	43.547060	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+96	43.547195	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+97	43.639918	fe80::fb1a:5b4c:6a17:f35b	ff02::1:3	LLMNR	95	Standard query 0x0a75 ANY DESKTOP-8L2A9D2
+98	43.639982	192.168.1.199	224.0.0.252	LLMNR	75	Standard query 0x0a75 ANY DESKTOP-8L2A9D2
+99	43.700306	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+100	43.700327	192.168.1.199	224.0.0.22	IGMPv3	62	Membership Report / Join group 224.0.0.252 for any sources / Join group 239.255.255.250 for any sources
+101	43.700377	fe80::fb1a:5b4c:6a17:f35b	ff02::16	ICMPv6	110	Multicast Listener Report Message v2
+102	43.856381	LCFCElectron_f6:69:59	Nearest-Bridge	LLDP	67	LA/DESKTOP-8L2A9D2 MA/18:3d:2d:f6:69:59 3601 
+103	44.092264	192.168.1.199	239.255.255.250	SSDP	179	M-SEARCH * HTTP/1.1 
+104	44.201618	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.199? (ARP Probe)
+105	44.217283	192.168.1.199	224.0.0.251	MDNS	93	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+106	44.217647	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	113	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+107	44.341806	192.168.1.199	224.0.0.251	MDNS	93	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+108	44.342097	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	113	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+109	44.403923	192.168.1.199	224.0.0.251	MDNS	93	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+110	44.404391	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	113	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+111	44.513504	192.168.1.199	224.0.0.251	MDNS	212	Standard query response 0x0000 SRV, cache flush 0 0 7680 DESKTOP-8L2A9D2.local TXT, cache flush
+112	44.513797	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	232	Standard query response 0x0000 SRV, cache flush 0 0 7680 DESKTOP-8L2A9D2.local TXT, cache flush
+113	44.561329	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+114	44.699593	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+115	44.856300	LCFCElectron_f6:69:59	Nearest-Bridge	LLDP	67	LA/DESKTOP-8L2A9D2 MA/18:3d:2d:f6:69:59 3601 
+116	44.948971	fe80::fb1a:5b4c:6a17:f35b	ff02::1:2	DHCPv6	157	Solicit XID: 0x830339 CID: 0001000130cd5eb0183d2df66959 
+117	45.199100	LCFCElectron_f6:69:59	Broadcast	ARP	42	ARP Announcement for 192.168.1.199
+118	45.202684	fe80::fb1a:5b4c:6a17:f35b	ff02::16	ICMPv6	90	Multicast Listener Report Message v2
+119	45.202692	192.168.1.199	224.0.0.22	IGMPv3	54	Membership Report / Leave group 224.0.0.252
+120	45.218607	fe80::fb1a:5b4c:6a17:f35b	ff02::16	ICMPv6	90	Multicast Listener Report Message v2
+121	45.218945	192.168.1.199	224.0.0.22	IGMPv3	54	Membership Report / Join group 224.0.0.252 for any sources
+122	45.219397	fe80::fb1a:5b4c:6a17:f35b	ff02::1:3	LLMNR	95	Standard query 0xd363 ANY DESKTOP-8L2A9D2
+123	45.219529	192.168.1.199	224.0.0.252	LLMNR	75	Standard query 0xd363 ANY DESKTOP-8L2A9D2
+124	45.281024	192.168.1.199	192.168.1.255	NBNS	110	Registration NB DESKTOP-8L2A9D2<00>
+125	45.281238	192.168.1.199	192.168.1.255	NBNS	110	Registration NB WORKGROUP<00>
+126	45.281348	192.168.1.199	192.168.1.255	NBNS	110	Registration NB DESKTOP-8L2A9D2<20>
+127	45.558818	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+128	45.558948	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+129	45.559241	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+130	45.559339	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+131	45.574192	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+132	45.636884	fe80::fb1a:5b4c:6a17:f35b	ff02::1:3	LLMNR	95	Standard query 0xd363 ANY DESKTOP-8L2A9D2
+133	45.636958	192.168.1.199	224.0.0.252	LLMNR	75	Standard query 0xd363 ANY DESKTOP-8L2A9D2
+134	45.700751	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+135	45.700772	192.168.1.199	224.0.0.22	IGMPv3	54	Membership Report / Join group 224.0.0.252 for any sources
+136	45.700827	fe80::fb1a:5b4c:6a17:f35b	ff02::16	ICMPv6	90	Multicast Listener Report Message v2
+137	46.045271	192.168.1.199	192.168.1.255	NBNS	110	Registration NB DESKTOP-8L2A9D2<20>
+138	46.045346	192.168.1.199	192.168.1.255	NBNS	110	Registration NB WORKGROUP<00>
+139	46.045396	192.168.1.199	192.168.1.255	NBNS	110	Registration NB DESKTOP-8L2A9D2<00>
+140	46.201249	fe80::fb1a:5b4c:6a17:f35b	ff02::2	ICMPv6	70	Router Solicitation from 18:3d:2d:f6:69:59
+141	46.233347	192.168.1.199	224.0.0.251	MDNS	93	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+142	46.234328	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	113	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+143	46.342983	192.168.1.199	224.0.0.251	MDNS	93	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+144	46.343348	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	113	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+145	46.406224	192.168.1.199	224.0.0.251	MDNS	93	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+146	46.406630	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	113	Standard query 0x0000 ANY DESKTOP-8L2A9D2._dosvc._tcp.local, "QU" question
+147	46.515301	192.168.1.199	224.0.0.251	MDNS	212	Standard query response 0x0000 SRV, cache flush 0 0 7680 DESKTOP-8L2A9D2.local TXT, cache flush
+148	46.515559	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	232	Standard query response 0x0000 SRV, cache flush 0 0 7680 DESKTOP-8L2A9D2.local TXT, cache flush
+149	46.573452	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+150	46.701459	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+151	46.795360	192.168.1.199	192.168.1.255	NBNS	110	Registration NB DESKTOP-8L2A9D2<00>
+152	46.795444	192.168.1.199	192.168.1.255	NBNS	110	Registration NB WORKGROUP<00>
+153	46.795495	192.168.1.199	192.168.1.255	NBNS	110	Registration NB DESKTOP-8L2A9D2<20>
+154	47.106867	192.168.1.199	239.255.255.250	SSDP	179	M-SEARCH * HTTP/1.1 
+155	47.191579	LCFCElectron_f6:69:59	Broadcast	ARP	42	ARP Announcement for 192.168.1.199
+156	47.349142	192.168.1.199	239.255.255.250	SSDP	179	M-SEARCH * HTTP/1.1 
+157	47.523284	192.168.1.199	224.0.0.251	MDNS	212	Standard query response 0x0000 SRV, cache flush 0 0 7680 DESKTOP-8L2A9D2.local TXT, cache flush
+158	47.523693	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	232	Standard query response 0x0000 SRV, cache flush 0 0 7680 DESKTOP-8L2A9D2.local TXT, cache flush
+159	47.554999	192.168.1.199	192.168.1.255	NBNS	110	Registration NB DESKTOP-8L2A9D2<20>
+160	47.555074	192.168.1.199	192.168.1.255	NBNS	110	Registration NB WORKGROUP<00>
+161	47.555127	192.168.1.199	192.168.1.255	NBNS	110	Registration NB DESKTOP-8L2A9D2<00>
+162	47.694890	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+163	48.087995	192.168.1.199	239.255.255.250	SSDP	179	M-SEARCH * HTTP/1.1 
+164	48.256505	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+165	48.283813	192.168.1.200	255.255.255.255	UDP	60	5000 → 5000 Len=16
+166	48.693505	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+167	48.960159	fe80::fb1a:5b4c:6a17:f35b	ff02::1:2	DHCPv6	157	Solicit XID: 0x830339 CID: 0001000130cd5eb0183d2df66959 
+168	49.271679	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+169	49.705959	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+170	49.777321	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+171	49.777466	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+172	49.777776	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+173	49.777874	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+174	50.192209	fe80::fb1a:5b4c:6a17:f35b	ff02::2	ICMPv6	70	Router Solicitation from 18:3d:2d:f6:69:59
+175	50.364396	192.168.1.199	239.255.255.250	SSDP	179	M-SEARCH * HTTP/1.1 
+176	50.706579	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+177	50.786499	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+178	50.786686	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+179	50.787132	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+180	50.787265	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+181	51.097319	192.168.1.199	239.255.255.250	SSDP	179	M-SEARCH * HTTP/1.1 
+182	51.936817	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+183	52.700281	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+184	52.794180	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+185	52.794304	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+186	52.794609	192.168.1.199	224.0.0.251	MDNS	82	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+187	52.794725	fe80::fb1a:5b4c:6a17:f35b	ff02::fb	MDNS	102	Standard query 0x0000 PTR _googlecast._tcp.local, "QM" question
+188	53.699565	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+189	54.105232	192.168.1.199	239.255.255.250	SSDP	179	M-SEARCH * HTTP/1.1 
+190	54.950954	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+191	55.695989	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+192	56.694942	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+193	56.960826	fe80::fb1a:5b4c:6a17:f35b	ff02::1:2	DHCPv6	157	Solicit XID: 0x830339 CID: 0001000130cd5eb0183d2df66959 
+194	57.045491	192.168.1.200	255.255.255.255	UDP	60	5000 → 5000 Len=16
+195	57.122565	192.168.1.199	239.255.255.250	SSDP	179	M-SEARCH * HTTP/1.1 
+196	57.976388	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+197	58.696254	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+198	59.692942	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+199	60.130898	192.168.1.199	239.255.255.250	SSDP	179	M-SEARCH * HTTP/1.1 
+200	61.082804	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+201	61.691459	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+202	62.694650	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+203	63.134263	192.168.1.199	239.255.255.250	SSDP	179	M-SEARCH * HTTP/1.1 
+204	63.993824	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+205	64.695784	LCFCElectron_f6:69:59	Broadcast	ARP	42	Who has 192.168.1.1? Tell 192.168.1.199
+
+
+C:\Users\phamnamhien>ping 192.168.1.200
+
+Pinging 192.168.1.200 with 32 bytes of data:
+Reply from 192.168.1.200: bytes=32 time=21ms TTL=128
+Reply from 192.168.1.200: bytes=32 time=10ms TTL=128
+Reply from 192.168.1.200: bytes=32 time=11ms TTL=128
+Reply from 192.168.1.200: bytes=32 time=10ms TTL=128
+
+Ping statistics for 192.168.1.200:
+    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),
+Approximate round trip times in milli-seconds:
+    Minimum = 10ms, Maximum = 21ms, Average = 13ms
+
+C:\Users\phamnamhien>
